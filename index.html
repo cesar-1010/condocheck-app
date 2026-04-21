@@ -8,7 +8,7 @@
         body { font-family: 'Segoe UI', sans-serif; background: #1a2c35; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }
         
         /* TELAS */
-        .screen { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: none; }
+        .screen { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: none; position: relative; }
         .active { display: block; }
 
         /* ELEMENTOS */
@@ -22,6 +22,10 @@
         
         /* STATUS */
         .error { color: red; text-align: center; margin-top: 10px; font-weight: bold; }
+        
+        /* PROGRESS BAR */
+        .progress-container { width: 100%; background-color: #ddd; border-radius: 8px; margin-top: 15px; overflow: hidden; height: 10px; }
+        .progress-bar { height: 10px; background-color: #00d2b4; width: 0%; transition: width 0.3s; }
         
         /* V2 CARDS */
         .task-card { background: #f0f8f7; padding: 15px; margin-top: 15px; border-radius: 8px; border-left: 5px solid #00d2b4; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -38,6 +42,13 @@
         .task-done { background: #e8f5e9; border-left-color: #4caf50; opacity: 0.7; pointer-events: none; }
         .task-done .btn-group { display: none; }
         .task-done-msg { color: #4caf50; font-weight: bold; font-size: 14px; text-align: center; display: block; margin-top: 10px; }
+
+        /* FAB E MODAL */
+        .fab-btn { position: fixed; bottom: 30px; right: 30px; background: #00d2b4; color: #1a2c35; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: none; cursor: pointer; z-index: 1000; font-weight: bold; }
+        .fab-btn:active { transform: scale(0.95); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; position: relative; max-height: 90vh; overflow-y: auto; }
+        .close-modal { position: absolute; top: 15px; right: 15px; font-size: 28px; cursor: pointer; color: #555; line-height: 1; }
     </style>
 </head>
 <body>
@@ -71,16 +82,48 @@
             <span style="color:#888; font-size:14px" id="dateDisplay"></span>
         </div>
 
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <p id="progressText" style="text-align:center; font-size:14px; margin-top:5px; color:#555; font-weight:bold;"></p>
+
         <div id="tasksContainer">
             <!-- Cards de tarefas serão inseridos aqui -->
         </div>
 
         <p id="statusMsg" style="text-align:center; margin-top:15px; font-weight:bold; color: #00d2b4;"></p>
+        
+        <!-- FAB OCORRÊNCIAS -->
+        <button class="fab-btn" onclick="abrirModalOcorrencia()">🔧</button>
+    </div>
+
+    <!-- MODAL OCORRENCIA -->
+    <div id="modalOcorrencia" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="fecharModalOcorrencia()">&times;</span>
+            <h3 style="margin-top:0; color:#1a2c35; border-bottom: 2px solid #00d2b4; padding-bottom: 10px;">Registrar Ocorrência Extra</h3>
+            
+            <label>Categoria:</label>
+            <select id="ocorrenciaCategoria">
+                <option value="">Selecione...</option>
+                <option value="Elétrica">Elétrica</option>
+                <option value="Hidráulica">Hidráulica</option>
+                <option value="Alvenaria">Alvenaria</option>
+                <option value="Outros">Outros</option>
+            </select>
+
+            <label>Descrição:</label>
+            <textarea id="ocorrenciaDescricao" rows="3" placeholder="Detalhes do problema..."></textarea>
+
+            <label>Foto do Local (Obrigatória):</label>
+            <input type="file" id="ocorrenciaFoto" accept="image/*" capture="environment" style="background: white;">
+
+            <button class="btn-main" id="btnSendOcorrencia" onclick="enviarOcorrencia()">ENVIAR REGISTRO</button>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Substitua aqui por suas chaves reais do Supabase, se necessário.
         const SUPABASE_URL = 'https://tkychwsoxinzcwzuuaas.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRreWNod3NveGluemN3enV1YWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMDk4NjEsImV4cCI6MjA3ODc4NTg2MX0.4mq4_jcSyAhRybjhIMaWPjS8YIDMkgX9nF3JvQ-dUNg';
         
@@ -88,8 +131,10 @@
 
         let loggedUser = null;
         let diaAtual = '';
+        let totalTarefas = 0;
+        let tarefasConcluidas = 0;
 
-        // Descobre o dia da semana atual pelo sistema do dispositivo
+        // Descobre o dia da semana atual
         const diasSemana = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
         const hoje = new Date();
         diaAtual = diasSemana[hoje.getDay()];
@@ -114,7 +159,6 @@
 
             msg.innerText = "Verificando...";
 
-            // Consulta tabela funcionarios_v2
             const { data, error } = await sb
                 .from('funcionarios_v2')
                 .select('*')
@@ -150,17 +194,34 @@
             carregarTarefas();
         }
 
+        function atualizarProgresso() {
+            const progressText = document.getElementById('progressText');
+            const progressBar = document.getElementById('progressBar');
+            
+            if(totalTarefas === 0) {
+                progressText.innerText = '';
+                progressBar.style.width = '0%';
+                return;
+            }
+            
+            const perc = (tarefasConcluidas / totalTarefas) * 100;
+            progressBar.style.width = `${perc}%`;
+            progressText.innerText = `${tarefasConcluidas} de ${totalTarefas} Tarefas Concluídas`;
+        }
+
         // --- CARREGAR TAREFAS ---
         async function carregarTarefas() {
             const container = document.getElementById('tasksContainer');
             container.innerHTML = '<p style="text-align:center;">Carregando tarefas...</p>';
+            totalTarefas = 0;
+            tarefasConcluidas = 0;
+            atualizarProgresso();
 
             if(diaAtual === 'domingo') {
                 container.innerHTML = '<p style="text-align:center; color:#555;">Nenhuma tarefa programada para domingo.</p>';
                 return;
             }
 
-            // 1. Busca as tarefas baseadas no ID do funcionário e no dia da semana atual
             const { data: tarefas, error: errTarefas } = await sb
                 .from('matriz_tarefas_v2')
                 .select('*')
@@ -172,7 +233,6 @@
                 return;
             }
 
-            // 2. Busca o que já foi executado hoje (CONCLUIDO ou JUSTIFICADO)
             const dataHoje = new Date().toISOString().split('T')[0];
             const { data: execucoes, error: errExec } = await sb
                 .from('diario_execucoes_v2')
@@ -185,10 +245,13 @@
                 execucoes.forEach(e => tarefasFeitas[e.tarefa_id] = e.status);
             }
 
-            // 3. Renderiza os Cards
             container.innerHTML = '';
+            totalTarefas = tarefas.length;
+            
             tarefas.forEach(t => {
                 const jaFeito = tarefasFeitas[t.id];
+                if(jaFeito) tarefasConcluidas++;
+
                 const card = document.createElement('div');
                 card.className = jaFeito ? 'task-card task-done' : 'task-card';
                 card.id = `card_${t.id}`;
@@ -199,13 +262,11 @@
                 if (jaFeito) {
                     statusHTML = `<span class="task-done-msg">✅ ${jaFeito}</span>`;
                 } else {
-                    // Valida regra da chuva para exibição da opção no select
                     let optionChuva = t.justificavel_por_chuva ? `<option value="Chuva">Chuva</option>` : '';
-                    
                     botoesHTML = `
                         <div class="btn-group">
-                            <button class="btn-executar" id="btnExec_${t.id}" onclick="executarTarefa(${t.id})">EXECUTAR</button>
-                            <button class="btn-justificar" id="btnJust_${t.id}" onclick="toggleJustificativa(${t.id})">JUSTIFICAR</button>
+                            <button class="btn-executar" id="btnExec_${t.id}" onclick="executarTarefa('${t.id}')">EXECUTAR</button>
+                            <button class="btn-justificar" id="btnJust_${t.id}" onclick="toggleJustificativa('${t.id}')">JUSTIFICAR</button>
                         </div>
                         <div id="justBox_${t.id}" class="justificativa-box">
                             <label style="margin-top:0">Motivo:</label>
@@ -219,9 +280,9 @@
                             </select>
                             
                             <label>Foto da Prova (Obrigatória):</label>
-                            <input type="file" id="foto_${t.id}" accept="image/*" style="background: white;">
+                            <input type="file" id="foto_${t.id}" accept="image/*" capture="environment" style="background: white;">
                             
-                            <button class="btn-send-just" id="btnSendJust_${t.id}" onclick="enviarJustificativa(${t.id})">ENVIAR JUSTIFICATIVA</button>
+                            <button class="btn-send-just" id="btnSendJust_${t.id}" onclick="enviarJustificativa('${t.id}')">ENVIAR JUSTIFICATIVA</button>
                         </div>
                     `;
                 }
@@ -233,9 +294,11 @@
                 `;
                 container.appendChild(card);
             });
+
+            atualizarProgresso();
         }
 
-        // --- AÇÕES DO CARD ---
+        // --- AÇÕES ---
         async function executarTarefa(tarefaId) {
             if(!confirm("Confirmar execução desta tarefa?")) return;
 
@@ -247,7 +310,6 @@
             
             const dataHoje = new Date().toISOString().split('T')[0];
 
-            // Salva na tabela com status CONCLUIDO
             const { error } = await sb.from('diario_execucoes_v2').insert({
                 tarefa_id: tarefaId,
                 funcionario_id: loggedUser.id,
@@ -263,6 +325,8 @@
             } else {
                 marcaCardComoConcluido(tarefaId, 'CONCLUIDO');
                 mostrarStatus('Tarefa executada com sucesso!');
+                tarefasConcluidas++;
+                atualizarProgresso();
             }
         }
 
@@ -284,7 +348,6 @@
             btnSend.innerText = "⏳ ENVIANDO FOTO...";
 
             try {
-                // Realiza Upload da Foto Obrigatória
                 const nomeArq = Date.now() + '_' + Math.floor(Math.random()*1000) + '.jpg';
                 const { error: errUp } = await sb.storage.from('PROVAS').upload(nomeArq, file);
                 if(errUp) throw errUp;
@@ -292,7 +355,6 @@
                 const { data: urlData } = sb.storage.from('PROVAS').getPublicUrl(nomeArq);
                 const fotoUrl = urlData.publicUrl;
 
-                // Salva no banco de dados como JUSTIFICADO
                 btnSend.innerText = "💾 SALVANDO...";
                 const dataHoje = new Date().toISOString().split('T')[0];
 
@@ -309,6 +371,8 @@
 
                 marcaCardComoConcluido(tarefaId, 'JUSTIFICADO');
                 mostrarStatus('Justificativa salva com sucesso!');
+                tarefasConcluidas++;
+                atualizarProgresso();
 
             } catch(e) {
                 alert("Erro: " + e.message);
@@ -337,6 +401,64 @@
             setTimeout(() => {
                 statusEl.innerText = "";
             }, 3000);
+        }
+
+        // --- OCORRÊNCIAS EXTRAS ---
+        function abrirModalOcorrencia() {
+            document.getElementById('modalOcorrencia').style.display = 'flex';
+        }
+
+        function fecharModalOcorrencia() {
+            document.getElementById('modalOcorrencia').style.display = 'none';
+            document.getElementById('ocorrenciaCategoria').value = '';
+            document.getElementById('ocorrenciaDescricao').value = '';
+            document.getElementById('ocorrenciaFoto').value = '';
+        }
+
+        async function enviarOcorrencia() {
+            const categoria = document.getElementById('ocorrenciaCategoria').value;
+            const descricao = document.getElementById('ocorrenciaDescricao').value.trim();
+            const fileInput = document.getElementById('ocorrenciaFoto');
+            const file = fileInput.files[0];
+
+            if(!categoria) { alert("Selecione uma categoria!"); return; }
+            if(!descricao) { alert("Descreva a ocorrência!"); return; }
+            if(!file) { alert("A foto é obrigatória!"); return; }
+
+            const btnSend = document.getElementById('btnSendOcorrencia');
+            btnSend.disabled = true;
+            btnSend.innerText = "⏳ ENVIANDO FOTO...";
+
+            try {
+                // Upload Foto
+                const nomeArq = 'ocorrencia_' + Date.now() + '_' + Math.floor(Math.random()*1000) + '.jpg';
+                const { error: errUp } = await sb.storage.from('PROVAS').upload(nomeArq, file);
+                if(errUp) throw errUp;
+
+                const { data: urlData } = sb.storage.from('PROVAS').getPublicUrl(nomeArq);
+                const fotoUrl = urlData.publicUrl;
+
+                btnSend.innerText = "💾 SALVANDO...";
+
+                // Banco de Dados
+                const { error: errDb } = await sb.from('ocorrencias_internas_v2').insert({
+                    funcionario_id: loggedUser.id,
+                    categoria: categoria,
+                    descricao: descricao,
+                    foto_url: fotoUrl
+                });
+
+                if(errDb) throw errDb;
+
+                alert('Ocorrência registrada com sucesso!');
+                fecharModalOcorrencia();
+
+            } catch(e) {
+                alert("Erro: " + e.message);
+            } finally {
+                btnSend.disabled = false;
+                btnSend.innerText = "ENVIAR REGISTRO";
+            }
         }
     </script>
 </body>
