@@ -438,9 +438,8 @@
                         area_id: "CondoCheck V2",
                         obs: (typeof obs !== 'undefined' ? obs : (typeof motivo !== 'undefined' ? motivo : (typeof descricao !== 'undefined' ? descricao : ''))),
                         url_da_midia: fotoUrl
-                    }),
-                    mode: 'no-cors'
-                }).catch(e => console.log('Aviso n8n ignorado'));
+                    })
+                }).catch(e => console.log('Erro no disparo do webhook:', e));
 
                 marcaCardComoConcluido(tarefaId, 'CONCLUIDO');
                 mostrarStatus('Tarefa executada com sucesso!');
@@ -496,9 +495,8 @@
                         area_id: "CondoCheck V2",
                         obs: (typeof obs !== 'undefined' ? obs : (typeof motivo !== 'undefined' ? motivo : (typeof descricao !== 'undefined' ? descricao : ''))),
                         url_da_midia: fotoUrl
-                    }),
-                    mode: 'no-cors'
-                }).catch(e => console.log('Aviso n8n ignorado'));
+                    })
+                }).catch(e => console.log('Erro no disparo do webhook:', e));
 
                 marcaCardComoConcluido(tarefaId, 'JUSTIFICADO');
                 mostrarStatus('Justificativa salva com sucesso!');
@@ -593,9 +591,8 @@
                         area_id: "CondoCheck V2",
                         obs: (typeof obs !== 'undefined' ? obs : (typeof motivo !== 'undefined' ? motivo : (typeof descricao !== 'undefined' ? descricao : ''))),
                         url_da_midia: fotoUrl
-                    }),
-                    mode: 'no-cors'
-                }).catch(e => console.log('Aviso n8n ignorado'));
+                    })
+                }).catch(e => console.log('Erro no disparo do webhook:', e));
 
                 alert('Ocorrência registrada com sucesso!');
                 fecharModalOcorrencia();
@@ -661,9 +658,8 @@
                         area_id: "CondoCheck V2",
                         obs: (typeof obs !== 'undefined' ? obs : (typeof motivo !== 'undefined' ? motivo : (typeof descricao !== 'undefined' ? descricao : ''))),
                         url_da_midia: fotoUrl
-                    }),
-                    mode: 'no-cors'
-                }).catch(e => console.log('Aviso n8n ignorado'));
+                    })
+                }).catch(e => console.log('Erro no disparo do webhook:', e));
 
                 alert('Tarefa extra registrada com sucesso!');
                 fecharModalExtra();
