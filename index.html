@@ -35,10 +35,17 @@
         .btn-executar:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-justificar { flex: 1; padding: 12px; background: #ff9800; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
         .btn-justificar:disabled { opacity: 0.6; cursor: not-allowed; }
-        .justificativa-box { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc; display: none; }
-        .justificativa-box.open { display: block; }
+        
+        /* BOXES - Execução e Justificativa */
+        .execucao-box, .justificativa-box { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc; display: none; }
+        .execucao-box.open, .justificativa-box.open { display: block; }
+        
+        .btn-send-exec { width: 100%; padding: 12px; background: #00d2b4; color: white; border: none; border-radius: 6px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        .btn-send-exec:disabled { background: #555; cursor: not-allowed; }
+        
         .btn-send-just { width: 100%; padding: 12px; background: #1a2c35; color: white; border: none; border-radius: 6px; font-weight: bold; margin-top: 10px; cursor: pointer; }
         .btn-send-just:disabled { background: #555; cursor: not-allowed; }
+        
         .task-done { background: #e8f5e9; border-left-color: #4caf50; opacity: 0.7; pointer-events: none; }
         .task-done .btn-group { display: none; }
         .task-done-msg { color: #4caf50; font-weight: bold; font-size: 14px; text-align: center; display: block; margin-top: 10px; }
@@ -265,9 +272,22 @@
                     let optionChuva = t.justificavel_por_chuva ? `<option value="Chuva">Chuva</option>` : '';
                     botoesHTML = `
                         <div class="btn-group">
-                            <button class="btn-executar" id="btnExec_${t.id}" onclick="executarTarefa('${t.id}')">EXECUTAR</button>
-                            <button class="btn-justificar" id="btnJust_${t.id}" onclick="toggleJustificativa('${t.id}')">JUSTIFICAR</button>
+                            <button class="btn-executar" id="btnToggleExec_${t.id}" onclick="toggleExecucao('${t.id}')">EXECUTAR</button>
+                            <button class="btn-justificar" id="btnToggleJust_${t.id}" onclick="toggleJustificativa('${t.id}')">JUSTIFICAR</button>
                         </div>
+                        
+                        <!-- CAIXA DE EXECUÇÃO -->
+                        <div id="execBox_${t.id}" class="execucao-box">
+                            <label style="margin-top:0">Observações (Opcional):</label>
+                            <textarea id="obsExec_${t.id}" rows="2" placeholder="Detalhes da execução..."></textarea>
+                            
+                            <label>Foto da Prova (Obrigatória):</label>
+                            <input type="file" id="fotoExec_${t.id}" accept="image/*" capture="environment" style="background: white;">
+                            
+                            <button class="btn-send-exec" id="btnSendExec_${t.id}" onclick="enviarExecucao('${t.id}')">ENVIAR PROVA E CONCLUIR</button>
+                        </div>
+
+                        <!-- CAIXA DE JUSTIFICATIVA -->
                         <div id="justBox_${t.id}" class="justificativa-box">
                             <label style="margin-top:0">Motivo:</label>
                             <select id="motivo_${t.id}">
@@ -299,40 +319,63 @@
         }
 
         // --- AÇÕES ---
-        async function executarTarefa(tarefaId) {
-            if(!confirm("Confirmar execução desta tarefa?")) return;
+        function toggleExecucao(tarefaId) {
+            const boxExec = document.getElementById(`execBox_${tarefaId}`);
+            const boxJust = document.getElementById(`justBox_${tarefaId}`);
+            if(boxJust.classList.contains('open')) boxJust.classList.remove('open');
+            boxExec.classList.toggle('open');
+        }
 
-            const btnExec = document.getElementById(`btnExec_${tarefaId}`);
-            const btnJust = document.getElementById(`btnJust_${tarefaId}`);
-            btnExec.disabled = true;
-            btnJust.disabled = true;
-            btnExec.innerText = "⏳...";
-            
-            const dataHoje = new Date().toISOString().split('T')[0];
+        function toggleJustificativa(tarefaId) {
+            const boxJust = document.getElementById(`justBox_${tarefaId}`);
+            const boxExec = document.getElementById(`execBox_${tarefaId}`);
+            if(boxExec.classList.contains('open')) boxExec.classList.remove('open');
+            boxJust.classList.toggle('open');
+        }
 
-            const { error } = await sb.from('diario_execucoes_v2').insert({
-                tarefa_id: tarefaId,
-                funcionario_id: loggedUser.id,
-                data_execucao: dataHoje,
-                status: 'CONCLUIDO'
-            });
+        async function enviarExecucao(tarefaId) {
+            const obs = document.getElementById(`obsExec_${tarefaId}`).value.trim();
+            const fileInput = document.getElementById(`fotoExec_${tarefaId}`);
+            const file = fileInput.files[0];
 
-            if (error) {
-                alert("Erro ao salvar: " + error.message);
-                btnExec.disabled = false;
-                btnJust.disabled = false;
-                btnExec.innerText = "EXECUTAR";
-            } else {
+            if(!file) { alert("A foto é obrigatória para concluir a tarefa!"); return; }
+
+            const btnSend = document.getElementById(`btnSendExec_${tarefaId}`);
+            btnSend.disabled = true;
+            btnSend.innerText = "⏳ ENVIANDO FOTO...";
+
+            try {
+                const nomeArq = 'execucao_' + Date.now() + '_' + Math.floor(Math.random()*1000) + '.jpg';
+                const { error: errUp } = await sb.storage.from('PROVAS').upload(nomeArq, file);
+                if(errUp) throw errUp;
+
+                const { data: urlData } = sb.storage.from('PROVAS').getPublicUrl(nomeArq);
+                const fotoUrl = urlData.publicUrl;
+
+                btnSend.innerText = "💾 SALVANDO...";
+                const dataHoje = new Date().toISOString().split('T')[0];
+
+                const { error: errDb } = await sb.from('diario_execucoes_v2').insert({
+                    tarefa_id: tarefaId,
+                    funcionario_id: loggedUser.id,
+                    data_execucao: dataHoje,
+                    status: 'CONCLUIDO',
+                    observacao: obs,
+                    foto_url: fotoUrl
+                });
+
+                if(errDb) throw errDb;
+
                 marcaCardComoConcluido(tarefaId, 'CONCLUIDO');
                 mostrarStatus('Tarefa executada com sucesso!');
                 tarefasConcluidas++;
                 atualizarProgresso();
-            }
-        }
 
-        function toggleJustificativa(tarefaId) {
-            const box = document.getElementById(`justBox_${tarefaId}`);
-            box.classList.toggle('open');
+            } catch(e) {
+                alert("Erro: " + e.message);
+                btnSend.disabled = false;
+                btnSend.innerText = "ENVIAR PROVA E CONCLUIR";
+            }
         }
 
         async function enviarJustificativa(tarefaId) {
@@ -348,7 +391,7 @@
             btnSend.innerText = "⏳ ENVIANDO FOTO...";
 
             try {
-                const nomeArq = Date.now() + '_' + Math.floor(Math.random()*1000) + '.jpg';
+                const nomeArq = 'justificativa_' + Date.now() + '_' + Math.floor(Math.random()*1000) + '.jpg';
                 const { error: errUp } = await sb.storage.from('PROVAS').upload(nomeArq, file);
                 if(errUp) throw errUp;
 
@@ -389,6 +432,10 @@
             
             const btnGroup = card.querySelector('.btn-group');
             if(btnGroup) btnGroup.remove();
+            
+            const execBox = card.querySelector('.execucao-box');
+            if(execBox) execBox.remove();
+            
             const justBox = card.querySelector('.justificativa-box');
             if(justBox) justBox.remove();
             
