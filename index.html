@@ -430,6 +430,8 @@
 
                 if(errDb) throw errDb;
 
+                const nomeTarefa = document.querySelector('#card_' + tarefaId + ' .task-title').innerText;
+                
                 fetch('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/checklist-app', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -437,7 +439,8 @@
                         user_id: loggedUser.nome,
                         area_id: "CondoCheck V2",
                         obs: (typeof obs !== 'undefined' ? obs : (typeof motivo !== 'undefined' ? motivo : (typeof descricao !== 'undefined' ? descricao : ''))),
-                        url_da_midia: fotoUrl
+                        url_da_midia: fotoUrl,
+                        checklist: [nomeTarefa]
                     })
                 }).catch(e => console.log('Erro no disparo do webhook:', e));
 
@@ -487,6 +490,8 @@
 
                 if(errDb) throw errDb;
 
+                const nomeTarefa = document.querySelector('#card_' + tarefaId + ' .task-title').innerText;
+
                 fetch('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/checklist-app', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -494,7 +499,8 @@
                         user_id: loggedUser.nome,
                         area_id: "CondoCheck V2",
                         obs: (typeof obs !== 'undefined' ? obs : (typeof motivo !== 'undefined' ? motivo : (typeof descricao !== 'undefined' ? descricao : ''))),
-                        url_da_midia: fotoUrl
+                        url_da_midia: fotoUrl,
+                        checklist: [nomeTarefa]
                     })
                 }).catch(e => console.log('Erro no disparo do webhook:', e));
 
@@ -590,7 +596,8 @@
                         user_id: loggedUser.nome,
                         area_id: "CondoCheck V2",
                         obs: (typeof obs !== 'undefined' ? obs : (typeof motivo !== 'undefined' ? motivo : (typeof descricao !== 'undefined' ? descricao : ''))),
-                        url_da_midia: fotoUrl
+                        url_da_midia: fotoUrl,
+                        checklist: [categoria + ' - ' + descricao]
                     })
                 }).catch(e => console.log('Erro no disparo do webhook:', e));
 
@@ -657,7 +664,8 @@
                         user_id: loggedUser.nome,
                         area_id: "CondoCheck V2",
                         obs: (typeof obs !== 'undefined' ? obs : (typeof motivo !== 'undefined' ? motivo : (typeof descricao !== 'undefined' ? descricao : ''))),
-                        url_da_midia: fotoUrl
+                        url_da_midia: fotoUrl,
+                        checklist: [categoria + ' - ' + descricao]
                     })
                 }).catch(e => console.log('Erro no disparo do webhook:', e));
 
