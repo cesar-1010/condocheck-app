@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arca Gestão - Torre de Comando</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { arca: { dark: '#0f172a', teal: '#0FBC7F', blue: '#0EA5E9' } } } } }
+    </script>
+    <style>
+        body { background-color: #f1f5f9; font-family: 'Segoe UI', sans-serif; }
+        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col md:flex-row min-h-screen relative">
+
+    <aside class="w-full md:w-72 bg-arca-dark text-slate-300 flex flex-col shadow-2xl z-20 border-r border-slate-800">
+        <div class="p-6 border-b border-slate-800 bg-slate-900/50 flex flex-col items-center">
+            <img src="https://raw.githubusercontent.com/CesarKAN/Projeto_Maui_Hills/main/img/arca-logo-vertical.png" alt="Arca" class="w-48 h-auto">
+            <div class="mt-4 px-3 py-1 bg-arca-teal/20 text-arca-teal text-[10px] font-bold uppercase rounded-full">
+                Comando v27.1 - Ouro
+            </div>
+        </div>
+        <nav class="p-4 space-y-2 overflow-y-auto no-scrollbar flex-1">
+            <button onclick="recarregarTudo()" id="btn-dash" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-arca-teal/10 text-arca-teal font-bold border border-arca-teal/20 text-left">📊 Inteligência</button>
+            <button onclick="mostrarSessao('aprovacao'); carregarPendencias()" id="btn-aprovacao" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left relative">⚖️ Ocorrências Bento</button>
+            <button onclick="mostrarSessao('pesquisa'); carregarBasePesquisa()" id="btn-pesquisa" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left">🔍 Relatórios & Auditoria</button>
+            <button onclick="mostrarSessao('moradores'); carregarMoradores()" id="btn-moradores" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left">🏠 Moradores</button>
+            <button onclick="mostrarSessao('fornecedores'); carregarFornecedores()" id="btn-fornecedores" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left">🛠️ Fornecedores</button>
+            <button onclick="mostrarSessao('cadastros'); carregarCadastrosBase()" id="btn-cadastros" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left">📝 Cadastros CondoCheck</button>
+        </nav>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between">
+            <h1 id="titulo-pagina" class="text-2xl font-black text-slate-800">Inteligência</h1>
+            <button onclick="recarregarTudo()" class="border px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-50 text-arca-blue border-arca-blue">🔄 Atualizar Base</button>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 no-scrollbar">
+            
+            <div id="sessao-dash" class="block space-y-6">
+                <div class="bg-white p-4 rounded-xl card-shadow border border-slate-100 flex flex-col md:flex-row gap-4 items-end">
+                    <div class="w-full md:w-1/3"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Data Inicial:</label><input type="date" id="filtro-bi-inicio" class="w-full p-2 text-sm bg-slate-50 border border-slate-200 rounded"></div>
+                    <div class="w-full md:w-1/3"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Data Final:</label><input type="date" id="filtro-bi-fim" class="w-full p-2 text-sm bg-slate-50 border border-slate-200 rounded"></div>
+                    <div class="w-full md:w-1/3"><button onclick="aplicarFiltroDashboard()" class="w-full bg-arca-blue text-white font-bold py-2 rounded shadow">📊 Filtrar Gráficos</button></div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Total</p><p id="kpi-total" class="text-3xl font-black">--</p></div>
+                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Conflitos</p><p id="kpi-conflitos" class="text-3xl font-black text-red-500">--</p></div>
+                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Checklists</p><p id="kpi-checklists" class="text-3xl font-black text-arca-blue">--</p></div>
+                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Elogios</p><p id="kpi-elogios" class="text-3xl font-black text-arca-teal">--</p></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl card-shadow"><h3 class="font-bold mb-4">Mapa de Calor</h3><div class="h-64"><canvas id="graficoCat"></canvas></div></div>
+                    <div class="bg-white p-6 rounded-xl card-shadow"><h3 class="font-bold mb-4">Ouvidoria</h3><div class="h-64 flex justify-center"><canvas id="graficoOuv"></canvas></div></div>
+                    <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-arca-teal"><h3 class="font-bold mb-4">Eficiência</h3><div class="h-64"><canvas id="graficoProd"></canvas></div></div>
+                </div>
+            </div>
+
+            <div id="sessao-aprovacao" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-red-500">
+                    <h2 class="text-xl font-black text-slate-800 mb-2">Fila de Ocorrências (Bento)</h2>
+                    <p class="text-sm text-slate-500 mb-6">Tarefas abertas pelo morador no WhatsApp.</p>
+                    <div id="lista-tarefas-aprovacao" class="space-y-3"><div class="p-8 text-center text-slate-400 font-bold border-2 border-dashed rounded-xl">Buscando...</div></div>
+                </div>
+            </div>
+
+            <div id="sessao-pesquisa" class="hidden space-y-6">
+               <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
+                        <input type="date" id="pesq-ini" class="p-3 border border-slate-200 rounded-lg text-sm bg-slate-50" title="Data Inicial">
+                        <input type="date" id="pesq-fim" class="p-3 border border-slate-200 rounded-lg text-sm bg-slate-50" title="Data Final">
+                        
+                        <select id="filtro-torre" class="p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 font-bold text-arca-blue">
+                            <option value="">Todas as Torres</option>
+                        </select>
+                        <select id="filtro-apto" class="p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 font-bold text-arca-blue">
+                            <option value="">Todos os Aptos</option>
+                        </select>
+                        
+                        <select id="filtro-categoria" class="p-3 border border-slate-200 rounded-lg text-sm bg-slate-50">
+                            <option value="">Todas as Categorias</option>
+                        </select>
+                        
+                        <select id="filtro-status" class="p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 font-bold">
+                            <option value="">Todos os Status</option>
+                            <option value="ABERTO">Abertas</option>
+                            <option value="FECHADO">Fechadas</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-4 mb-6">
+                        <input type="text" id="termo-pesquisa" placeholder="Busca livre: Morador, Apto, Descrição da ocorrência..." class="flex-1 p-3 border border-slate-200 rounded-lg text-sm bg-slate-50">
+                        <button onclick="aplicarFiltroPesquisa()" class="bg-slate-800 text-white font-bold px-10 py-3 rounded-lg shadow">🔍 Filtrar</button>
+                    </div>
+                    <div class="overflow-x-auto rounded-lg border border-slate-100">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold">
+                                <tr><th class="px-4 py-3">Data</th><th class="px-4 py-3">Morador / Contato</th><th class="px-4 py-3">Local (Torre/Apto)</th><th class="px-4 py-3">Categoria</th><th class="px-4 py-3">Descrição</th><th class="px-4 py-3">Status</th><th class="px-4 py-3 text-center">Foto</th></tr>
+                            </thead>
+                            <tbody id="tabela-resultados" class="divide-y divide-slate-100"><tr><td colspan="7" class="p-8 text-center text-slate-400">Clique em Filtrar para carregar os dados.</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+
+        <div id="sessao-moradores" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-arca-blue">
+                <h4 class="font-bold mb-4">🏠 Gerenciar Morador</h4>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <input type="text" id="mor-nome" placeholder="Nome Completo" class="p-2 border rounded">
+                    <input type="text" id="mor-phone" placeholder="WhatsApp" class="p-2 border rounded">
+                  <select id="mor-bloco" class="p-2 border rounded" required>
+  		            <option value="" disabled selected>Selecione a Torre...</option>
+    		        <option value="Torre 1">Torre 1</option>
+    		        <option value="Torre 2">Torre 2</option>
+		          </select>
+                    <input type="text" id="mor-apto" placeholder="Apto" class="p-2 border rounded">
+                </div>
+                <div class="mt-4 flex gap-2">
+                    <button id="btn-salvar-mor" onclick="salvarMorador()" class="bg-arca-blue text-white font-bold py-2 px-6 rounded">Cadastrar Novo</button>
+                    <button onclick="cancelarEdicao()" class="bg-slate-200 text-slate-600 font-bold py-2 px-6 rounded hidden" id="btn-cancelar-mor">Cancelar</button>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl card-shadow overflow-hidden border border-slate-100">
+                <div class="max-h-96 overflow-y-auto relative no-scrollbar">
+                    <table class="w-full text-sm text-left">
+                        <thead class="sticky top-0 bg-slate-100 text-slate-500 uppercase text-[10px] font-bold z-10 shadow-sm">
+                            <tr>
+                                <th class="px-4 py-3">Nome do Morador</th>
+                                <th class="px-4 py-3">Local (Torre/Apto)</th>
+                                <th class="px-4 py-3">WhatsApp</th>
+                                <th class="px-4 py-3 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-moradores" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div id="sessao-fornecedores" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-arca-teal">
+                <h4 class="font-bold mb-4">🛠️ Gerenciar Fornecedor</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="for-empresa" placeholder="Empresa" class="p-2 border rounded">
+                    <input type="text" id="for-servico" placeholder="Categoria" class="p-2 border rounded">
+                    <input type="text" id="for-contato" placeholder="WhatsApp" class="p-2 border rounded">
+                </div>
+                <div class="mt-4 flex gap-2">
+                    <button id="btn-salvar-for" onclick="salvarFornecedor()" class="bg-arca-teal text-white font-bold py-2 px-6 rounded">Cadastrar Novo</button>
+                    <button onclick="cancelarEdicao()" class="bg-slate-200 text-slate-600 font-bold py-2 px-6 rounded hidden" id="btn-cancelar-for">Cancelar</button>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl card-shadow overflow-hidden">
+                <table class="w-full text-sm text-left">
+                    <tbody id="tabela-fornecedores" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="sessao-cadastros" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-slate-800">
+                    <h4 class="font-bold mb-4">👤 Equipe</h4>
+                    <input type="text" id="usu-nome" placeholder="Nome" class="w-full p-2 mb-2 border rounded text-sm">
+                    <input type="text" id="usu-login" placeholder="Login" class="w-full p-2 mb-2 border rounded text-sm">
+                    <input type="text" id="usu-senha" placeholder="Senha" class="w-full p-2 mb-2 border rounded text-sm">
+                    <select id="usu-cargo" class="w-full p-2 mb-2 border rounded text-sm"><option value="Zelador">Zelador</option><option value="Manutenção">Manutenção</option><option value="Síndico">Síndico</option></select>
+                    <button onclick="salvarUsuario()" class="w-full bg-slate-800 text-white font-bold py-2 rounded">Cadastrar</button>
+                    <ul id="lista-usuarios" class="mt-4 space-y-2 text-sm max-h-48 overflow-y-auto"></ul>
+                </div>
+                <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-arca-teal">
+                    <h4 class="font-bold mb-4">📍 Áreas</h4>
+                    <input type="text" id="area-nome" placeholder="Nome da Área" class="w-full p-2 mb-2 border rounded text-sm">
+                    <select id="area-loc" class="w-full p-2 mb-2 border rounded text-sm"><option value="Térreo">Térreo</option><option value="Subsolo">Subsolo</option><option value="Torres">Torres</option></select>
+                    <button onclick="salvarArea()" class="w-full bg-arca-teal text-white font-bold py-2 rounded">Cadastrar</button>
+                    <ul id="lista-areas" class="mt-4 space-y-2 text-sm max-h-48 overflow-y-auto"></ul>
+                </div>
+                <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-arca-blue">
+                    <h4 class="font-bold mb-4">📋 Tarefas Fixas</h4>
+                    <select id="tarefa-area" class="w-full p-2 mb-2 border rounded text-sm"><option value="">Carregando...</option></select>
+                    <input type="text" id="tarefa-desc" placeholder="O que deve ser feito?" class="w-full p-2 mb-2 border rounded text-sm">
+                    <button onclick="salvarTarefa()" class="w-full bg-arca-blue text-white font-bold py-2 rounded">Cadastrar</button>
+                    <ul id="lista-tarefas" class="mt-4 space-y-2 text-sm max-h-48 overflow-y-auto"></ul>
+                </div>
+            </div>
+        </div>
+        </div>
+    </main>
+
+    <!-- MODAL DE RESOLUÇÃO (SOBREPOSIÇÃO) -->
+    <div id="modal-resolucao" class="hidden fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-black text-lg text-slate-800">Resolver Ocorrência</h3>
+                <button onclick="fecharModalResolucao()" class="text-slate-400 hover:text-red-500 font-bold text-xl">&times;</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Morador / Contato:</p>
+                    <p id="modal-desc-morador" class="text-sm font-bold text-slate-700">--</p>
+                    <p id="modal-desc-local" class="text-xs text-arca-blue mt-1">--</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mt-3 mb-1">Descrição:</p>
+                    <p id="modal-desc-texto" class="text-sm text-slate-600 italic">"--"</p>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Mensagem de Resposta do Síndico:</label>
+                    <textarea id="modal-resposta-sindico" rows="4" class="w-full p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:outline-none focus:border-arca-blue" placeholder="Digite aqui a resposta que será enviada no WhatsApp do morador..."></textarea>
+                </div>
+            </div>
+            <div class="p-6 border-t border-slate-100 bg-slate-50 flex gap-3 justify-end">
+                <button onclick="fecharModalResolucao()" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-200 transition">Cancelar</button>
+                <button id="btn-confirmar-resolucao" onclick="confirmarResolucao()" class="px-6 py-2 rounded-lg text-sm font-bold text-white bg-arca-teal shadow hover:bg-emerald-600 transition">Concluir e Enviar WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SB_URL = 'https://tkychwsoxinzcwzuuaas.supabase.co';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRreWNod3NveGluemN3enV1YWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMDk4NjEsImV4cCI6MjA3ODc4NTg2MX0.4mq4_jcSyAhRybjhIMaWPjS8YIDMkgX9nF3JvQ-dUNg';
+        const supabaseDB = supabase.createClient(SB_URL, SB_KEY);
+        
+        let chartCat = null, chartProd = null, chartOuv = null;
+        let editandoMoradorId = null, editandoFornecedorId = null;
+        let dadosGlobaisBI = [];
+        let dadosGlobaisPesquisa = [];
+        let tarefaAtualId = null; // Para o Modal de Resolução
+
+        function mostrarSessao(id) {
+            ['dash', 'aprovacao', 'pesquisa', 'moradores', 'fornecedores', 'cadastros'].forEach(s => { document.getElementById('sessao-' + s).style.display = 'none'; let btn = document.getElementById('btn-' + s); if(btn) { btn.classList.remove('bg-arca-teal/10', 'text-arca-teal', 'border-arca-teal/20'); btn.classList.add('text-slate-400', 'border-transparent'); } });
+            document.getElementById('sessao-' + id).style.display = 'block'; let btnAtivo = document.getElementById('btn-' + id); if(btnAtivo) { btnAtivo.classList.remove('text-slate-400', 'border-transparent'); btnAtivo.classList.add('bg-arca-teal/10', 'text-arca-teal', 'border-arca-teal/20'); }
+            document.getElementById('titulo-pagina').innerText = btnAtivo.innerText.split(' ').slice(1).join(' '); cancelarEdicao();
+        }
+
+        function cancelarEdicao() {
+            editandoMoradorId = null; editandoFornecedorId = null; document.querySelectorAll('#sessao-moradores input, #sessao-fornecedores input').forEach(i => i.value = '');
+            document.getElementById('btn-salvar-mor').innerText = "Cadastrar Novo"; document.getElementById('btn-salvar-mor').classList.replace('bg-orange-500', 'bg-arca-blue');
+            document.getElementById('btn-salvar-for').innerText = "Cadastrar Novo"; document.getElementById('btn-salvar-for').classList.replace('bg-orange-500', 'bg-arca-teal');
+            document.getElementById('btn-cancelar-mor').classList.add('hidden'); document.getElementById('btn-cancelar-for').classList.add('hidden');
+        }
+
+        async function carregarEstatisticas() {
+            try { const res = await fetch("https://condocheck-n8n.wsoxvx.easypanel.host/webhook/gerar_estatisticas"); if(!res.ok) throw new Error("Erro"); let data = await res.json(); dadosGlobaisBI = Array.isArray(data) ? data : [data]; aplicarFiltroDashboard(); } catch (e) { console.log("Aguardando bi"); }
+        }
+
+        function aplicarFiltroDashboard() {
+            let ini = document.getElementById('filtro-bi-inicio').value; let fim = document.getElementById('filtro-bi-fim').value; let filtrados = dadosGlobaisBI;
+            if(ini && fim) {
+                let dIni = new Date(ini + "T00:00:00").getTime(); let dFim = new Date(fim + "T23:59:59").getTime();
+                filtrados = dadosGlobaisBI.filter(d => { let dStr = d.data || d.data_abertura || d.created_at || d.timestamp; if(!dStr) return false; let t = dStr.includes('/') ? new Date(`${dStr.split(' ')[0].split('/')[2]}-${dStr.split(' ')[0].split('/')[1]}-${dStr.split(' ')[0].split('/')[0]}T12:00:00`).getTime() : new Date(dStr).getTime(); return t >= dIni && t <= dFim; });
+            }
+            let total = 0, conflitos = 0, elogios = 0, checklists = 0, heat = {}, prod = {};
+            filtrados.forEach(i => { total++; let c = (i.categoria||'').toUpperCase(); let op = i.user_name || 'Equipe'; if(c.includes('CONFLITO')) conflitos++; if(c.includes('ELOGIO')) elogios++; if(c.includes('CHECKLIST')) { checklists++; prod[op] = (prod[op]||0)+1; } else if(c && c !== 'NULL') heat[c] = (heat[c]||0)+1; });
+            document.getElementById('kpi-total').innerText = total; document.getElementById('kpi-conflitos').innerText = conflitos; document.getElementById('kpi-checklists').innerText = checklists; document.getElementById('kpi-elogios').innerText = elogios;
+            let tHeat = Object.entries(heat).sort((a,b)=>b[1]-a[1]).slice(0,5); if(chartCat) chartCat.destroy(); chartCat = new Chart(document.getElementById('graficoCat'), { type: 'bar', data: { labels: tHeat.map(i=>i[0]), datasets: [{ data: tHeat.map(i=>i[1]), backgroundColor: '#0EA5E9' }] }, options: { plugins: { legend: { display: false } } } });
+            let pData = [elogios, conflitos]; let bgC = ['#0FBC7F', '#EF4444']; if(elogios === 0 && conflitos === 0) { pData = [1]; bgC = ['#e2e8f0']; } if(chartOuv) chartOuv.destroy(); chartOuv = new Chart(document.getElementById('graficoOuv'), { type: 'doughnut', data: { labels: (elogios===0&&conflitos===0)?['Sem dados']:['Elogios', 'Conflitos'], datasets: [{ data: pData, backgroundColor: bgC, borderWidth: 0 }] }, options: { plugins: { legend: { position: 'bottom' } } } });
+            let tProd = Object.entries(prod).sort((a,b)=>b[1]-a[1]); if(chartProd) chartProd.destroy(); chartProd = new Chart(document.getElementById('graficoProd'), { type: 'bar', data: { labels: tProd.map(i=>i[0]), datasets: [{ data: tProd.map(i=>i[1]), backgroundColor: '#0FBC7F' }] }, options: { indexAxis: 'y', plugins: { legend: { display: false } } } });
+        }
+
+        async function carregarBasePesquisa() {
+            const div = document.getElementById('tabela-resultados');
+            div.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">Baixando histórico...</td></tr>`;
+            try {
+                const res = await fetch("https://condocheck-n8n.wsoxvx.easypanel.host/webhook/listar_tarefas");
+                if(!res.ok) throw new Error("Erro"); 
+                let data = await res.json();
+                dadosGlobaisPesquisa = Array.isArray(data) ? data : [data];
+                
+                popularDropdownCategorias(dadosGlobaisPesquisa);
+                popularDropdownTorreApto(dadosGlobaisPesquisa);
+                
+                aplicarFiltroPesquisa();
+            } catch(e) { div.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-red-400 font-bold">Falha de rede.</td></tr>'; }
+        }
+
+        function popularDropdownCategorias(dados) {
+            const select = document.getElementById('filtro-categoria');
+            const categoriasUnicas = new Set();
+            dados.forEach(d => {
+                if (d.categoria) {
+                    categoriasUnicas.add(String(d.categoria).trim().toUpperCase());
+                }
+            });
+            let html = '<option value="">Todas as Categorias</option>';
+            Array.from(categoriasUnicas).sort().forEach(cat => {
+                html += `<option value="${cat}">${cat.charAt(0) + cat.slice(1).toLowerCase()}</option>`;
+            });
+            select.innerHTML = html;
+        }
+
+        function popularDropdownTorreApto(dados) {
+            const selTorre = document.getElementById('filtro-torre');
+            const selApto = document.getElementById('filtro-apto');
+            
+            const torresUnicas = new Set();
+            const aptosUnicos = new Set();
+            
+            dados.forEach(d => {
+                let t = d.bloco || d.torre;
+                let a = d.apartamento || d.apto;
+                if(t && String(t).trim() !== '') torresUnicas.add(String(t).trim().toUpperCase());
+                if(a && String(a).trim() !== '') aptosUnicos.add(String(a).trim().toUpperCase());
+            });
+            
+            let torresArr = Array.from(torresUnicas).sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}));
+            let aptosArr = Array.from(aptosUnicos).sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}));
+            
+            let htmlTorre = '<option value="">Todas as Torres</option>';
+            let htmlApto = '<option value="">Todos os Aptos</option>';
+            
+            torresArr.forEach(t => htmlTorre += `<option value="${t}">${t}</option>`);
+            aptosArr.forEach(a => htmlApto += `<option value="${a}">${a}</option>`);
+            
+            selTorre.innerHTML = htmlTorre;
+            selApto.innerHTML = htmlApto;
+        }
+
+        function aplicarFiltroPesquisa() {
+            const termoLibre = document.getElementById('termo-pesquisa').value.toLowerCase().trim();
+            const termoTorre = document.getElementById('filtro-torre').value.toUpperCase().trim();
+            const termoApto = document.getElementById('filtro-apto').value.toUpperCase().trim();
+            const cat = document.getElementById('filtro-categoria').value;
+            const status = document.getElementById('filtro-status').value;
+            const ini = document.getElementById('pesq-ini').value;
+            const fim = document.getElementById('pesq-fim').value;
+            const div = document.getElementById('tabela-resultados');
+            
+            let filtrados = dadosGlobaisPesquisa.filter(d => {
+                let matchData = true, matchStatus = true, matchCat = true, matchTorre = true, matchApto = true, matchLibre = true;
+                
+                const textoCompleto = `${d.local||''} ${d.bloco||''} ${d.torre||''} ${d.apto||''} ${d.apartamento||''} ${d.descricao_completa||d.descricao||''}`.toLowerCase();
+
+                if(termoTorre) {
+                    const blocoCampo = String(d.bloco || d.torre || '').toUpperCase().trim();
+                    matchTorre = (blocoCampo === termoTorre);
+                }
+                
+                if(termoApto) {
+                    const aptoCampo = String(d.apartamento || d.apto || '').toUpperCase().trim();
+                    matchApto = (aptoCampo === termoApto);
+                }
+
+                if(cat) matchCat = (String(d.categoria||'').trim().toUpperCase() === cat);
+                if(status) matchStatus = (String(d.status || 'ABERTO').trim().toUpperCase() === status);
+
+                if(ini || fim) {
+                    let dStr = d.data_abertura || d.created_at || d.data;
+                    if(!dStr) matchData = false;
+                    else {
+                        let t = dStr.includes('/') ? new Date(`${dStr.split(' ')[0].split('/')[2]}-${dStr.split(' ')[0].split('/')[1]}-${dStr.split(' ')[0].split('/')[0]}T12:00:00`).getTime() : new Date(dStr).getTime();
+                        if(ini && fim) matchData = (t >= new Date(ini + "T00:00:00").getTime() && t <= new Date(fim + "T23:59:59").getTime());
+                        else if (ini) matchData = (t >= new Date(ini + "T00:00:00").getTime());
+                        else if (fim) matchData = (t <= new Date(fim + "T23:59:59").getTime());
+                    }
+                }
+
+                if(termoLibre) matchLibre = textoCompleto.includes(termoLibre);
+
+                return matchData && matchStatus && matchCat && matchTorre && matchApto && matchLibre;
+            });
+            
+            let htmlAcumulado = '';
+            if(filtrados.length === 0) { 
+                div.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-slate-400">Nenhum registro encontrado com esses critérios.</td></tr>'; 
+                return; 
+            }
+            filtrados.forEach(d => { 
+                let dataE = d.data_abertura || d.created_at || d.data || '--'; 
+                if(dataE !== '--' && dataE.includes('T')) dataE = new Date(dataE).toLocaleDateString('pt-BR');
+                let statusE = String(d.status || 'ABERTO').trim().toUpperCase(); 
+                let corS = statusE === 'FECHADO' ? 'text-slate-400' : 'text-arca-teal';
+                
+                let fotoBtn = 'S/ Foto';
+                if(d.foto_url && String(d.foto_url).trim() !== '') {
+                    fotoBtn = `<a href="${d.foto_url}" target="_blank" class="bg-emerald-500 text-white px-2 py-1 rounded text-[10px] font-bold shadow hover:bg-emerald-600 inline-block">📷 Ver Foto</a>`;
+                }
+
+                htmlAcumulado += `<tr class="border-b hover:bg-slate-50"><td class="px-4 py-3 whitespace-nowrap">${dataE}</td><td class="px-4 py-3 font-bold text-slate-700">${d.morador||d.nome_morador||d.responsavel||'--'}</td><td class="px-4 py-3 text-arca-blue font-bold text-xs">${d.local||d.bloco||d.apto||'--'}</td><td class="px-4 py-3"><span class="bg-slate-200 text-slate-600 text-[10px] px-2 py-1 rounded font-bold">${d.categoria||'Ocorrência'}</span></td><td class="px-4 py-3 text-slate-600 text-xs">${d.descricao_completa||d.descricao||'--'}</td><td class="px-4 py-3 font-bold ${corS} uppercase text-xs">${statusE}</td><td class="px-4 py-3 text-center">${fotoBtn}</td></tr>`; 
+            });
+            div.innerHTML = htmlAcumulado;
+        }
+
+        async function carregarPendencias() {
+            const div = document.getElementById('lista-tarefas-aprovacao'); 
+            div.innerHTML = '<div class="p-8 text-center text-slate-400 font-bold">Buscando na base...</div>';
+            try {
+                const res = await fetch("https://condocheck-n8n.wsoxvx.easypanel.host/webhook/listar_tarefas", { cache: "no-store" });
+                if(!res.ok) throw new Error("Erro"); 
+                const dados = await res.json();
+                
+                dadosGlobaisPesquisa = Array.isArray(dados) ? dados : [dados];
+
+                let pendentes = dados.filter(t => { let st = String(t.status || t.Status || 'ABERTO').trim().toUpperCase(); return st !== 'FECHADO' && st !== 'CONCLUÍDO' && st !== 'CONCLUIDO'; });
+                if(pendentes.length === 0) { 
+                    div.innerHTML = '<div class="p-8 text-center text-slate-500 font-bold border-2 border-dashed rounded-xl">Todas as ocorrências já foram fechadas!</div>'; 
+                    return; 
+                }
+                
+                let htmlAcumulado = '';
+                pendentes.forEach(t => { 
+                    let desc = t.descricao || t.descricao_completa || 'Ocorrência'; 
+                    let morador = t.morador || t.nome_morador || t.responsavel || '--';
+                    let local = t.local || 'N/A';
+                    
+                    let descEnc = encodeURIComponent(desc);
+                    let moradorEnc = encodeURIComponent(morador);
+                    let localEnc = encodeURIComponent(local);
+
+                    htmlAcumulado += `<div id="task-${t.id}" class="bg-slate-50 p-4 rounded-lg border border-slate-200 flex justify-between items-center"><div class="pr-4"><p class="font-bold text-slate-700">${desc}</p><p class="text-xs text-slate-500 mt-1">Local: <span class="text-arca-blue font-bold">${local}</span></p></div><button id="btn-fechar-${t.id}" onclick="abrirModalResolucao('${t.id}', '${descEnc}', '${moradorEnc}', '${localEnc}')" class="bg-arca-teal text-white px-4 py-2 rounded shadow text-sm font-bold hover:bg-emerald-600 shrink-0">Resolver</button></div>`; 
+                });
+                div.innerHTML = htmlAcumulado;
+            } catch(e) { div.innerHTML = '<div class="p-6 text-center text-red-500 font-bold">Erro de conexão com n8n.</div>'; }
+        }
+
+        function abrirModalResolucao(id, descEnc, moradorEnc, localEnc) {
+            tarefaAtualId = id;
+            document.getElementById('modal-desc-morador').innerText = decodeURIComponent(moradorEnc);
+            document.getElementById('modal-desc-local').innerText = "Local: " + decodeURIComponent(localEnc);
+            document.getElementById('modal-desc-texto').innerText = '"' + decodeURIComponent(descEnc) + '"';
+            document.getElementById('modal-resposta-sindico').value = '';
+            document.getElementById('modal-resolucao').classList.remove('hidden');
+        }
+
+        function fecharModalResolucao() {
+            document.getElementById('modal-resolucao').classList.add('hidden');
+            tarefaAtualId = null;
+        }
+
+        function confirmarResolucao() {
+            if(!tarefaAtualId) return;
+            const resposta = document.getElementById('modal-resposta-sindico').value.trim();
+            if(!resposta) {
+                alert("Por favor, digite a resposta do síndico.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-confirmar-resolucao');
+            btn.innerText = "Processando..."; 
+            btn.disabled = true;
+
+            const url = `https://condocheck-n8n.wsoxvx.easypanel.host/webhook/baixar_tarefa?id=${tarefaAtualId}&usuario=Painel_Comando&resposta_sindico=${encodeURIComponent(resposta)}`;
+
+            fetch(url, { mode: 'no-cors' })
+            .then(() => {
+                setTimeout(() => {
+                    fecharModalResolucao();
+                    btn.innerText = "Concluir e Enviar WhatsApp"; 
+                    btn.disabled = false;
+                    carregarPendencias(); 
+                }, 1500);
+            })
+            .catch(() => {
+                alert("Falha de rede ao tentar enviar o comando.");
+                btn.innerText = "Concluir e Enviar WhatsApp"; 
+                btn.disabled = false;
+            });
+        }
+
+        async function carregarMoradores() { 
+            const { data } = await supabaseDB.from('cadastro_moradores').select('*').order('nome'); 
+            const tb = document.getElementById('tabela-moradores'); 
+            let htmlAcumulado = '';
+            if(data) {
+                data.forEach(m => { 
+                    let fone = (m.telefone || 'Sem Número'); 
+                    htmlAcumulado += `<tr class="border-b hover:bg-slate-50"><td class="p-4 font-bold text-slate-700">${m.nome}</td><td class="p-4 text-arca-blue font-bold text-xs">Torre ${m.bloco} - Apto ${m.apartamento}</td><td class="p-4 text-slate-500">${fone}</td><td class="p-4 text-right"><button onclick="editarMorador(${m.id}, '${m.nome}', '${fone}', '${m.bloco}', '${m.apartamento}')" class="text-blue-500 font-bold mr-3">Editar</button><button onclick="deletarItem('cadastro_moradores', ${m.id}, carregarMoradores)" class="text-red-500 font-bold">Excluir</button></td></tr>`; 
+                }); 
+            }
+            tb.innerHTML = htmlAcumulado;
+        }
+
+        function editarMorador(id, nome, fone, bloco, apto) { document.getElementById('mor-nome').value = nome; document.getElementById('mor-phone').value = fone !== 'Sem Número' ? fone : ''; document.getElementById('mor-bloco').value = bloco !== 'null' ? bloco : ''; document.getElementById('mor-apto').value = apto !== 'null' ? apto : ''; editandoMoradorId = id; document.getElementById('btn-salvar-mor').innerText = "Atualizar"; document.getElementById('btn-salvar-mor').classList.replace('bg-arca-blue', 'bg-orange-500'); document.getElementById('btn-cancelar-mor').classList.remove('hidden'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        
+        async function salvarMorador() {
+            const n = document.getElementById('mor-nome').value.trim();
+            let p = document.getElementById('mor-phone').value.replace(/\D/g, ''); 
+            const b = document.getElementById('mor-bloco').value.trim();
+            const a = document.getElementById('mor-apto').value.trim();
+
+            if (!n) return alert("O Nome é obrigatório!");
+
+            if (p.length === 10 || p.length === 11) {
+                // Perfeito
+            } else {
+                return alert("O WhatsApp deve ter o DDD + 8 ou 9 dígitos.\nExemplo correto: 51982149914");
+            }
+
+            let queryDup = supabaseDB.from('cadastro_moradores').select('id, nome').eq('telefone', p);
+            
+            if (editandoMoradorId) {
+                queryDup = queryDup.neq('id', editandoMoradorId); 
+            }
+
+            const { data: duplicado } = await queryDup;
+
+            if (duplicado && duplicado.length > 0) {
+                return alert(`Ação Bloqueada: Este telefone já está cadastrado para o morador "${duplicado[0].nome}". Não é possível duplicar.`);
+            }
+
+            document.getElementById('btn-salvar-mor').innerText = "Salvando...";
+
+            let payload = { nome: String(n), telefone: String(p), bloco: String(b), apartamento: String(a) };
+            
+            let result = editandoMoradorId 
+                ? await supabaseDB.from('cadastro_moradores').update(payload).eq('id', editandoMoradorId).select() 
+                : await supabaseDB.from('cadastro_moradores').insert([payload]).select();
+
+            if (result.error) {
+                alert("Erro ao salvar: " + result.error.message);
+                document.getElementById('btn-salvar-mor').innerText = editandoMoradorId ? "Atualizar" : "Cadastrar Novo";
+            } else {
+                alert("Morador salvo com sucesso!");
+                document.getElementById('mor-nome').value = '';
+                document.getElementById('mor-phone').value = '';
+                document.getElementById('mor-bloco').value = '';
+                document.getElementById('mor-apto').value = '';
+                cancelarEdicao();
+                carregarMoradores();
+            }
+        }
+        
+        async function carregarFornecedores() { 
+            const { data } = await supabaseDB.from('fornecedores').select('*').order('nome_empresa'); 
+            const tb = document.getElementById('tabela-fornecedores'); 
+            let htmlAcumulado = '';
+            if(data) {
+                data.forEach(f => { 
+                    htmlAcumulado += `<tr class="border-b hover:bg-slate-50"><td class="p-4 font-bold text-slate-700">${f.nome_empresa}</td><td class="p-4 text-arca-teal font-bold text-xs uppercase">${f.categoria_manutencao || '--'}</td><td class="p-4 text-slate-500">${f.telefone_plantao || 'Sem Número'}</td><td class="p-4 text-right"><button onclick="editarFornecedor('${f.id}', '${f.nome_empresa}', '${f.categoria_manutencao}', '${f.telefone_plantao||''}')" class="text-blue-500 font-bold mr-3">Editar</button><button onclick="deletarItem('fornecedores', '${f.id}', carregarFornecedores)" class="text-red-500 font-bold">Excluir</button></td></tr>`; 
+                }); 
+            }
+            tb.innerHTML = htmlAcumulado;
+        }
+
+        function editarFornecedor(id, empresa, servico, fone) { document.getElementById('for-empresa').value = empresa; document.getElementById('for-servico').value = servico !== 'null' ? servico : ''; document.getElementById('for-contato').value = fone; editandoFornecedorId = id; document.getElementById('btn-salvar-for').innerText = "Atualizar"; document.getElementById('btn-salvar-for').classList.replace('bg-arca-teal', 'bg-orange-500'); document.getElementById('btn-cancelar-for').classList.remove('hidden'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        
+        async function salvarFornecedor() { const e = document.getElementById('for-empresa').value, s = document.getElementById('for-servico').value, c = document.getElementById('for-contato').value.replace(/\D/g, ''); if(!e) return alert("Empresa obrigatória!"); let payload = { nome_empresa: e, categoria_manutencao: s, telefone_plantao: c }; let result = editandoFornecedorId ? await supabaseDB.from('fornecedores').update(payload).eq('id', editandoFornecedorId) : await supabaseDB.from('fornecedores').insert([payload]); if(result.error) alert(result.error.message); else { alert("Salvo!"); cancelarEdicao(); carregarFornecedores(); } }
+
+        async function carregarCadastrosBase() { 
+            const { data: users } = await supabaseDB.from('usuarios').select('*').eq('ativo', true).order('nome'); 
+            document.getElementById('lista-usuarios').innerHTML = users ? users.map(u => `<li class="flex justify-between border-b py-2"><span><b>${u.nome}</b> <span class="text-[10px] bg-slate-100 px-2 rounded ml-1">${u.cargo}</span></span> <button onclick="desativarItem('usuarios', ${u.id})" class="text-red-400 font-bold text-xs">Excluir</button></li>`).join('') : ''; 
+            
+            const { data: areas } = await supabaseDB.from('areas').select('*').eq('ativo', true).order('nome'); 
+            document.getElementById('lista-areas').innerHTML = areas ? areas.map(a => `<li class="flex justify-between border-b py-2"><span><b>${a.nome}</b> <span class="text-xs text-slate-400">(${a.localizacao})</span></span> <button onclick="desativarItem('areas', ${a.id})" class="text-red-400 font-bold text-xs">Excluir</button></li>`).join('') : ''; 
+            
+            const sArea = document.getElementById('tarefa-area'); 
+            let sAreaHtml = '<option value="">Vincular a qual área?</option>'; 
+            if(areas) areas.forEach(a => sAreaHtml += `<option value="${a.id}">${a.nome}</option>`); 
+            sArea.innerHTML = sAreaHtml;
+            
+            const { data: tarefas } = await supabaseDB.from('tarefas').select('*, areas(nome)').eq('ativo', true).order('id', {ascending: false}); 
+            document.getElementById('lista-tarefas').innerHTML = tarefas ? tarefas.map(t => `<li class="flex justify-between border-b py-2"><span class="truncate pr-2"><b>${t.descricao}</b> <span class="text-[10px] text-arca-blue block">${t.areas ? t.areas.nome : 'Geral'}</span></span> <button onclick="desativarItem('tarefas', ${t.id})" class="text-red-400 font-bold text-xs">Excluir</button></li>`).join('') : ''; 
+        }
+        
+        async function salvarUsuario() { const n = document.getElementById('usu-nome').value, l = document.getElementById('usu-login').value, s = document.getElementById('usu-senha').value, c = document.getElementById('usu-cargo').value; if(!n || !l || !s) return alert("Preencha tudo"); const {error} = await supabaseDB.from('usuarios').insert([{ nome: n, login: l.toLowerCase(), senha: s, cargo: c, ativo: true }]); if(error) alert(error.message); else { alert("Cadastrado com sucesso!"); document.querySelectorAll('#sessao-cadastros input').forEach(i=>i.value=''); carregarCadastrosBase(); } }
+        async function salvarArea() { const n = document.getElementById('area-nome').value, l = document.getElementById('area-loc').value; if(!n) return alert("Preencha Nome"); await supabaseDB.from('areas').insert([{ nome: n, localizacao: l, ativo: true }]); document.getElementById('area-nome').value=''; carregarCadastrosBase(); }
+        async function salvarTarefa() { const a = document.getElementById('tarefa-area').value, d = document.getElementById('tarefa-desc').value; if(!a || !d) return alert("Preencha tudo"); await supabaseDB.from('tarefas').insert([{ area_id: a, descricao: d, ativo: true }]); document.getElementById('tarefa-desc').value=''; carregarCadastrosBase(); }
+        async function deletarItem(tabela, id, callback) { if(confirm("Apagar permanentemente?")) { await supabaseDB.from(tabela).delete().eq('id', id); callback(); } }
+        async function desativarItem(tabela, id) { if(confirm("Remover do aplicativo?")) { await supabaseDB.from(tabela).update({ ativo: false }).eq('id', id); carregarCadastrosBase(); } }
+
+        function recarregarTudo() { mostrarSessao('dash'); carregarEstatisticas(); carregarMoradores(); }
+        window.onload = recarregarTudo;
+    </script>
+</body>
+</html>
