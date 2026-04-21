@@ -19,6 +19,7 @@
         .btn-main { width: 100%; padding: 15px; background: #1a2c35; color: #00d2b4; border: none; font-weight: bold; font-size: 16px; margin-top: 20px; border-radius: 8px; cursor: pointer; }
         .btn-main:active { opacity: 0.9; }
         .btn-main:disabled { background: #555; cursor: not-allowed; }
+        .btn-extra { background: #1a2c35; color: white; border: 2px dashed #00d2b4; margin-top: 30px; }
         
         /* STATUS */
         .error { color: red; text-align: center; margin-top: 10px; font-weight: bold; }
@@ -59,6 +60,9 @@
     </style>
 </head>
 <body>
+
+    <!-- DATALIST -->
+    <datalist id="listaTodasTarefas"></datalist>
 
     <!-- TELA DE LOGIN -->
     <div id="screenLogin" class="screen active">
@@ -126,6 +130,30 @@
             <input type="file" id="ocorrenciaFoto" accept="image/*" capture="environment" style="background: white;">
 
             <button class="btn-main" id="btnSendOcorrencia" onclick="enviarOcorrencia()">ENVIAR REGISTRO</button>
+        </div>
+    </div>
+
+    <!-- MODAL TAREFA EXTRA -->
+    <div id="modalExtra" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="fecharModalExtra()">&times;</span>
+            <h3 style="margin-top:0; color:#1a2c35; border-bottom: 2px solid #00d2b4; padding-bottom: 10px;">Registrar Tarefa Extra</h3>
+            
+            <label>Categoria:</label>
+            <select id="extraCategoria">
+                <option value="">Selecione...</option>
+                <option value="Limpeza">Limpeza</option>
+                <option value="Zeladoria">Zeladoria</option>
+                <option value="Outros">Outros</option>
+            </select>
+
+            <label>Descrição da Tarefa:</label>
+            <input type="text" id="extraDescricao" list="listaTodasTarefas" placeholder="Digite ou selecione uma tarefa...">
+
+            <label>Foto da Prova (Obrigatória):</label>
+            <input type="file" id="extraFoto" accept="image/*" capture="environment" style="background: white;">
+
+            <button class="btn-main" id="btnSendExtra" onclick="enviarExtra()">ENVIAR TAREFA EXTRA</button>
         </div>
     </div>
 
@@ -199,6 +227,24 @@
             document.getElementById('dateDisplay').innerText = `Tarefas de Hoje (${diaAtual.charAt(0).toUpperCase() + diaAtual.slice(1)})`;
             
             carregarTarefas();
+            carregarDatalistTarefas();
+        }
+
+        async function carregarDatalistTarefas() {
+            const { data, error } = await sb
+                .from('matriz_tarefas_v2')
+                .select('descricao_tarefa');
+            
+            if(data) {
+                const descricoes = [...new Set(data.map(d => d.descricao_tarefa))].filter(Boolean);
+                const datalist = document.getElementById('listaTodasTarefas');
+                datalist.innerHTML = '';
+                descricoes.forEach(desc => {
+                    const option = document.createElement('option');
+                    option.value = desc;
+                    datalist.appendChild(option);
+                });
+            }
         }
 
         function atualizarProgresso() {
@@ -224,8 +270,17 @@
             tarefasConcluidas = 0;
             atualizarProgresso();
 
+            const renderizarBotaoExtra = () => {
+                const btnExtra = document.createElement('button');
+                btnExtra.className = 'btn-main btn-extra';
+                btnExtra.innerText = '[ + REGISTRAR TAREFA EXTRA ]';
+                btnExtra.onclick = abrirModalExtra;
+                container.appendChild(btnExtra);
+            };
+
             if(diaAtual === 'domingo') {
                 container.innerHTML = '<p style="text-align:center; color:#555;">Nenhuma tarefa programada para domingo.</p>';
+                renderizarBotaoExtra();
                 return;
             }
 
@@ -237,6 +292,7 @@
 
             if(errTarefas || !tarefas || tarefas.length === 0) {
                 container.innerHTML = '<p style="text-align:center; color:#555;">Nenhuma tarefa programada para você hoje.</p>';
+                renderizarBotaoExtra();
                 return;
             }
 
@@ -316,6 +372,7 @@
             });
 
             atualizarProgresso();
+            renderizarBotaoExtra();
         }
 
         // --- AÇÕES ---
@@ -505,6 +562,62 @@
             } finally {
                 btnSend.disabled = false;
                 btnSend.innerText = "ENVIAR REGISTRO";
+            }
+        }
+
+        // --- TAREFAS EXTRAS ---
+        function abrirModalExtra() {
+            document.getElementById('modalExtra').style.display = 'flex';
+        }
+
+        function fecharModalExtra() {
+            document.getElementById('modalExtra').style.display = 'none';
+            document.getElementById('extraCategoria').value = '';
+            document.getElementById('extraDescricao').value = '';
+            document.getElementById('extraFoto').value = '';
+        }
+
+        async function enviarExtra() {
+            const categoria = document.getElementById('extraCategoria').value;
+            const descricao = document.getElementById('extraDescricao').value.trim();
+            const fileInput = document.getElementById('extraFoto');
+            const file = fileInput.files[0];
+
+            if(!categoria) { alert("Selecione uma categoria!"); return; }
+            if(!descricao) { alert("Descreva a tarefa extra!"); return; }
+            if(!file) { alert("A foto é obrigatória!"); return; }
+
+            const btnSend = document.getElementById('btnSendExtra');
+            btnSend.disabled = true;
+            btnSend.innerText = "⏳ ENVIANDO FOTO...";
+
+            try {
+                const nomeArq = 'tarefa_extra_' + Date.now() + '_' + Math.floor(Math.random()*1000) + '.jpg';
+                const { error: errUp } = await sb.storage.from('PROVAS').upload(nomeArq, file);
+                if(errUp) throw errUp;
+
+                const { data: urlData } = sb.storage.from('PROVAS').getPublicUrl(nomeArq);
+                const fotoUrl = urlData.publicUrl;
+
+                btnSend.innerText = "💾 SALVANDO...";
+
+                const { error: errDb } = await sb.from('atividades_extras_v2').insert({
+                    funcionario_id: loggedUser.id,
+                    categoria: categoria,
+                    descricao: descricao,
+                    foto_url: fotoUrl
+                });
+
+                if(errDb) throw errDb;
+
+                alert('Tarefa extra registrada com sucesso!');
+                fecharModalExtra();
+
+            } catch(e) {
+                alert("Erro: " + e.message);
+            } finally {
+                btnSend.disabled = false;
+                btnSend.innerText = "ENVIAR TAREFA EXTRA";
             }
         }
     </script>
