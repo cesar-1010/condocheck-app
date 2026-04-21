@@ -430,6 +430,18 @@
 
                 if(errDb) throw errDb;
 
+                fetch('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/checklist-app', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: loggedUser.nome,
+                        area_id: "CondoCheck V2",
+                        obs: (typeof obs !== 'undefined' ? obs : (typeof motivo !== 'undefined' ? motivo : (typeof descricao !== 'undefined' ? descricao : ''))),
+                        url_da_midia: fotoUrl
+                    }),
+                    mode: 'no-cors'
+                }).catch(e => console.log('Aviso n8n ignorado'));
+
                 marcaCardComoConcluido(tarefaId, 'CONCLUIDO');
                 mostrarStatus('Tarefa executada com sucesso!');
                 tarefasConcluidas++;
@@ -475,6 +487,18 @@
                 });
 
                 if(errDb) throw errDb;
+
+                fetch('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/checklist-app', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: loggedUser.nome,
+                        area_id: "CondoCheck V2",
+                        obs: (typeof obs !== 'undefined' ? obs : (typeof motivo !== 'undefined' ? motivo : (typeof descricao !== 'undefined' ? descricao : ''))),
+                        url_da_midia: fotoUrl
+                    }),
+                    mode: 'no-cors'
+                }).catch(e => console.log('Aviso n8n ignorado'));
 
                 marcaCardComoConcluido(tarefaId, 'JUSTIFICADO');
                 mostrarStatus('Justificativa salva com sucesso!');
@@ -561,6 +585,18 @@
 
                 if(errDb) throw errDb;
 
+                fetch('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/checklist-app', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: loggedUser.nome,
+                        area_id: "CondoCheck V2",
+                        obs: (typeof obs !== 'undefined' ? obs : (typeof motivo !== 'undefined' ? motivo : (typeof descricao !== 'undefined' ? descricao : ''))),
+                        url_da_midia: fotoUrl
+                    }),
+                    mode: 'no-cors'
+                }).catch(e => console.log('Aviso n8n ignorado'));
+
                 alert('Ocorrência registrada com sucesso!');
                 fecharModalOcorrencia();
 
@@ -616,6 +652,18 @@
                 });
 
                 if(errDb) throw errDb;
+
+                fetch('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/checklist-app', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: loggedUser.nome,
+                        area_id: "CondoCheck V2",
+                        obs: (typeof obs !== 'undefined' ? obs : (typeof motivo !== 'undefined' ? motivo : (typeof descricao !== 'undefined' ? descricao : ''))),
+                        url_da_midia: fotoUrl
+                    }),
+                    mode: 'no-cors'
+                }).catch(e => console.log('Aviso n8n ignorado'));
 
                 alert('Tarefa extra registrada com sucesso!');
                 fecharModalExtra();
