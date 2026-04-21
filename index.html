@@ -29,8 +29,9 @@
         .progress-bar { height: 10px; background-color: #00d2b4; width: 0%; transition: width 0.3s; }
         
         /* LOGOS */
-        .logo-arca { width: 120px; height: auto; margin-bottom: 10px; }
-        .logo-condocheck { width: 160px; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .logo-arca { position: fixed; bottom: 20px; left: 20px; width: 60px; height: auto; opacity: 0.6; z-index: 100; transition: opacity 0.3s; }
+        .logo-arca:hover { opacity: 1; }
+        .logo-condocheck { width: 160px; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: block; margin: 0 auto 10px auto; }
 
         /* V2 CARDS */
         .task-card { background: #f0f8f7; padding: 15px; margin-top: 15px; border-radius: 8px; border-left: 5px solid #00d2b4; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -71,7 +72,6 @@
     <!-- TELA DE LOGIN -->
     <div id="screenLogin" class="screen active">
         <div style="text-align: center; margin-bottom: 25px;">
-            <img src="logo-arca.png" class="logo-arca" alt="Arca Gestão">
             <img src="logo-condocheck.png" class="logo-condocheck" alt="CondoCheck">
             <p style="color: #555; font-size: 14px; margin-top: 10px; font-weight: bold;">Acesso Operacional Restrito - V2</p>
         </div>
@@ -628,5 +628,6 @@
             }
         }
     </script>
+    <img src="logo-arca.png" class="logo-arca" alt="Arca Gestão">
 </body>
 </html>
