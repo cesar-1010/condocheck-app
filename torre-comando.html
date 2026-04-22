@@ -47,18 +47,17 @@
                 <div class="bg-white p-4 rounded-xl card-shadow border border-slate-100 flex flex-col md:flex-row gap-4 items-end">
                     <div class="w-full md:w-1/3"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Data Inicial:</label><input type="date" id="filtro-bi-inicio" class="w-full p-2 text-sm bg-slate-50 border border-slate-200 rounded"></div>
                     <div class="w-full md:w-1/3"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Data Final:</label><input type="date" id="filtro-bi-fim" class="w-full p-2 text-sm bg-slate-50 border border-slate-200 rounded"></div>
-                    <div class="w-full md:w-1/3"><button onclick="aplicarFiltroDashboard()" class="w-full bg-arca-blue text-white font-bold py-2 rounded shadow">📊 Filtrar Gráficos</button></div>
+                    <div class="w-full md:w-1/3"><button onclick="aplicarFiltroDashboard()" class="w-full bg-arca-blue text-white font-bold py-2 rounded shadow">📊 Filtrar Operação</button></div>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Total</p><p id="kpi-total" class="text-3xl font-black">--</p></div>
-                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Conflitos</p><p id="kpi-conflitos" class="text-3xl font-black text-red-500">--</p></div>
-                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Checklists</p><p id="kpi-checklists" class="text-3xl font-black text-arca-blue">--</p></div>
-                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Elogios</p><p id="kpi-elogios" class="text-3xl font-black text-arca-teal">--</p></div>
+                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Total de Tarefas</p><p id="kpi-total" class="text-3xl font-black">--</p></div>
+                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Executadas</p><p id="kpi-executadas" class="text-3xl font-black text-arca-blue">--</p></div>
+                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Justificadas</p><p id="kpi-justificadas" class="text-3xl font-black text-orange-500">--</p></div>
+                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Eficiência</p><p id="kpi-eficiencia" class="text-3xl font-black text-arca-teal">--</p></div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-xl card-shadow"><h3 class="font-bold mb-4">Mapa de Calor</h3><div class="h-64"><canvas id="graficoCat"></canvas></div></div>
-                    <div class="bg-white p-6 rounded-xl card-shadow"><h3 class="font-bold mb-4">Ouvidoria</h3><div class="h-64 flex justify-center"><canvas id="graficoOuv"></canvas></div></div>
-                    <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-arca-teal"><h3 class="font-bold mb-4">Eficiência</h3><div class="h-64"><canvas id="graficoProd"></canvas></div></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-arca-blue"><h3 class="font-bold mb-4">Balanço de Operação</h3><div class="h-64 flex justify-center"><canvas id="graficoStatus"></canvas></div></div>
+                    <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-orange-500"><h3 class="font-bold mb-4">Principais Ofensores (Motivos)</h3><div class="h-64"><canvas id="graficoMotivos"></canvas></div></div>
                 </div>
             </div>
 
@@ -224,7 +223,7 @@
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRreWNod3NveGluemN3enV1YWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMDk4NjEsImV4cCI6MjA3ODc4NTg2MX0.4mq4_jcSyAhRybjhIMaWPjS8YIDMkgX9nF3JvQ-dUNg';
         const supabaseDB = supabase.createClient(SB_URL, SB_KEY);
         
-        let chartCat = null, chartProd = null, chartOuv = null;
+        let chartCat = null, chartOuv = null;
         let editandoMoradorId = null, editandoFornecedorId = null;
         let dadosGlobaisBI = [];
         let dadosGlobaisPesquisa = [];
@@ -244,37 +243,142 @@
         }
 
         async function carregarEstatisticas() {
-            try { const res = await fetch("https://condocheck-n8n.wsoxvx.easypanel.host/webhook/gerar_estatisticas"); if(!res.ok) throw new Error("Erro"); let data = await res.json(); dadosGlobaisBI = Array.isArray(data) ? data : [data]; aplicarFiltroDashboard(); } catch (e) { console.log("Aguardando bi"); }
+            try {
+                const { data, error } = await supabaseDB.from('diario_execucoes_v2').select('status, motivo, data_execucao');
+                if (error) throw error;
+                dadosGlobaisBI = data || [];
+                aplicarFiltroDashboard();
+            } catch (e) { console.error("Erro no BI:", e); }
         }
 
         function aplicarFiltroDashboard() {
-            let ini = document.getElementById('filtro-bi-inicio').value; let fim = document.getElementById('filtro-bi-fim').value; let filtrados = dadosGlobaisBI;
+            let ini = document.getElementById('filtro-bi-inicio').value;
+            let fim = document.getElementById('filtro-bi-fim').value;
+            let filtrados = dadosGlobaisBI;
+
             if(ini && fim) {
-                let dIni = new Date(ini + "T00:00:00").getTime(); let dFim = new Date(fim + "T23:59:59").getTime();
-                filtrados = dadosGlobaisBI.filter(d => { let dStr = d.data || d.data_abertura || d.created_at || d.timestamp; if(!dStr) return false; let t = dStr.includes('/') ? new Date(`${dStr.split(' ')[0].split('/')[2]}-${dStr.split(' ')[0].split('/')[1]}-${dStr.split(' ')[0].split('/')[0]}T12:00:00`).getTime() : new Date(dStr).getTime(); return t >= dIni && t <= dFim; });
+                let dIni = new Date(ini + "T00:00:00").getTime();
+                let dFim = new Date(fim + "T23:59:59").getTime();
+                filtrados = dadosGlobaisBI.filter(d => {
+                    if(!d.data_execucao) return false;
+                    let t = new Date(d.data_execucao + "T12:00:00").getTime();
+                    return t >= dIni && t <= dFim;
+                });
             }
-            let total = 0, conflitos = 0, elogios = 0, checklists = 0, heat = {}, prod = {};
-            filtrados.forEach(i => { total++; let c = (i.categoria||'').toUpperCase(); let op = i.user_name || 'Equipe'; if(c.includes('CONFLITO')) conflitos++; if(c.includes('ELOGIO')) elogios++; if(c.includes('CHECKLIST')) { checklists++; prod[op] = (prod[op]||0)+1; } else if(c && c !== 'NULL') heat[c] = (heat[c]||0)+1; });
-            document.getElementById('kpi-total').innerText = total; document.getElementById('kpi-conflitos').innerText = conflitos; document.getElementById('kpi-checklists').innerText = checklists; document.getElementById('kpi-elogios').innerText = elogios;
-            let tHeat = Object.entries(heat).sort((a,b)=>b[1]-a[1]).slice(0,5); if(chartCat) chartCat.destroy(); chartCat = new Chart(document.getElementById('graficoCat'), { type: 'bar', data: { labels: tHeat.map(i=>i[0]), datasets: [{ data: tHeat.map(i=>i[1]), backgroundColor: '#0EA5E9' }] }, options: { plugins: { legend: { display: false } } } });
-            let pData = [elogios, conflitos]; let bgC = ['#0FBC7F', '#EF4444']; if(elogios === 0 && conflitos === 0) { pData = [1]; bgC = ['#e2e8f0']; } if(chartOuv) chartOuv.destroy(); chartOuv = new Chart(document.getElementById('graficoOuv'), { type: 'doughnut', data: { labels: (elogios===0&&conflitos===0)?['Sem dados']:['Elogios', 'Conflitos'], datasets: [{ data: pData, backgroundColor: bgC, borderWidth: 0 }] }, options: { plugins: { legend: { position: 'bottom' } } } });
-            let tProd = Object.entries(prod).sort((a,b)=>b[1]-a[1]); if(chartProd) chartProd.destroy(); chartProd = new Chart(document.getElementById('graficoProd'), { type: 'bar', data: { labels: tProd.map(i=>i[0]), datasets: [{ data: tProd.map(i=>i[1]), backgroundColor: '#0FBC7F' }] }, options: { indexAxis: 'y', plugins: { legend: { display: false } } } });
+
+            let total = filtrados.length, executadas = 0, justificadas = 0, motivosCount = {};
+            filtrados.forEach(i => {
+                if(i.status === 'CONCLUIDO') executadas++;
+                else if(i.status === 'JUSTIFICADO') {
+                    justificadas++;
+                    let mot = i.motivo || 'Outros';
+                    motivosCount[mot] = (motivosCount[mot] || 0) + 1;
+                }
+            });
+
+            let eficiencia = total > 0 ? Math.round((executadas / total) * 100) : 0;
+            document.getElementById('kpi-total').innerText = total;
+            document.getElementById('kpi-executadas').innerText = executadas;
+            document.getElementById('kpi-justificadas').innerText = justificadas;
+            document.getElementById('kpi-eficiencia').innerText = eficiencia + "%";
+
+            if(chartOuv) chartOuv.destroy();
+            chartOuv = new Chart(document.getElementById('graficoStatus'), {
+                type: 'doughnut',
+                data: { labels: total === 0 ? ['Sem dados'] : ['Executadas', 'Justificadas'], datasets: [{ data: total === 0 ? [1] : [executadas, justificadas], backgroundColor: total === 0 ? ['#e2e8f0'] : ['#0EA5E9', '#F97316'], borderWidth: 0 }] },
+                options: { plugins: { legend: { position: 'bottom' } }, maintainAspectRatio: false }
+            });
+
+            let tMotivos = Object.entries(motivosCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+            if(chartCat) chartCat.destroy();
+            chartCat = new Chart(document.getElementById('graficoMotivos'), {
+                type: 'bar',
+                data: { labels: tMotivos.length === 0 ? ['Nenhum ofensor'] : tMotivos.map(i=>i[0]), datasets: [{ data: tMotivos.length === 0 ? [0] : tMotivos.map(i=>i[1]), backgroundColor: '#F97316' }] },
+                options: { indexAxis: 'y', plugins: { legend: { display: false } }, maintainAspectRatio: false }
+            });
         }
 
         async function carregarBasePesquisa() {
             const div = document.getElementById('tabela-resultados');
-            div.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400">Baixando histórico...</td></tr>`;
+            div.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-slate-400">Consolidando dados (n8n + Supabase V2)...</td></tr>';
             try {
-                const res = await fetch("https://condocheck-n8n.wsoxvx.easypanel.host/webhook/listar_tarefas");
-                if(!res.ok) throw new Error("Erro"); 
-                let data = await res.json();
-                dadosGlobaisPesquisa = Array.isArray(data) ? data : [data];
-                
+                dadosGlobaisPesquisa = [];
+
+                // 1. BUSCA OCORRÊNCIAS DOS MORADORES (n8n)
+                try {
+                    const res = await fetch("https://condocheck-n8n.wsoxvx.easypanel.host/webhook/listar_tarefas", { cache: "no-store" });
+                    if(res.ok) {
+                        let dataN8n = await res.json();
+                        dadosGlobaisPesquisa = dadosGlobaisPesquisa.concat(Array.isArray(dataN8n) ? dataN8n : [dataN8n]);
+                    }
+                } catch(e) { console.log("Aviso: n8n indisponível no momento."); }
+
+                // 2. BUSCA ROTINA DO APP ZELADOR (Supabase V2)
+                // Mapeamento em memória para evitar falhas de Foreign Key
+                const { data: funcs } = await supabaseDB.from('funcionarios_v2').select('id, nome');
+                const { data: matriz } = await supabaseDB.from('matriz_tarefas_v2').select('id, descricao_tarefa');
+                const mapFuncs = {}; if(funcs) funcs.forEach(f => mapFuncs[f.id] = f.nome);
+                const mapMatriz = {}; if(matriz) matriz.forEach(m => mapMatriz[m.id] = m.descricao_tarefa);
+
+                // Execuções da Rotina
+                const { data: execs } = await supabaseDB.from('diario_execucoes_v2').select('*');
+                if (execs) {
+                    execs.forEach(e => {
+                        let nomeT = mapMatriz[e.tarefa_id] || 'Tarefa Operacional';
+                        let nomeF = mapFuncs[e.funcionario_id] || 'Equipe';
+                        dadosGlobaisPesquisa.push({
+                            data_abertura: e.data_execucao,
+                            morador: nomeF,
+                            local: 'Condomínio',
+                            categoria: e.status === 'JUSTIFICADO' ? 'Justificativa' : 'Rotina',
+                            descricao: nomeT + (e.observacao ? ` (Obs: ${e.observacao})` : '') + (e.motivo ? ` (Motivo: ${e.motivo})` : ''),
+                            status: e.status,
+                            foto_url: e.foto_url
+                        });
+                    });
+                }
+
+                // Ocorrências Extras (Zelador)
+                const { data: ocorrencias } = await supabaseDB.from('ocorrencias_internas_v2').select('*');
+                if (ocorrencias) {
+                    ocorrencias.forEach(o => {
+                        dadosGlobaisPesquisa.push({
+                            data_abertura: o.created_at,
+                            morador: mapFuncs[o.funcionario_id] || 'Equipe',
+                            local: 'Condomínio',
+                            categoria: o.categoria || 'Ocorrência Interna',
+                            descricao: o.descricao,
+                            status: 'REGISTRADO',
+                            foto_url: o.foto_url
+                        });
+                    });
+                }
+
+                // Tarefas Extras (Zelador)
+                const { data: extras } = await supabaseDB.from('atividades_extras_v2').select('*');
+                if (extras) {
+                    extras.forEach(ex => {
+                        dadosGlobaisPesquisa.push({
+                            data_abertura: ex.created_at,
+                            morador: mapFuncs[ex.funcionario_id] || 'Equipe',
+                            local: 'Condomínio',
+                            categoria: ex.categoria || 'Tarefa Extra',
+                            descricao: ex.descricao,
+                            status: 'CONCLUIDO',
+                            foto_url: ex.foto_url
+                        });
+                    });
+                }
+
+                // Atualiza a tela
                 popularDropdownCategorias(dadosGlobaisPesquisa);
                 popularDropdownTorreApto(dadosGlobaisPesquisa);
-                
                 aplicarFiltroPesquisa();
-            } catch(e) { div.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-red-400 font-bold">Falha de rede.</td></tr>'; }
+
+            } catch(e) {
+                div.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-red-400 font-bold">Falha ao carregar dados da auditoria.</td></tr>';
+                console.error(e);
+            }
         }
 
         function popularDropdownCategorias(dados) {
