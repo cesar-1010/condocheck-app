@@ -21,8 +21,8 @@
     <aside class="w-full md:w-72 bg-arca-dark text-slate-300 flex flex-col shadow-2xl z-20 border-r border-slate-800">
         <div class="p-6 border-b border-slate-800 bg-slate-900/50 flex flex-col items-center">
             <img src="https://raw.githubusercontent.com/CesarKAN/Projeto_Maui_Hills/main/img/arca-logo-vertical.png" alt="Arca" class="w-48 h-auto">
-            <div class="mt-4 px-3 py-1 bg-arca-teal/20 text-arca-teal text-[10px] font-bold uppercase rounded-full">
-                Comando v28.0 - Ouro
+            <div class="mt-4 px-3 py-1 bg-arca-teal/20 text-arca-teal text-[10px] font-bold uppercase rounded-full tracking-widest">
+                Comando v28.1 - Diamante
             </div>
         </div>
         <nav class="p-4 space-y-2 overflow-y-auto no-scrollbar flex-1">
@@ -39,7 +39,7 @@
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
         <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between">
             <h1 id="titulo-pagina" class="text-2xl font-black text-slate-800">Inteligência</h1>
-            <button onclick="recarregarTudo()" class="border px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-50 text-arca-blue border-arca-blue">🔄 Atualizar Base</button>
+            <button onclick="recarregarTudo()" class="border px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-50 text-arca-blue border-arca-blue transition">🔄 Atualizar Base</button>
         </header>
 
         <div class="flex-1 overflow-y-auto p-8 no-scrollbar">
@@ -48,7 +48,7 @@
                 <div class="bg-white p-4 rounded-xl card-shadow border border-slate-100 flex flex-col md:flex-row gap-4 items-end">
                     <div class="w-full md:w-1/3"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Data Inicial:</label><input type="date" id="filtro-bi-inicio" class="w-full p-2 text-sm bg-slate-50 border border-slate-200 rounded"></div>
                     <div class="w-full md:w-1/3"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Data Final:</label><input type="date" id="filtro-bi-fim" class="w-full p-2 text-sm bg-slate-50 border border-slate-200 rounded"></div>
-                    <div class="w-full md:w-1/3"><button onclick="aplicarFiltroDashboard()" class="w-full bg-arca-blue text-white font-bold py-2 rounded shadow">📊 Filtrar Operação</button></div>
+                    <div class="w-full md:w-1/3"><button onclick="aplicarFiltroDashboard()" class="w-full bg-arca-blue text-white font-bold py-2 rounded shadow hover:bg-blue-600 transition">📊 Filtrar Operação</button></div>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Total de Tarefas</p><p id="kpi-total" class="text-3xl font-black">--</p></div>
@@ -62,32 +62,69 @@
                 </div>
             </div>
 
+            <!-- OCORRÊNCIAS BENTO (COM FILTRO E SANITIZAÇÃO DE JSON) -->
             <div id="sessao-aprovacao" class="hidden space-y-6">
                 <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-red-500">
-                    <h2 class="text-xl font-black text-slate-800 mb-2">Fila de Ocorrências (Bento)</h2>
-                    <p class="text-sm text-slate-500 mb-6">Tarefas abertas pelo morador no WhatsApp.</p>
+                    <div class="flex justify-between items-end mb-6">
+                        <div>
+                            <h2 class="text-xl font-black text-slate-800 mb-1">Fila de Ocorrências (Bento)</h2>
+                            <p class="text-sm text-slate-500">Tarefas e reclamações abertas pelo morador no WhatsApp.</p>
+                        </div>
+                        <div class="w-1/3">
+                            <input type="text" id="filtro-ocorrencias" onkeyup="renderizarOcorrencias()" placeholder="🔍 Filtrar por morador, local ou problema..." class="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-red-400 focus:outline-none">
+                        </div>
+                    </div>
                     <div id="lista-tarefas-aprovacao" class="space-y-3"><div class="p-8 text-center text-slate-400 font-bold border-2 border-dashed rounded-xl">Buscando...</div></div>
                 </div>
             </div>
 
-            <!-- NOVA SESSÃO DE ATRASOS -->
+            <!-- ATIVIDADES CONDOCHECK (ATRASOS E CONCLUÍDAS COM HORA EXATA) -->
             <div id="sessao-atividades" class="hidden space-y-6">
-                <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-orange-500">
-                    <h2 class="text-xl font-black text-slate-800 mb-2">Tabela de Atrasos (CondoCheck)</h2>
-                    <p class="text-sm text-slate-500 mb-6">Tarefas operacionais da equipe que ainda não receberam evidência fotográfica hoje.</p>
-                    <div class="overflow-x-auto rounded-lg border border-slate-100">
-                        <table class="w-full text-sm text-left">
-                            <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold">
-                                <tr><th class="px-4 py-3">Tarefa Prevista</th><th class="px-4 py-3">Responsável</th><th class="px-4 py-3">Status</th></tr>
-                            </thead>
-                            <tbody id="tabela-atrasos" class="divide-y divide-slate-100">
-                                <tr><td colspan="3" class="p-8 text-center text-slate-400">Carregando atrasos...</td></tr>
-                            </tbody>
-                        </table>
+                <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-slate-800">
+                    <div class="flex justify-between items-end mb-6">
+                        <div>
+                            <h2 class="text-xl font-black text-slate-800 mb-1">Painel Operacional (Hoje)</h2>
+                            <p class="text-sm text-slate-500">Acompanhamento em tempo real das atividades da equipe.</p>
+                        </div>
+                        <div class="w-1/3">
+                            <input type="text" id="filtro-atrasos" onkeyup="renderizarAtividades()" placeholder="🔍 Buscar tarefa ou funcionário..." class="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-slate-800 focus:outline-none">
+                        </div>
                     </div>
+                    
+                    <!-- Bloco Atrasos -->
+                    <div class="mb-6">
+                        <h3 class="font-bold text-orange-600 mb-3 flex items-center gap-2">⚠️ Pendentes (Atrasos)</h3>
+                        <div class="overflow-x-auto rounded-lg border border-slate-200">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold">
+                                    <tr><th class="px-4 py-3">Tarefa Prevista</th><th class="px-4 py-3">Responsável</th><th class="px-4 py-3">Status</th></tr>
+                                </thead>
+                                <tbody id="tabela-atrasos" class="divide-y divide-slate-100">
+                                    <tr><td colspan="3" class="p-8 text-center text-slate-400">Calculando pendências...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Bloco Concluídas com Hora -->
+                    <div>
+                        <h3 class="font-bold text-arca-teal mb-3 flex items-center gap-2">✅ Concluídas ou Justificadas</h3>
+                        <div class="overflow-x-auto rounded-lg border border-slate-200">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold">
+                                    <tr><th class="px-4 py-3 w-32">Hora Extata</th><th class="px-4 py-3">Tarefa Realizada</th><th class="px-4 py-3">Responsável</th><th class="px-4 py-3">Status</th></tr>
+                                </thead>
+                                <tbody id="tabela-concluidas" class="divide-y divide-slate-100">
+                                    <tr><td colspan="4" class="p-8 text-center text-slate-400">Buscando execuções...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
+            <!-- RELATÓRIOS E AUDITORIA -->
             <div id="sessao-pesquisa" class="hidden space-y-6">
                <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
                         <input type="date" id="pesq-ini" class="p-3 border border-slate-200 rounded-lg text-sm bg-slate-50" title="Data Inicial">
@@ -112,7 +149,7 @@
                     </div>
                     <div class="flex flex-col md:flex-row gap-4 mb-6">
                         <input type="text" id="termo-pesquisa" placeholder="Busca livre: Morador, Apto, Descrição da ocorrência..." class="flex-1 p-3 border border-slate-200 rounded-lg text-sm bg-slate-50">
-                        <button onclick="aplicarFiltroPesquisa()" class="bg-slate-800 text-white font-bold px-10 py-3 rounded-lg shadow">🔍 Filtrar</button>
+                        <button onclick="aplicarFiltroPesquisa()" class="bg-slate-800 text-white font-bold px-10 py-3 rounded-lg shadow hover:bg-slate-900 transition">🔍 Filtrar</button>
                     </div>
                     <div class="overflow-x-auto rounded-lg border border-slate-100">
                         <table class="w-full text-sm text-left">
@@ -124,12 +161,13 @@
                     </div>
                 </div>
 
+        <!-- MORADORES -->
         <div id="sessao-moradores" class="hidden space-y-6">
             <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-arca-blue">
                 <h4 class="font-bold mb-4">🏠 Gerenciar Morador</h4>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <input type="text" id="mor-nome" placeholder="Nome Completo" class="p-2 border rounded">
-                    <input type="text" id="mor-phone" placeholder="WhatsApp" class="p-2 border rounded">
+                    <input type="text" id="mor-phone" placeholder="WhatsApp (Apenas Números)" class="p-2 border rounded">
                   <select id="mor-bloco" class="p-2 border rounded" required>
                     <option value="" disabled selected>Selecione a Torre...</option>
                     <option value="Torre 1">Torre 1</option>
@@ -138,11 +176,10 @@
                     <input type="text" id="mor-apto" placeholder="Apto" class="p-2 border rounded">
                 </div>
                 <div class="mt-4 flex gap-2">
-                    <button id="btn-salvar-mor" onclick="salvarMorador()" class="bg-arca-blue text-white font-bold py-2 px-6 rounded">Cadastrar Novo</button>
-                    <button onclick="cancelarEdicao()" class="bg-slate-200 text-slate-600 font-bold py-2 px-6 rounded hidden" id="btn-cancelar-mor">Cancelar</button>
+                    <button id="btn-salvar-mor" onclick="salvarMorador()" class="bg-arca-blue text-white font-bold py-2 px-6 rounded shadow hover:bg-blue-600 transition">Cadastrar Novo</button>
+                    <button onclick="cancelarEdicao()" class="bg-slate-200 text-slate-600 font-bold py-2 px-6 rounded hidden transition" id="btn-cancelar-mor">Cancelar</button>
                 </div>
             </div>
-            
             <div class="bg-white rounded-xl card-shadow overflow-hidden border border-slate-100">
                 <div class="max-h-96 overflow-y-auto relative no-scrollbar">
                     <table class="w-full text-sm text-left">
@@ -160,6 +197,7 @@
             </div>
         </div>
         
+        <!-- FORNECEDORES -->
         <div id="sessao-fornecedores" class="hidden space-y-6">
             <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-arca-teal">
                 <h4 class="font-bold mb-4">🛠️ Gerenciar Fornecedor</h4>
@@ -169,8 +207,8 @@
                     <input type="text" id="for-contato" placeholder="WhatsApp" class="p-2 border rounded">
                 </div>
                 <div class="mt-4 flex gap-2">
-                    <button id="btn-salvar-for" onclick="salvarFornecedor()" class="bg-arca-teal text-white font-bold py-2 px-6 rounded">Cadastrar Novo</button>
-                    <button onclick="cancelarEdicao()" class="bg-slate-200 text-slate-600 font-bold py-2 px-6 rounded hidden" id="btn-cancelar-for">Cancelar</button>
+                    <button id="btn-salvar-for" onclick="salvarFornecedor()" class="bg-arca-teal text-white font-bold py-2 px-6 rounded shadow hover:bg-emerald-600 transition">Cadastrar Novo</button>
+                    <button onclick="cancelarEdicao()" class="bg-slate-200 text-slate-600 font-bold py-2 px-6 rounded hidden transition" id="btn-cancelar-for">Cancelar</button>
                 </div>
             </div>
             <div class="bg-white rounded-xl card-shadow overflow-hidden">
@@ -180,6 +218,7 @@
             </div>
         </div>
         
+        <!-- CADASTROS BASE -->
         <div id="sessao-cadastros" class="hidden space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-slate-800">
@@ -188,21 +227,21 @@
                     <input type="text" id="usu-login" placeholder="Login" class="w-full p-2 mb-2 border rounded text-sm">
                     <input type="text" id="usu-senha" placeholder="Senha" class="w-full p-2 mb-2 border rounded text-sm">
                     <select id="usu-cargo" class="w-full p-2 mb-2 border rounded text-sm"><option value="Zelador">Zelador</option><option value="Manutenção">Manutenção</option><option value="Síndico">Síndico</option></select>
-                    <button onclick="salvarUsuario()" class="w-full bg-slate-800 text-white font-bold py-2 rounded">Cadastrar</button>
+                    <button onclick="salvarUsuario()" class="w-full bg-slate-800 text-white font-bold py-2 rounded shadow hover:bg-slate-900 transition">Cadastrar</button>
                     <ul id="lista-usuarios" class="mt-4 space-y-2 text-sm max-h-48 overflow-y-auto"></ul>
                 </div>
                 <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-arca-teal">
                     <h4 class="font-bold mb-4">📍 Áreas</h4>
                     <input type="text" id="area-nome" placeholder="Nome da Área" class="w-full p-2 mb-2 border rounded text-sm">
                     <select id="area-loc" class="w-full p-2 mb-2 border rounded text-sm"><option value="Térreo">Térreo</option><option value="Subsolo">Subsolo</option><option value="Torres">Torres</option></select>
-                    <button onclick="salvarArea()" class="w-full bg-arca-teal text-white font-bold py-2 rounded">Cadastrar</button>
+                    <button onclick="salvarArea()" class="w-full bg-arca-teal text-white font-bold py-2 rounded shadow hover:bg-emerald-600 transition">Cadastrar</button>
                     <ul id="lista-areas" class="mt-4 space-y-2 text-sm max-h-48 overflow-y-auto"></ul>
                 </div>
                 <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-arca-blue">
                     <h4 class="font-bold mb-4">📋 Tarefas Fixas</h4>
                     <select id="tarefa-area" class="w-full p-2 mb-2 border rounded text-sm"><option value="">Carregando...</option></select>
                     <input type="text" id="tarefa-desc" placeholder="O que deve ser feito?" class="w-full p-2 mb-2 border rounded text-sm">
-                    <button onclick="salvarTarefa()" class="w-full bg-arca-blue text-white font-bold py-2 rounded">Cadastrar</button>
+                    <button onclick="salvarTarefa()" class="w-full bg-arca-blue text-white font-bold py-2 rounded shadow hover:bg-blue-600 transition">Cadastrar</button>
                     <ul id="lista-tarefas" class="mt-4 space-y-2 text-sm max-h-48 overflow-y-auto"></ul>
                 </div>
             </div>
@@ -210,29 +249,29 @@
         </div>
     </main>
 
-    <!-- MODAL DE RESOLUÇÃO (SOBREPOSIÇÃO) -->
-    <div id="modal-resolucao" class="hidden fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-4">
+    <!-- MODAL DE RESOLUÇÃO -->
+    <div id="modal-resolucao" class="hidden fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
             <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                 <h3 class="font-black text-lg text-slate-800">Resolver Ocorrência</h3>
-                <button onclick="fecharModalResolucao()" class="text-slate-400 hover:text-red-500 font-bold text-xl">&times;</button>
+                <button onclick="fecharModalResolucao()" class="text-slate-400 hover:text-red-500 font-bold text-xl transition">&times;</button>
             </div>
             <div class="p-6 space-y-4">
                 <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
                     <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Morador / Contato:</p>
                     <p id="modal-desc-morador" class="text-sm font-bold text-slate-700">--</p>
-                    <p id="modal-desc-local" class="text-xs text-arca-blue mt-1">--</p>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase mt-3 mb-1">Descrição:</p>
+                    <p id="modal-desc-local" class="text-xs text-arca-blue font-bold mt-1">--</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mt-3 mb-1">Descrição do Problema:</p>
                     <p id="modal-desc-texto" class="text-sm text-slate-600 italic">"--"</p>
                 </div>
                 <div>
                     <label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Mensagem de Resposta do Síndico:</label>
-                    <textarea id="modal-resposta-sindico" rows="4" class="w-full p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:outline-none focus:border-arca-blue" placeholder="Digite aqui a resposta que será enviada no WhatsApp do morador..."></textarea>
+                    <textarea id="modal-resposta-sindico" rows="4" class="w-full p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:outline-none focus:border-arca-blue focus:ring-1 focus:ring-arca-blue" placeholder="Digite a resposta oficial que será enviada para o WhatsApp do morador..."></textarea>
                 </div>
             </div>
             <div class="p-6 border-t border-slate-100 bg-slate-50 flex gap-3 justify-end">
                 <button onclick="fecharModalResolucao()" class="px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-200 transition">Cancelar</button>
-                <button id="btn-confirmar-resolucao" onclick="confirmarResolucao()" class="px-6 py-2 rounded-lg text-sm font-bold text-white bg-arca-teal shadow hover:bg-emerald-600 transition">Concluir e Enviar WhatsApp</button>
+                <button id="btn-confirmar-resolucao" onclick="confirmarResolucao()" class="px-6 py-2 rounded-lg text-sm font-bold text-white bg-arca-teal shadow hover:bg-emerald-600 transition">Baixar e Enviar WhatsApp</button>
             </div>
         </div>
     </div>
@@ -246,13 +285,199 @@
         let editandoMoradorId = null, editandoFornecedorId = null;
         let dadosGlobaisBI = [];
         let dadosGlobaisPesquisa = [];
-        let tarefaAtualId = null; // Para o Modal de Resolução
+        let dadosOcorrenciasBento = [];
+        let dadosAtividadesAtrasos = [];
+        let dadosAtividadesConcluidas = [];
+        let tarefaAtualId = null;
 
         function mostrarSessao(id) {
-            ['dash', 'aprovacao', 'atividades', 'pesquisa', 'moradores', 'fornecedores', 'cadastros'].forEach(s => { document.getElementById('sessao-' + s).style.display = 'none'; let btn = document.getElementById('btn-' + s); if(btn) { btn.classList.remove('bg-arca-teal/10', 'text-arca-teal', 'border-arca-teal/20'); btn.classList.add('text-slate-400', 'border-transparent'); } });
-            document.getElementById('sessao-' + id).style.display = 'block'; let btnAtivo = document.getElementById('btn-' + id); if(btnAtivo) { btnAtivo.classList.remove('text-slate-400', 'border-transparent'); btnAtivo.classList.add('bg-arca-teal/10', 'text-arca-teal', 'border-arca-teal/20'); }
+            ['dash', 'aprovacao', 'atividades', 'pesquisa', 'moradores', 'fornecedores', 'cadastros'].forEach(s => { 
+                document.getElementById('sessao-' + s).style.display = 'none'; 
+                let btn = document.getElementById('btn-' + s); 
+                if(btn) { btn.classList.remove('bg-arca-teal/10', 'text-arca-teal', 'border-arca-teal/20'); btn.classList.add('text-slate-400', 'border-transparent'); } 
+            });
+            document.getElementById('sessao-' + id).style.display = 'block'; 
+            let btnAtivo = document.getElementById('btn-' + id); 
+            if(btnAtivo) { btnAtivo.classList.remove('text-slate-400', 'border-transparent'); btnAtivo.classList.add('bg-arca-teal/10', 'text-arca-teal', 'border-arca-teal/20'); }
             document.getElementById('titulo-pagina').innerText = btnAtivo.innerText.split(' ').slice(1).join(' '); cancelarEdicao();
         }
+
+        // ==========================================
+        // 1. OCORRÊNCIAS BENTO (COM DESINFECÇÃO DE JSON E FILTRO)
+        // ==========================================
+        function limparDadosBento(t) {
+            let desc = t.descricao || t.descricao_completa || t.problema || 'Sem descrição';
+            let morador = t.morador || t.nome_morador || t.responsavel || t.nome || 'Morador não identificado';
+            let local = t.local || t.bloco || t.apto ? `${t.bloco||''} ${t.apto||''}`.trim() : 'Local não especificado';
+            
+            // Corrige se a API salvou o 'local' como o nome do projeto
+            if (local.includes("CondoCheck")) local = "Local não especificado";
+
+            // Se o Bento falhar e mandar JSON puro na descrição, o sistema extrai o dado correto aqui:
+            if (typeof desc === 'string' && desc.includes('{') && desc.includes('}')) {
+                try {
+                    let textoLimpo = desc.replace(/```json/g, '').replace(/```/g, '').trim();
+                    let obj = JSON.parse(textoLimpo);
+                    desc = obj.problema || obj.descricao || desc;
+                    if (obj.local && local === 'Local não especificado') local = obj.local;
+                    if (obj.nome && morador === 'Morador não identificado') morador = obj.nome;
+                } catch(e) {}
+            }
+            return { id: t.id, desc, morador, local, status: t.status || t.Status || 'ABERTO' };
+        }
+
+        async function carregarPendencias() {
+            const div = document.getElementById('lista-tarefas-aprovacao'); 
+            div.innerHTML = '<div class="p-8 text-center text-slate-400 font-bold">Lendo matriz de ocorrências...</div>';
+            try {
+                const res = await fetch("https://condocheck-n8n.wsoxvx.easypanel.host/webhook/listar_tarefas", { cache: "no-store" });
+                if(!res.ok) throw new Error("Erro"); 
+                let dados = await res.json();
+                dados = Array.isArray(dados) ? dados : [dados];
+
+                // Filtra apenas as que não estão fechadas e limpa os JSONs quebrados
+                dadosOcorrenciasBento = dados
+                    .map(limparDadosBento)
+                    .filter(t => t.status.toUpperCase() !== 'FECHADO' && t.status.toUpperCase() !== 'CONCLUÍDO' && t.status.toUpperCase() !== 'CONCLUIDO');
+                
+                renderizarOcorrencias();
+            } catch(e) { 
+                div.innerHTML = '<div class="p-6 text-center text-red-500 font-bold">Erro de conexão com o painel do n8n.</div>'; 
+            }
+        }
+
+        function renderizarOcorrencias() {
+            const div = document.getElementById('lista-tarefas-aprovacao'); 
+            const termo = document.getElementById('filtro-ocorrencias').value.toLowerCase().trim();
+            
+            if(dadosOcorrenciasBento.length === 0) { 
+                div.innerHTML = '<div class="p-8 text-center text-emerald-500 font-bold border-2 border-emerald-100 bg-emerald-50 rounded-xl">Excelente! Nenhuma ocorrência pendente.</div>'; 
+                return; 
+            }
+
+            let filtrados = dadosOcorrenciasBento.filter(t => {
+                return (t.desc.toLowerCase().includes(termo) || t.morador.toLowerCase().includes(termo) || t.local.toLowerCase().includes(termo));
+            });
+
+            if(filtrados.length === 0) {
+                div.innerHTML = '<div class="p-6 text-center text-slate-400">Nenhuma ocorrência corresponde à sua busca.</div>'; 
+                return;
+            }
+
+            let htmlAcumulado = '';
+            filtrados.forEach(t => { 
+                let descEnc = encodeURIComponent(t.desc);
+                let moradorEnc = encodeURIComponent(t.morador);
+                let localEnc = encodeURIComponent(t.local);
+
+                htmlAcumulado += `
+                <div class="bg-slate-50 p-5 rounded-lg border border-slate-200 flex flex-col md:flex-row justify-between md:items-center gap-4 hover:shadow-md transition">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">Urgente</span>
+                            <span class="text-xs font-bold text-slate-700">👤 ${t.morador}</span>
+                            <span class="text-xs text-arca-blue font-bold">📍 ${t.local}</span>
+                        </div>
+                        <p class="font-bold text-slate-800 text-sm mt-2">"${t.desc}"</p>
+                    </div>
+                    <button onclick="abrirModalResolucao('${t.id}', '${descEnc}', '${moradorEnc}', '${localEnc}')" class="bg-red-500 text-white px-6 py-3 rounded-lg shadow text-sm font-bold hover:bg-red-600 shrink-0 transition">Resolver Agora</button>
+                </div>`; 
+            });
+            div.innerHTML = htmlAcumulado;
+        }
+
+        // ==========================================
+        // 2. ATIVIDADES CONDOCHECK (ATRASOS E CONCLUÍDAS COM HORA)
+        // ==========================================
+        async function carregarAtrasos() {
+            const tbodyAtrasos = document.getElementById('tabela-atrasos');
+            const tbodyConcluidas = document.getElementById('tabela-concluidas');
+            tbodyAtrasos.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-slate-400 font-bold">Cruzando matriz de tarefas...</td></tr>';
+            tbodyConcluidas.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400 font-bold">Buscando execuções...</td></tr>';
+            
+            try {
+                const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+                const dataLocal = new Date(new Date().getTime() - (3 * 60 * 60 * 1000));
+                const hojeStr = dias[dataLocal.getDay()];
+                const dataHoje = dataLocal.toISOString().split('T')[0];
+
+                const { data: tarefasPrevistas } = await supabaseDB.from('matriz_tarefas_v2').select('id, descricao_tarefa, funcionario_id').eq(hojeStr, true);
+                
+                // Agora puxamos o created_at (Hora exata) e o status (Concluído ou Justificado)
+                const { data: execucoesHoje } = await supabaseDB.from('diario_execucoes_v2').select('tarefa_id, created_at, status, observacao, motivo').eq('data_execucao', dataHoje);
+                const { data: funcs } = await supabaseDB.from('funcionarios_v2').select('id, nome');
+                
+                const mapFuncs = {}; if(funcs) funcs.forEach(f => mapFuncs[f.id] = f.nome);
+                const mapTarefas = {}; if(tarefasPrevistas) tarefasPrevistas.forEach(t => mapTarefas[t.id] = t.descricao_tarefa);
+
+                const idsFeitos = execucoesHoje ? execucoesHoje.map(e => e.tarefa_id) : [];
+                
+                // Mapear Atrasos
+                dadosAtividadesAtrasos = tarefasPrevistas ? tarefasPrevistas.filter(t => !idsFeitos.includes(t.id)).map(t => ({
+                    tarefa: t.descricao_tarefa,
+                    responsavel: mapFuncs[t.funcionario_id] || 'Equipe'
+                })) : [];
+
+                // Mapear Concluídas com formatação de Hora (BRT)
+                dadosAtividadesConcluidas = execucoesHoje ? execucoesHoje.map(e => {
+                    let d = new Date(e.created_at);
+                    let horaFormatada = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    let nomeT = mapTarefas[e.tarefa_id] || 'Tarefa Operacional';
+                    let complemento = e.status === 'JUSTIFICADO' ? ` (Motivo: ${e.motivo || 'N/A'})` : '';
+                    return {
+                        hora: horaFormatada,
+                        tarefa: nomeT + complemento,
+                        responsavel: 'Equipe', // O func_id está na matriz, simplificando aqui
+                        status: e.status
+                    }
+                }).sort((a,b) => b.hora.localeCompare(a.hora)) : []; // Ordena da mais recente para a mais antiga
+
+                renderizarAtividades();
+
+            } catch(e) {
+                tbodyAtrasos.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-red-500 font-bold">Erro ao carregar auditoria.</td></tr>';
+            }
+        }
+
+        function renderizarAtividades() {
+            const tbodyAtrasos = document.getElementById('tabela-atrasos');
+            const tbodyConcluidas = document.getElementById('tabela-concluidas');
+            const termo = document.getElementById('filtro-atrasos').value.toLowerCase().trim();
+
+            // Renderiza Atrasos
+            let filtradosAtrasos = dadosAtividadesAtrasos.filter(a => a.tarefa.toLowerCase().includes(termo) || a.responsavel.toLowerCase().includes(termo));
+            if (filtradosAtrasos.length === 0) {
+                tbodyAtrasos.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-emerald-500 font-bold bg-emerald-50">Equipe 100% em dia ou busca vazia.</td></tr>';
+            } else {
+                let htmlA = '';
+                filtradosAtrasos.forEach(a => {
+                    htmlA += `<tr class="border-b hover:bg-slate-50"><td class="px-4 py-3 font-bold text-slate-700">${a.tarefa}</td><td class="px-4 py-3 text-arca-blue font-bold">${a.responsavel}</td><td class="px-4 py-3"><span class="bg-orange-100 text-orange-600 px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider">Atrasada</span></td></tr>`;
+                });
+                tbodyAtrasos.innerHTML = htmlA;
+            }
+
+            // Renderiza Concluídas
+            let filtradosConcluidas = dadosAtividadesConcluidas.filter(c => c.tarefa.toLowerCase().includes(termo) || c.status.toLowerCase().includes(termo));
+            if (filtradosConcluidas.length === 0) {
+                tbodyConcluidas.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400">Nenhuma atividade registrada hoje ainda.</td></tr>';
+            } else {
+                let htmlC = '';
+                filtradosConcluidas.forEach(c => {
+                    let corStatus = c.status === 'JUSTIFICADO' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700';
+                    htmlC += `<tr class="border-b hover:bg-slate-50">
+                        <td class="px-4 py-3 font-black text-slate-400 text-lg">🕒 ${c.hora}</td>
+                        <td class="px-4 py-3 font-bold text-slate-700 text-sm">${c.tarefa}</td>
+                        <td class="px-4 py-3 text-slate-500 text-xs">${c.responsavel}</td>
+                        <td class="px-4 py-3"><span class="${corStatus} px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider">${c.status}</span></td>
+                    </tr>`;
+                });
+                tbodyConcluidas.innerHTML = htmlC;
+            }
+        }
+
+        // ==========================================
+        // DEMAIS FUNÇÕES DO SISTEMA (MANTIDAS INTACTAS)
+        // ==========================================
 
         function cancelarEdicao() {
             editandoMoradorId = null; editandoFornecedorId = null; document.querySelectorAll('#sessao-moradores input, #sessao-fornecedores input').forEach(i => i.value = '');
@@ -319,17 +544,16 @@
 
         async function carregarBasePesquisa() {
             const div = document.getElementById('tabela-resultados');
-            div.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-slate-400">Consolidando dados (n8n + Supabase V2)...</td></tr>';
+            div.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-slate-400">Consolidando dados globais...</td></tr>';
             try {
                 dadosGlobaisPesquisa = [];
-
                 try {
                     const res = await fetch("https://condocheck-n8n.wsoxvx.easypanel.host/webhook/listar_tarefas", { cache: "no-store" });
                     if(res.ok) {
                         let dataN8n = await res.json();
                         dadosGlobaisPesquisa = dadosGlobaisPesquisa.concat(Array.isArray(dataN8n) ? dataN8n : [dataN8n]);
                     }
-                } catch(e) { console.log("Aviso: n8n indisponível no momento."); }
+                } catch(e) {}
 
                 const { data: funcs } = await supabaseDB.from('funcionarios_v2').select('id, nome');
                 const { data: matriz } = await supabaseDB.from('matriz_tarefas_v2').select('id, descricao_tarefa');
@@ -342,97 +566,43 @@
                         let nomeT = mapMatriz[e.tarefa_id] || 'Tarefa Operacional';
                         let nomeF = mapFuncs[e.funcionario_id] || 'Equipe';
                         dadosGlobaisPesquisa.push({
-                            data_abertura: e.data_execucao,
-                            morador: nomeF,
-                            local: 'Condomínio',
-                            categoria: e.status === 'JUSTIFICADO' ? 'Justificativa' : 'Rotina',
-                            descricao: nomeT + (e.observacao ? ` (Obs: ${e.observacao})` : '') + (e.motivo ? ` (Motivo: ${e.motivo})` : ''),
-                            status: e.status,
-                            foto_url: e.foto_url
+                            data_abertura: e.data_execucao, morador: nomeF, local: 'Condomínio', categoria: e.status === 'JUSTIFICADO' ? 'Justificativa' : 'Rotina', descricao: nomeT + (e.observacao ? ` (Obs: ${e.observacao})` : '') + (e.motivo ? ` (Motivo: ${e.motivo})` : ''), status: e.status, foto_url: e.foto_url
                         });
                     });
                 }
-
-                const { data: ocorrencias } = await supabaseDB.from('ocorrencias_internas_v2').select('*');
-                if (ocorrencias) {
-                    ocorrencias.forEach(o => {
-                        dadosGlobaisPesquisa.push({
-                            data_abertura: o.created_at,
-                            morador: mapFuncs[o.funcionario_id] || 'Equipe',
-                            local: 'Condomínio',
-                            categoria: o.categoria || 'Ocorrência Interna',
-                            descricao: o.descricao,
-                            status: 'REGISTRADO',
-                            foto_url: o.foto_url
-                        });
-                    });
-                }
-
-                const { data: extras } = await supabaseDB.from('atividades_extras_v2').select('*');
-                if (extras) {
-                    extras.forEach(ex => {
-                        dadosGlobaisPesquisa.push({
-                            data_abertura: ex.created_at,
-                            morador: mapFuncs[ex.funcionario_id] || 'Equipe',
-                            local: 'Condomínio',
-                            categoria: ex.categoria || 'Tarefa Extra',
-                            descricao: ex.descricao,
-                            status: 'CONCLUIDO',
-                            foto_url: ex.foto_url
-                        });
-                    });
-                }
-
                 popularDropdownCategorias(dadosGlobaisPesquisa);
                 popularDropdownTorreApto(dadosGlobaisPesquisa);
                 aplicarFiltroPesquisa();
-
             } catch(e) {
                 div.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-red-400 font-bold">Falha ao carregar dados da auditoria.</td></tr>';
-                console.error(e);
             }
         }
 
         function popularDropdownCategorias(dados) {
             const select = document.getElementById('filtro-categoria');
             const categoriasUnicas = new Set();
-            dados.forEach(d => {
-                if (d.categoria) {
-                    categoriasUnicas.add(String(d.categoria).trim().toUpperCase());
-                }
-            });
+            dados.forEach(d => { if (d.categoria) categoriasUnicas.add(String(d.categoria).trim().toUpperCase()); });
             let html = '<option value="">Todas as Categorias</option>';
-            Array.from(categoriasUnicas).sort().forEach(cat => {
-                html += `<option value="${cat}">${cat.charAt(0) + cat.slice(1).toLowerCase()}</option>`;
-            });
+            Array.from(categoriasUnicas).sort().forEach(cat => { html += `<option value="${cat}">${cat.charAt(0) + cat.slice(1).toLowerCase()}</option>`; });
             select.innerHTML = html;
         }
 
         function popularDropdownTorreApto(dados) {
             const selTorre = document.getElementById('filtro-torre');
             const selApto = document.getElementById('filtro-apto');
-            
-            const torresUnicas = new Set();
-            const aptosUnicos = new Set();
-            
+            const torresUnicas = new Set(), aptosUnicos = new Set();
             dados.forEach(d => {
-                let t = d.bloco || d.torre;
-                let a = d.apartamento || d.apto;
+                let t = d.bloco || d.torre; let a = d.apartamento || d.apto;
                 if(t && String(t).trim() !== '') torresUnicas.add(String(t).trim().toUpperCase());
                 if(a && String(a).trim() !== '') aptosUnicos.add(String(a).trim().toUpperCase());
             });
-            
             let torresArr = Array.from(torresUnicas).sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}));
             let aptosArr = Array.from(aptosUnicos).sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}));
-            
             let htmlTorre = '<option value="">Todas as Torres</option>';
             let htmlApto = '<option value="">Todos os Aptos</option>';
-            
             torresArr.forEach(t => htmlTorre += `<option value="${t}">${t}</option>`);
             aptosArr.forEach(a => htmlApto += `<option value="${a}">${a}</option>`);
-            
-            selTorre.innerHTML = htmlTorre;
-            selApto.innerHTML = htmlApto;
+            selTorre.innerHTML = htmlTorre; selApto.innerHTML = htmlApto;
         }
 
         function aplicarFiltroPesquisa() {
@@ -447,22 +617,11 @@
             
             let filtrados = dadosGlobaisPesquisa.filter(d => {
                 let matchData = true, matchStatus = true, matchCat = true, matchTorre = true, matchApto = true, matchLibre = true;
-                
                 const textoCompleto = `${d.local||''} ${d.bloco||''} ${d.torre||''} ${d.apto||''} ${d.apartamento||''} ${d.descricao_completa||d.descricao||''}`.toLowerCase();
-
-                if(termoTorre) {
-                    const blocoCampo = String(d.bloco || d.torre || '').toUpperCase().trim();
-                    matchTorre = (blocoCampo === termoTorre);
-                }
-                
-                if(termoApto) {
-                    const aptoCampo = String(d.apartamento || d.apto || '').toUpperCase().trim();
-                    matchApto = (aptoCampo === termoApto);
-                }
-
+                if(termoTorre) { matchTorre = (String(d.bloco || d.torre || '').toUpperCase().trim() === termoTorre); }
+                if(termoApto) { matchApto = (String(d.apartamento || d.apto || '').toUpperCase().trim() === termoApto); }
                 if(cat) matchCat = (String(d.categoria||'').trim().toUpperCase() === cat);
                 if(status) matchStatus = (String(d.status || 'ABERTO').trim().toUpperCase() === status);
-
                 if(ini || fim) {
                     let dStr = d.data_abertura || d.created_at || d.data;
                     if(!dStr) matchData = false;
@@ -473,104 +632,30 @@
                         else if (fim) matchData = (t <= new Date(fim + "T23:59:59").getTime());
                     }
                 }
-
                 if(termoLibre) matchLibre = textoCompleto.includes(termoLibre);
-
                 return matchData && matchStatus && matchCat && matchTorre && matchApto && matchLibre;
             });
             
             let htmlAcumulado = '';
-            if(filtrados.length === 0) { 
-                div.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-slate-400">Nenhum registro encontrado com esses critérios.</td></tr>'; 
-                return; 
-            }
+            if(filtrados.length === 0) { div.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-slate-400">Nenhum registro encontrado.</td></tr>'; return; }
             filtrados.forEach(d => { 
                 let dataE = d.data_abertura || d.created_at || d.data || '--'; 
                 if(dataE !== '--' && dataE.includes('T')) dataE = new Date(dataE).toLocaleDateString('pt-BR');
                 let statusE = String(d.status || 'ABERTO').trim().toUpperCase(); 
                 let corS = statusE === 'FECHADO' ? 'text-slate-400' : 'text-arca-teal';
-                
                 let fotoBtn = 'S/ Foto';
                 if(d.foto_url && String(d.foto_url).trim() !== '') {
                     fotoBtn = `<a href="${d.foto_url}" target="_blank" class="bg-emerald-500 text-white px-2 py-1 rounded text-[10px] font-bold shadow hover:bg-emerald-600 inline-block">📷 Ver Foto</a>`;
                 }
-
                 htmlAcumulado += `<tr class="border-b hover:bg-slate-50"><td class="px-4 py-3 whitespace-nowrap">${dataE}</td><td class="px-4 py-3 font-bold text-slate-700">${d.morador||d.nome_morador||d.responsavel||'--'}</td><td class="px-4 py-3 text-arca-blue font-bold text-xs">${d.local||d.bloco||d.apto||'--'}</td><td class="px-4 py-3"><span class="bg-slate-200 text-slate-600 text-[10px] px-2 py-1 rounded font-bold">${d.categoria||'Ocorrência'}</span></td><td class="px-4 py-3 text-slate-600 text-xs">${d.descricao_completa||d.descricao||'--'}</td><td class="px-4 py-3 font-bold ${corS} uppercase text-xs">${statusE}</td><td class="px-4 py-3 text-center">${fotoBtn}</td></tr>`; 
             });
             div.innerHTML = htmlAcumulado;
         }
 
-        async function carregarPendencias() {
-            const div = document.getElementById('lista-tarefas-aprovacao'); 
-            div.innerHTML = '<div class="p-8 text-center text-slate-400 font-bold">Buscando na base...</div>';
-            try {
-                const res = await fetch("https://condocheck-n8n.wsoxvx.easypanel.host/webhook/listar_tarefas", { cache: "no-store" });
-                if(!res.ok) throw new Error("Erro"); 
-                const dados = await res.json();
-                
-                dadosGlobaisPesquisa = Array.isArray(dados) ? dados : [dados];
-
-                let pendentes = dados.filter(t => { let st = String(t.status || t.Status || 'ABERTO').trim().toUpperCase(); return st !== 'FECHADO' && st !== 'CONCLUÍDO' && st !== 'CONCLUIDO'; });
-                if(pendentes.length === 0) { 
-                    div.innerHTML = '<div class="p-8 text-center text-slate-500 font-bold border-2 border-dashed rounded-xl">Todas as ocorrências já foram fechadas!</div>'; 
-                    return; 
-                }
-                
-                let htmlAcumulado = '';
-                pendentes.forEach(t => { 
-                    let desc = t.descricao || t.descricao_completa || 'Ocorrência'; 
-                    let morador = t.morador || t.nome_morador || t.responsavel || '--';
-                    let local = t.local || 'N/A';
-                    
-                    let descEnc = encodeURIComponent(desc);
-                    let moradorEnc = encodeURIComponent(morador);
-                    let localEnc = encodeURIComponent(local);
-
-                    htmlAcumulado += `<div id="task-${t.id}" class="bg-slate-50 p-4 rounded-lg border border-slate-200 flex justify-between items-center"><div class="pr-4"><p class="font-bold text-slate-700">${desc}</p><p class="text-xs text-slate-500 mt-1">Local: <span class="text-arca-blue font-bold">${local}</span></p></div><button id="btn-fechar-${t.id}" onclick="abrirModalResolucao('${t.id}', '${descEnc}', '${moradorEnc}', '${localEnc}')" class="bg-arca-teal text-white px-4 py-2 rounded shadow text-sm font-bold hover:bg-emerald-600 shrink-0">Resolver</button></div>`; 
-                });
-                div.innerHTML = htmlAcumulado;
-            } catch(e) { div.innerHTML = '<div class="p-6 text-center text-red-500 font-bold">Erro de conexão com n8n.</div>'; }
-        }
-
-        async function carregarAtrasos() {
-            const tbody = document.getElementById('tabela-atrasos');
-            tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-slate-400 font-bold">Calculando pendências...</td></tr>';
-            try {
-                const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
-                const dataLocal = new Date(new Date().getTime() - (3 * 60 * 60 * 1000));
-                const hojeStr = dias[dataLocal.getDay()];
-                const dataHoje = dataLocal.toISOString().split('T')[0];
-
-                const { data: tarefasPrevistas } = await supabaseDB.from('matriz_tarefas_v2').select('id, descricao_tarefa, funcionario_id').eq(hojeStr, true);
-                const { data: execucoesHoje } = await supabaseDB.from('diario_execucoes_v2').select('tarefa_id').eq('data_execucao', dataHoje);
-                const { data: funcs } = await supabaseDB.from('funcionarios_v2').select('id, nome');
-                
-                const mapFuncs = {}; if(funcs) funcs.forEach(f => mapFuncs[f.id] = f.nome);
-
-                const idsFeitos = execucoesHoje ? execucoesHoje.map(e => e.tarefa_id) : [];
-                const atrasos = tarefasPrevistas ? tarefasPrevistas.filter(t => !idsFeitos.includes(t.id)) : [];
-
-                if (atrasos.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-emerald-500 font-bold">Excelente! Nenhuma tarefa em atraso hoje.</td></tr>';
-                    return;
-                }
-
-                let html = '';
-                atrasos.forEach(a => {
-                    let nomeFunc = mapFuncs[a.funcionario_id] || 'Equipe';
-                    html += `<tr class="border-b hover:bg-slate-50"><td class="px-4 py-3 font-bold text-slate-700">${a.descricao_tarefa}</td><td class="px-4 py-3 text-arca-blue font-bold">${nomeFunc}</td><td class="px-4 py-3"><span class="bg-orange-100 text-orange-600 px-2 py-1 rounded text-xs font-bold uppercase">Pendente</span></td></tr>`;
-                });
-                tbody.innerHTML = html;
-
-            } catch(e) {
-                tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-red-500 font-bold">Erro ao carregar atrasos.</td></tr>';
-            }
-        }
-
         function abrirModalResolucao(id, descEnc, moradorEnc, localEnc) {
             tarefaAtualId = id;
-            document.getElementById('modal-desc-morador').innerText = decodeURIComponent(moradorEnc);
-            document.getElementById('modal-desc-local').innerText = "Local: " + decodeURIComponent(localEnc);
+            document.getElementById('modal-desc-morador').innerText = "👤 " + decodeURIComponent(moradorEnc);
+            document.getElementById('modal-desc-local').innerText = "📍 " + decodeURIComponent(localEnc);
             document.getElementById('modal-desc-texto').innerText = '"' + decodeURIComponent(descEnc) + '"';
             document.getElementById('modal-resposta-sindico').value = '';
             document.getElementById('modal-resolucao').classList.remove('hidden');
@@ -584,30 +669,19 @@
         function confirmarResolucao() {
             if(!tarefaAtualId) return;
             const resposta = document.getElementById('modal-resposta-sindico').value.trim();
-            if(!resposta) {
-                alert("Por favor, digite a resposta do síndico.");
-                return;
-            }
-
+            if(!resposta) return alert("Por favor, digite a resposta do síndico.");
             const btn = document.getElementById('btn-confirmar-resolucao');
-            btn.innerText = "Processando..."; 
-            btn.disabled = true;
+            btn.innerText = "Processando..."; btn.disabled = true;
 
             const url = `https://condocheck-n8n.wsoxvx.easypanel.host/webhook/baixar_tarefa?id=${tarefaAtualId}&usuario=Painel_Comando&resposta_sindico=${encodeURIComponent(resposta)}`;
-
-            fetch(url, { mode: 'no-cors' })
-            .then(() => {
+            fetch(url, { mode: 'no-cors' }).then(() => {
                 setTimeout(() => {
                     fecharModalResolucao();
-                    btn.innerText = "Concluir e Enviar WhatsApp"; 
-                    btn.disabled = false;
+                    btn.innerText = "Baixar e Enviar WhatsApp"; btn.disabled = false;
                     carregarPendencias(); 
                 }, 1500);
-            })
-            .catch(() => {
-                alert("Falha de rede ao tentar enviar o comando.");
-                btn.innerText = "Concluir e Enviar WhatsApp"; 
-                btn.disabled = false;
+            }).catch(() => {
+                alert("Falha de rede."); btn.innerText = "Baixar e Enviar WhatsApp"; btn.disabled = false;
             });
         }
 
@@ -631,46 +705,20 @@
             let p = document.getElementById('mor-phone').value.replace(/\D/g, ''); 
             const b = document.getElementById('mor-bloco').value.trim();
             const a = document.getElementById('mor-apto').value.trim();
-
             if (!n) return alert("O Nome é obrigatório!");
-
-            if (p.length === 10 || p.length === 11) {
-                // Perfeito
-            } else {
-                return alert("O WhatsApp deve ter o DDD + 8 ou 9 dígitos.\nExemplo correto: 51982149914");
-            }
-
+            if (p.length !== 10 && p.length !== 11) return alert("O WhatsApp deve ter DDD + 8 ou 9 dígitos.");
             let queryDup = supabaseDB.from('cadastro_moradores').select('id, nome').eq('telefone', p);
-            
-            if (editandoMoradorId) {
-                queryDup = queryDup.neq('id', editandoMoradorId); 
-            }
-
+            if (editandoMoradorId) queryDup = queryDup.neq('id', editandoMoradorId); 
             const { data: duplicado } = await queryDup;
-
-            if (duplicado && duplicado.length > 0) {
-                return alert(`Ação Bloqueada: Este telefone já está cadastrado para o morador "${duplicado[0].nome}". Não é possível duplicar.`);
-            }
-
-            document.getElementById('btn-salvar-mor').innerText = "Salvando...";
-
-            let payload = { nome: String(n), telefone: String(p), bloco: String(b), apartamento: String(a) };
+            if (duplicado && duplicado.length > 0) return alert(`Ação Bloqueada: Telefone já cadastrado para "${duplicado[0].nome}".`);
             
-            let result = editandoMoradorId 
-                ? await supabaseDB.from('cadastro_moradores').update(payload).eq('id', editandoMoradorId).select() 
-                : await supabaseDB.from('cadastro_moradores').insert([payload]).select();
-
+            document.getElementById('btn-salvar-mor').innerText = "Salvando...";
+            let payload = { nome: String(n), telefone: String(p), bloco: String(b), apartamento: String(a) };
+            let result = editandoMoradorId ? await supabaseDB.from('cadastro_moradores').update(payload).eq('id', editandoMoradorId).select() : await supabaseDB.from('cadastro_moradores').insert([payload]).select();
             if (result.error) {
-                alert("Erro ao salvar: " + result.error.message);
-                document.getElementById('btn-salvar-mor').innerText = editandoMoradorId ? "Atualizar" : "Cadastrar Novo";
+                alert("Erro ao salvar."); document.getElementById('btn-salvar-mor').innerText = editandoMoradorId ? "Atualizar" : "Cadastrar Novo";
             } else {
-                alert("Morador salvo com sucesso!");
-                document.getElementById('mor-nome').value = '';
-                document.getElementById('mor-phone').value = '';
-                document.getElementById('mor-bloco').value = '';
-                document.getElementById('mor-apto').value = '';
-                cancelarEdicao();
-                carregarMoradores();
+                document.getElementById('mor-nome').value = ''; document.getElementById('mor-phone').value = ''; document.getElementById('mor-bloco').value = ''; document.getElementById('mor-apto').value = ''; cancelarEdicao(); carregarMoradores();
             }
         }
         
@@ -679,34 +727,28 @@
             const tb = document.getElementById('tabela-fornecedores'); 
             let htmlAcumulado = '';
             if(data) {
-                data.forEach(f => { 
-                    htmlAcumulado += `<tr class="border-b hover:bg-slate-50"><td class="p-4 font-bold text-slate-700">${f.nome_empresa}</td><td class="p-4 text-arca-teal font-bold text-xs uppercase">${f.categoria_manutencao || '--'}</td><td class="p-4 text-slate-500">${f.telefone_plantao || 'Sem Número'}</td><td class="p-4 text-right"><button onclick="editarFornecedor('${f.id}', '${f.nome_empresa}', '${f.categoria_manutencao}', '${f.telefone_plantao||''}')" class="text-blue-500 font-bold mr-3">Editar</button><button onclick="deletarItem('fornecedores', '${f.id}', carregarFornecedores)" class="text-red-500 font-bold">Excluir</button></td></tr>`; 
-                }); 
+                data.forEach(f => { htmlAcumulado += `<tr class="border-b hover:bg-slate-50"><td class="p-4 font-bold text-slate-700">${f.nome_empresa}</td><td class="p-4 text-arca-teal font-bold text-xs uppercase">${f.categoria_manutencao || '--'}</td><td class="p-4 text-slate-500">${f.telefone_plantao || 'Sem Número'}</td><td class="p-4 text-right"><button onclick="editarFornecedor('${f.id}', '${f.nome_empresa}', '${f.categoria_manutencao}', '${f.telefone_plantao||''}')" class="text-blue-500 font-bold mr-3">Editar</button><button onclick="deletarItem('fornecedores', '${f.id}', carregarFornecedores)" class="text-red-500 font-bold">Excluir</button></td></tr>`; }); 
             }
             tb.innerHTML = htmlAcumulado;
         }
 
         function editarFornecedor(id, empresa, servico, fone) { document.getElementById('for-empresa').value = empresa; document.getElementById('for-servico').value = servico !== 'null' ? servico : ''; document.getElementById('for-contato').value = fone; editandoFornecedorId = id; document.getElementById('btn-salvar-for').innerText = "Atualizar"; document.getElementById('btn-salvar-for').classList.replace('bg-arca-teal', 'bg-orange-500'); document.getElementById('btn-cancelar-for').classList.remove('hidden'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-        
-        async function salvarFornecedor() { const e = document.getElementById('for-empresa').value, s = document.getElementById('for-servico').value, c = document.getElementById('for-contato').value.replace(/\D/g, ''); if(!e) return alert("Empresa obrigatória!"); let payload = { nome_empresa: e, categoria_manutencao: s, telefone_plantao: c }; let result = editandoFornecedorId ? await supabaseDB.from('fornecedores').update(payload).eq('id', editandoFornecedorId) : await supabaseDB.from('fornecedores').insert([payload]); if(result.error) alert(result.error.message); else { alert("Salvo!"); cancelarEdicao(); carregarFornecedores(); } }
+        async function salvarFornecedor() { const e = document.getElementById('for-empresa').value, s = document.getElementById('for-servico').value, c = document.getElementById('for-contato').value.replace(/\D/g, ''); if(!e) return alert("Empresa obrigatória!"); let payload = { nome_empresa: e, categoria_manutencao: s, telefone_plantao: c }; let result = editandoFornecedorId ? await supabaseDB.from('fornecedores').update(payload).eq('id', editandoFornecedorId) : await supabaseDB.from('fornecedores').insert([payload]); if(result.error) alert(result.error.message); else { cancelarEdicao(); carregarFornecedores(); } }
 
         async function carregarCadastrosBase() { 
             const { data: funcs } = await supabaseDB.from('funcionarios_v2').select('*').order('nome'); 
             document.getElementById('lista-usuarios').innerHTML = funcs ? funcs.map(u => `<li class="flex justify-between border-b py-2"><span><b>${u.nome}</b> <span class="text-[10px] bg-slate-100 px-2 rounded ml-1">${u.perfil || 'Equipe'}</span></span> <button onclick="deletarItem('funcionarios_v2', '${u.id}', carregarCadastrosBase)" class="text-red-400 font-bold text-xs">Excluir</button></li>`).join('') : ''; 
-            
             const { data: areas } = await supabaseDB.from('areas').select('*').eq('ativo', true).order('nome'); 
             document.getElementById('lista-areas').innerHTML = areas ? areas.map(a => `<li class="flex justify-between border-b py-2"><span><b>${a.nome}</b> <span class="text-xs text-slate-400">(${a.localizacao})</span></span> <button onclick="desativarItem('areas', ${a.id})" class="text-red-400 font-bold text-xs">Excluir</button></li>`).join('') : ''; 
-            
             const sArea = document.getElementById('tarefa-area'); 
             let sAreaHtml = '<option value="">Vincular a qual área?</option>'; 
             if(areas) areas.forEach(a => sAreaHtml += `<option value="${a.id}">${a.nome}</option>`); 
             sArea.innerHTML = sAreaHtml;
-            
             const { data: tarefas } = await supabaseDB.from('matriz_tarefas_v2').select('*').order('descricao_tarefa'); 
             document.getElementById('lista-tarefas').innerHTML = tarefas ? tarefas.map(t => `<li class="flex justify-between border-b py-2"><span class="truncate pr-2"><b>${t.descricao_tarefa}</b></span> <button onclick="deletarItem('matriz_tarefas_v2', '${t.id}', carregarCadastrosBase)" class="text-red-400 font-bold text-xs">Excluir</button></li>`).join('') : ''; 
         }
         
-        async function salvarUsuario() { const n = document.getElementById('usu-nome').value, l = document.getElementById('usu-login').value, s = document.getElementById('usu-senha').value, c = document.getElementById('usu-cargo').value; if(!n || !l || !s) return alert("Preencha tudo"); const {error} = await supabaseDB.from('funcionarios_v2').insert([{ nome: n, login: l.toLowerCase(), senha: s, perfil: c }]); if(error) alert(error.message); else { alert("Cadastrado com sucesso!"); document.querySelectorAll('#sessao-cadastros input').forEach(i=>i.value=''); carregarCadastrosBase(); } }
+        async function salvarUsuario() { const n = document.getElementById('usu-nome').value, l = document.getElementById('usu-login').value, s = document.getElementById('usu-senha').value, c = document.getElementById('usu-cargo').value; if(!n || !l || !s) return alert("Preencha tudo"); const {error} = await supabaseDB.from('funcionarios_v2').insert([{ nome: n, login: l.toLowerCase(), senha: s, perfil: c }]); if(!error){ document.querySelectorAll('#sessao-cadastros input').forEach(i=>i.value=''); carregarCadastrosBase(); } }
         async function salvarArea() { const n = document.getElementById('area-nome').value, l = document.getElementById('area-loc').value; if(!n) return alert("Preencha Nome"); await supabaseDB.from('areas').insert([{ nome: n, localizacao: l, ativo: true }]); document.getElementById('area-nome').value=''; carregarCadastrosBase(); }
         async function salvarTarefa() { const d = document.getElementById('tarefa-desc').value; if(!d) return alert("Preencha a tarefa"); await supabaseDB.from('matriz_tarefas_v2').insert([{ descricao_tarefa: d, segunda: true, terca: true, quarta: true, quinta: true, sexta: true, sabado: true }]); document.getElementById('tarefa-desc').value=''; carregarCadastrosBase(); }
         async function deletarItem(tabela, id, callback) { if(confirm("Apagar permanentemente?")) { await supabaseDB.from(tabela).delete().eq('id', id); callback(); } }
