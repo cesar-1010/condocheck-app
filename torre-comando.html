@@ -18,11 +18,11 @@
 </head>
 <body class="text-slate-800 flex flex-col md:flex-row min-h-screen relative">
 
-    <aside class="w-full md:w-72 bg-arca-dark text-slate-300 flex flex-col shadow-2xl z-20 border-r border-slate-800">
+    <aside class="w-full md:w-72 bg-arca-dark text-slate-300 flex flex-col shadow-2xl z-50 border-r border-slate-800 relative">
         <div class="p-6 border-b border-slate-800 bg-slate-900/50 flex flex-col items-center">
             <img src="https://raw.githubusercontent.com/CesarKAN/Projeto_Maui_Hills/main/img/arca-logo-vertical.png" alt="Arca" class="w-48 h-auto">
-            <div class="mt-4 px-3 py-1 bg-arca-teal/20 text-arca-teal text-[10px] font-bold uppercase rounded-full tracking-widest">
-                Comando v28.1 - Diamante
+            <div class="mt-4 px-3 py-1 bg-arca-blue/20 text-arca-blue text-[10px] font-bold uppercase rounded-full tracking-widest shadow-sm border border-arca-blue/30">
+                Comando v29.0 - Supremo
             </div>
         </div>
         <nav class="p-4 space-y-2 overflow-y-auto no-scrollbar flex-1">
@@ -37,13 +37,14 @@
     </aside>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between">
+        <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between z-40 shadow-sm relative">
             <h1 id="titulo-pagina" class="text-2xl font-black text-slate-800">Inteligência</h1>
-            <button onclick="recarregarTudo()" class="border px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-50 text-arca-blue border-arca-blue transition">🔄 Atualizar Base</button>
+            <button onclick="recarregarTudo()" class="border px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-50 text-arca-blue border-arca-blue transition shadow-sm">🔄 Atualizar Base</button>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-8 no-scrollbar">
+        <div class="flex-1 overflow-y-auto p-8 no-scrollbar relative">
             
+            <!-- DASHBOARD DE BI -->
             <div id="sessao-dash" class="block space-y-6">
                 <div class="bg-white p-4 rounded-xl card-shadow border border-slate-100 flex flex-col md:flex-row gap-4 items-end">
                     <div class="w-full md:w-1/3"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Data Inicial:</label><input type="date" id="filtro-bi-inicio" class="w-full p-2 text-sm bg-slate-50 border border-slate-200 rounded"></div>
@@ -62,65 +63,73 @@
                 </div>
             </div>
 
-            <!-- OCORRÊNCIAS BENTO (COM FILTRO E SANITIZAÇÃO DE JSON) -->
+            <!-- OCORRÊNCIAS BENTO -->
             <div id="sessao-aprovacao" class="hidden space-y-6">
                 <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-red-500">
-                    <div class="flex justify-between items-end mb-6">
+                    <div class="flex flex-col md:flex-row justify-between md:items-end mb-6 gap-4">
                         <div>
                             <h2 class="text-xl font-black text-slate-800 mb-1">Fila de Ocorrências (Bento)</h2>
                             <p class="text-sm text-slate-500">Tarefas e reclamações abertas pelo morador no WhatsApp.</p>
                         </div>
-                        <div class="w-1/3">
-                            <input type="text" id="filtro-ocorrencias" onkeyup="renderizarOcorrencias()" placeholder="🔍 Filtrar por morador, local ou problema..." class="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-red-400 focus:outline-none">
+                        <div class="w-full md:w-1/3">
+                            <input type="text" id="filtro-ocorrencias" onkeyup="renderizarOcorrencias()" placeholder="🔍 Filtrar por morador, local ou problema..." class="w-full p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-red-400 focus:outline-none shadow-sm">
                         </div>
                     </div>
                     <div id="lista-tarefas-aprovacao" class="space-y-3"><div class="p-8 text-center text-slate-400 font-bold border-2 border-dashed rounded-xl">Buscando...</div></div>
                 </div>
             </div>
 
-            <!-- ATIVIDADES CONDOCHECK (ATRASOS E CONCLUÍDAS COM HORA EXATA) -->
-            <div id="sessao-atividades" class="hidden space-y-6">
-                <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-slate-800">
-                    <div class="flex justify-between items-end mb-6">
-                        <div>
-                            <h2 class="text-xl font-black text-slate-800 mb-1">Painel Operacional (Hoje)</h2>
-                            <p class="text-sm text-slate-500">Acompanhamento em tempo real das atividades da equipe.</p>
+            <!-- ATIVIDADES CONDOCHECK (NOVA VERSÃO V29.0 SUPREMA) -->
+            <div id="sessao-atividades" class="hidden relative">
+                <!-- CABEÇALHO FIXO (MÁSCARA E FILTROS) -->
+                <div class="sticky top-[-2rem] z-30 bg-[#f1f5f9] pt-8 pb-4 -mt-8 -mx-8 px-8">
+                    <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-slate-800 flex flex-col lg:flex-row justify-between lg:items-end gap-6">
+                        <div class="flex-1">
+                            <h2 class="text-xl font-black text-slate-800 mb-1">Painel Operacional (Auditoria)</h2>
+                            <p class="text-sm text-slate-500">Acompanhamento das tarefas diárias da equipe e status de conclusão.</p>
                         </div>
-                        <div class="w-1/3">
-                            <input type="text" id="filtro-atrasos" onkeyup="renderizarAtividades()" placeholder="🔍 Buscar tarefa ou funcionário..." class="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-slate-800 focus:outline-none">
+                        <div class="flex flex-col md:flex-row gap-4 w-full lg:w-auto">
+                            <!-- FILTRO DE DATA -->
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">📅 Data Alvo:</label>
+                                <input type="date" id="filtro-data-atividades" onchange="carregarAtrasos()" class="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-slate-800 focus:outline-none font-bold text-arca-blue cursor-pointer shadow-sm">
+                            </div>
+                            <!-- FILTRO DE STATUS -->
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">🚦 Filtro de Status:</label>
+                                <select id="filtro-status-atividades" onchange="renderizarAtividades()" class="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-slate-800 focus:outline-none font-bold text-slate-600 shadow-sm cursor-pointer">
+                                    <option value="TODAS">Mostrar Todas</option>
+                                    <option value="ATRASADA">🔴 Atrasadas / Pendentes</option>
+                                    <option value="CONCLUIDO">🟢 Apenas Executadas</option>
+                                    <option value="JUSTIFICADO">🟠 Apenas Justificadas</option>
+                                </select>
+                            </div>
+                            <!-- BUSCA LIVRE -->
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">🔍 Buscar Tarefa:</label>
+                                <input type="text" id="filtro-texto-atividades" onkeyup="renderizarAtividades()" placeholder="Nome ou funcionário..." class="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:border-slate-800 focus:outline-none shadow-sm">
+                            </div>
                         </div>
                     </div>
-                    
-                    <!-- Bloco Atrasos -->
-                    <div class="mb-6">
-                        <h3 class="font-bold text-orange-600 mb-3 flex items-center gap-2">⚠️ Pendentes (Atrasos)</h3>
-                        <div class="overflow-x-auto rounded-lg border border-slate-200">
-                            <table class="w-full text-sm text-left">
-                                <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold">
-                                    <tr><th class="px-4 py-3">Tarefa Prevista</th><th class="px-4 py-3">Responsável</th><th class="px-4 py-3">Status</th></tr>
-                                </thead>
-                                <tbody id="tabela-atrasos" class="divide-y divide-slate-100">
-                                    <tr><td colspan="3" class="p-8 text-center text-slate-400">Calculando pendências...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                </div>
 
-                    <!-- Bloco Concluídas com Hora -->
-                    <div>
-                        <h3 class="font-bold text-arca-teal mb-3 flex items-center gap-2">✅ Concluídas ou Justificadas</h3>
-                        <div class="overflow-x-auto rounded-lg border border-slate-200">
-                            <table class="w-full text-sm text-left">
-                                <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold">
-                                    <tr><th class="px-4 py-3 w-32">Hora Extata</th><th class="px-4 py-3">Tarefa Realizada</th><th class="px-4 py-3">Responsável</th><th class="px-4 py-3">Status</th></tr>
-                                </thead>
-                                <tbody id="tabela-concluidas" class="divide-y divide-slate-100">
-                                    <tr><td colspan="4" class="p-8 text-center text-slate-400">Buscando execuções...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                <!-- TABELA UNIFICADA -->
+                <div class="bg-white rounded-xl card-shadow overflow-hidden border border-slate-200 mt-2 relative z-20">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-100 text-slate-500 uppercase text-[10px] font-bold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-6 py-4 w-28">Hora</th>
+                                    <th class="px-6 py-4">Tarefa da Matriz</th>
+                                    <th class="px-6 py-4">Responsável</th>
+                                    <th class="px-6 py-4 text-center w-40">Status do Sistema</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-unificada-atividades" class="divide-y divide-slate-100">
+                                <tr><td colspan="4" class="p-10 text-center text-slate-400 font-bold">Iniciando máquina de auditoria...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
-
                 </div>
             </div>
 
@@ -136,11 +145,9 @@
                         <select id="filtro-apto" class="p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 font-bold text-arca-blue">
                             <option value="">Todos os Aptos</option>
                         </select>
-                        
                         <select id="filtro-categoria" class="p-3 border border-slate-200 rounded-lg text-sm bg-slate-50">
                             <option value="">Todas as Categorias</option>
                         </select>
-                        
                         <select id="filtro-status" class="p-3 border border-slate-200 rounded-lg text-sm bg-slate-50 font-bold">
                             <option value="">Todos os Status</option>
                             <option value="ABERTO">Abertas</option>
@@ -149,10 +156,10 @@
                     </div>
                     <div class="flex flex-col md:flex-row gap-4 mb-6">
                         <input type="text" id="termo-pesquisa" placeholder="Busca livre: Morador, Apto, Descrição da ocorrência..." class="flex-1 p-3 border border-slate-200 rounded-lg text-sm bg-slate-50">
-                        <button onclick="aplicarFiltroPesquisa()" class="bg-slate-800 text-white font-bold px-10 py-3 rounded-lg shadow hover:bg-slate-900 transition">🔍 Filtrar</button>
+                        <button onclick="aplicarFiltroPesquisa()" class="bg-slate-800 text-white font-bold px-10 py-3 rounded-lg shadow hover:bg-slate-900 transition">🔍 Filtrar Base</button>
                     </div>
-                    <div class="overflow-x-auto rounded-lg border border-slate-100">
-                        <table class="w-full text-sm text-left">
+                    <div class="overflow-x-auto rounded-lg border border-slate-100 card-shadow">
+                        <table class="w-full text-sm text-left bg-white">
                             <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold">
                                 <tr><th class="px-4 py-3">Data</th><th class="px-4 py-3">Morador / Contato</th><th class="px-4 py-3">Local (Torre/Apto)</th><th class="px-4 py-3">Categoria</th><th class="px-4 py-3">Descrição</th><th class="px-4 py-3">Status</th><th class="px-4 py-3 text-center">Foto</th></tr>
                             </thead>
@@ -286,8 +293,7 @@
         let dadosGlobaisBI = [];
         let dadosGlobaisPesquisa = [];
         let dadosOcorrenciasBento = [];
-        let dadosAtividadesAtrasos = [];
-        let dadosAtividadesConcluidas = [];
+        let dadosAtividadesGeral = []; // Nova lista unificada
         let tarefaAtualId = null;
 
         function mostrarSessao(id) {
@@ -303,21 +309,18 @@
         }
 
         // ==========================================
-        // 1. OCORRÊNCIAS BENTO (COM DESINFECÇÃO DE JSON E FILTRO)
+        // 1. OCORRÊNCIAS BENTO (DESINFECÇÃO DE JSON E FILTRO)
         // ==========================================
         function limparDadosBento(t) {
             let desc = t.descricao || t.descricao_completa || t.problema || 'Sem descrição';
             let morador = t.morador || t.nome_morador || t.responsavel || t.nome || 'Morador não identificado';
             let local = t.local || t.bloco || t.apto ? `${t.bloco||''} ${t.apto||''}`.trim() : 'Local não especificado';
             
-            // Corrige se a API salvou o 'local' como o nome do projeto
             if (local.includes("CondoCheck")) local = "Local não especificado";
 
-            // Se o Bento falhar e mandar JSON puro na descrição, o sistema extrai o dado correto aqui:
             if (typeof desc === 'string' && desc.includes('{') && desc.includes('}')) {
                 try {
-                    let textoLimpo = desc.replace(/```json/g, '').replace(/```/g, '').trim();
-                    let obj = JSON.parse(textoLimpo);
+                    let obj = JSON.parse(desc.replace(/```json/g, '').replace(/```/g, '').trim());
                     desc = obj.problema || obj.descricao || desc;
                     if (obj.local && local === 'Local não especificado') local = obj.local;
                     if (obj.nome && morador === 'Morador não identificado') morador = obj.nome;
@@ -335,11 +338,7 @@
                 let dados = await res.json();
                 dados = Array.isArray(dados) ? dados : [dados];
 
-                // Filtra apenas as que não estão fechadas e limpa os JSONs quebrados
-                dadosOcorrenciasBento = dados
-                    .map(limparDadosBento)
-                    .filter(t => t.status.toUpperCase() !== 'FECHADO' && t.status.toUpperCase() !== 'CONCLUÍDO' && t.status.toUpperCase() !== 'CONCLUIDO');
-                
+                dadosOcorrenciasBento = dados.map(limparDadosBento).filter(t => t.status.toUpperCase() !== 'FECHADO' && t.status.toUpperCase() !== 'CONCLUÍDO' && t.status.toUpperCase() !== 'CONCLUIDO');
                 renderizarOcorrencias();
             } catch(e) { 
                 div.innerHTML = '<div class="p-6 text-center text-red-500 font-bold">Erro de conexão com o painel do n8n.</div>'; 
@@ -355,9 +354,7 @@
                 return; 
             }
 
-            let filtrados = dadosOcorrenciasBento.filter(t => {
-                return (t.desc.toLowerCase().includes(termo) || t.morador.toLowerCase().includes(termo) || t.local.toLowerCase().includes(termo));
-            });
+            let filtrados = dadosOcorrenciasBento.filter(t => (t.desc.toLowerCase().includes(termo) || t.morador.toLowerCase().includes(termo) || t.local.toLowerCase().includes(termo)));
 
             if(filtrados.length === 0) {
                 div.innerHTML = '<div class="p-6 text-center text-slate-400">Nenhuma ocorrência corresponde à sua busca.</div>'; 
@@ -366,10 +363,7 @@
 
             let htmlAcumulado = '';
             filtrados.forEach(t => { 
-                let descEnc = encodeURIComponent(t.desc);
-                let moradorEnc = encodeURIComponent(t.morador);
-                let localEnc = encodeURIComponent(t.local);
-
+                let descEnc = encodeURIComponent(t.desc); let moradorEnc = encodeURIComponent(t.morador); let localEnc = encodeURIComponent(t.local);
                 htmlAcumulado += `
                 <div class="bg-slate-50 p-5 rounded-lg border border-slate-200 flex flex-col md:flex-row justify-between md:items-center gap-4 hover:shadow-md transition">
                     <div class="flex-1">
@@ -387,96 +381,131 @@
         }
 
         // ==========================================
-        // 2. ATIVIDADES CONDOCHECK (ATRASOS E CONCLUÍDAS COM HORA)
+        // 2. ATIVIDADES CONDOCHECK (NOVA TABELA UNIFICADA)
         // ==========================================
+        function initDataFiltro() {
+            const inputData = document.getElementById('filtro-data-atividades');
+            if (!inputData.value) {
+                const dataLocal = new Date(new Date().getTime() - (3 * 60 * 60 * 1000));
+                inputData.value = dataLocal.toISOString().split('T')[0];
+            }
+        }
+
         async function carregarAtrasos() {
-            const tbodyAtrasos = document.getElementById('tabela-atrasos');
-            const tbodyConcluidas = document.getElementById('tabela-concluidas');
-            tbodyAtrasos.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-slate-400 font-bold">Cruzando matriz de tarefas...</td></tr>';
-            tbodyConcluidas.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400 font-bold">Buscando execuções...</td></tr>';
+            initDataFiltro();
+            const tbody = document.getElementById('tabela-unificada-atividades');
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 font-bold">Consultando base de dados...</td></tr>';
             
             try {
+                const inputDataStr = document.getElementById('filtro-data-atividades').value;
+                if (!inputDataStr) return;
+
+                // Converter data e pegar dia da semana
+                const partes = inputDataStr.split('-');
+                const dataObj = new Date(partes[0], partes[1] - 1, partes[2]);
                 const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
-                const dataLocal = new Date(new Date().getTime() - (3 * 60 * 60 * 1000));
-                const hojeStr = dias[dataLocal.getDay()];
-                const dataHoje = dataLocal.toISOString().split('T')[0];
+                const hojeStr = dias[dataObj.getDay()];
 
-                const { data: tarefasPrevistas } = await supabaseDB.from('matriz_tarefas_v2').select('id, descricao_tarefa, funcionario_id').eq(hojeStr, true);
-                
-                // Agora puxamos o created_at (Hora exata) e o status (Concluído ou Justificado)
-                const { data: execucoesHoje } = await supabaseDB.from('diario_execucoes_v2').select('tarefa_id, created_at, status, observacao, motivo').eq('data_execucao', dataHoje);
-                const { data: funcs } = await supabaseDB.from('funcionarios_v2').select('id, nome');
-                
-                const mapFuncs = {}; if(funcs) funcs.forEach(f => mapFuncs[f.id] = f.nome);
-                const mapTarefas = {}; if(tarefasPrevistas) tarefasPrevistas.forEach(t => mapTarefas[t.id] = t.descricao_tarefa);
+                // Consultas Paralelas
+                const [resMatriz, resExec, resFuncs] = await Promise.all([
+                    supabaseDB.from('matriz_tarefas_v2').select('id, descricao_tarefa, funcionario_id').eq(hojeStr, true),
+                    supabaseDB.from('diario_execucoes_v2').select('tarefa_id, created_at, status, observacao, motivo').eq('data_execucao', inputDataStr),
+                    supabaseDB.from('funcionarios_v2').select('id, nome')
+                ]);
 
-                const idsFeitos = execucoesHoje ? execucoesHoje.map(e => e.tarefa_id) : [];
-                
-                // Mapear Atrasos
-                dadosAtividadesAtrasos = tarefasPrevistas ? tarefasPrevistas.filter(t => !idsFeitos.includes(t.id)).map(t => ({
-                    tarefa: t.descricao_tarefa,
-                    responsavel: mapFuncs[t.funcionario_id] || 'Equipe'
-                })) : [];
+                if (resMatriz.error || resExec.error) throw new Error("Erro de consulta ao Supabase.");
 
-                // Mapear Concluídas com formatação de Hora (BRT)
-                dadosAtividadesConcluidas = execucoesHoje ? execucoesHoje.map(e => {
-                    let d = new Date(e.created_at);
-                    let horaFormatada = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                    let nomeT = mapTarefas[e.tarefa_id] || 'Tarefa Operacional';
-                    let complemento = e.status === 'JUSTIFICADO' ? ` (Motivo: ${e.motivo || 'N/A'})` : '';
-                    return {
-                        hora: horaFormatada,
-                        tarefa: nomeT + complemento,
-                        responsavel: 'Equipe', // O func_id está na matriz, simplificando aqui
-                        status: e.status
-                    }
-                }).sort((a,b) => b.hora.localeCompare(a.hora)) : []; // Ordena da mais recente para a mais antiga
+                const mapFuncs = {}; 
+                if(resFuncs.data) resFuncs.data.forEach(f => mapFuncs[f.id] = f.nome);
+
+                dadosAtividadesGeral = [];
+
+                if (resMatriz.data) {
+                    const execMap = {};
+                    if(resExec.data) resExec.data.forEach(e => execMap[e.tarefa_id] = e);
+
+                    resMatriz.data.forEach(t => {
+                        let exec = execMap[t.id];
+                        let responsavel = mapFuncs[t.funcionario_id] || 'Equipe';
+                        
+                        if (exec) {
+                            let d = new Date(exec.created_at);
+                            let horaFormatada = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                            let comp = exec.status === 'JUSTIFICADO' ? `<br><span class="text-xs text-orange-500 font-normal">Motivo: ${exec.motivo || 'N/A'}</span>` : '';
+                            
+                            dadosAtividadesGeral.push({
+                                hora: horaFormatada,
+                                tarefa: t.descricao_tarefa + comp,
+                                responsavel: responsavel,
+                                status: exec.status,
+                                ordem: exec.status === 'JUSTIFICADO' ? 2 : 3
+                            });
+                        } else {
+                            dadosAtividadesGeral.push({
+                                hora: '--:--',
+                                tarefa: t.descricao_tarefa,
+                                responsavel: responsavel,
+                                status: 'ATRASADA',
+                                ordem: 1
+                            });
+                        }
+                    });
+                }
+
+                // Ordenação: 1º Atrasadas, 2º Justificadas, 3º Concluídas
+                dadosAtividadesGeral.sort((a, b) => a.ordem - b.ordem);
 
                 renderizarAtividades();
 
             } catch(e) {
-                tbodyAtrasos.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-red-500 font-bold">Erro ao carregar auditoria.</td></tr>';
+                console.error(e);
+                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 font-bold">Erro ao processar auditoria do dia.</td></tr>';
             }
         }
 
         function renderizarAtividades() {
-            const tbodyAtrasos = document.getElementById('tabela-atrasos');
-            const tbodyConcluidas = document.getElementById('tabela-concluidas');
-            const termo = document.getElementById('filtro-atrasos').value.toLowerCase().trim();
+            const tbody = document.getElementById('tabela-unificada-atividades');
+            const termo = document.getElementById('filtro-texto-atividades').value.toLowerCase().trim();
+            const statusSelecionado = document.getElementById('filtro-status-atividades').value;
 
-            // Renderiza Atrasos
-            let filtradosAtrasos = dadosAtividadesAtrasos.filter(a => a.tarefa.toLowerCase().includes(termo) || a.responsavel.toLowerCase().includes(termo));
-            if (filtradosAtrasos.length === 0) {
-                tbodyAtrasos.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-emerald-500 font-bold bg-emerald-50">Equipe 100% em dia ou busca vazia.</td></tr>';
-            } else {
-                let htmlA = '';
-                filtradosAtrasos.forEach(a => {
-                    htmlA += `<tr class="border-b hover:bg-slate-50"><td class="px-4 py-3 font-bold text-slate-700">${a.tarefa}</td><td class="px-4 py-3 text-arca-blue font-bold">${a.responsavel}</td><td class="px-4 py-3"><span class="bg-orange-100 text-orange-600 px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider">Atrasada</span></td></tr>`;
-                });
-                tbodyAtrasos.innerHTML = htmlA;
+            let filtrados = dadosAtividadesGeral.filter(a => {
+                let matchTexto = a.tarefa.toLowerCase().includes(termo) || a.responsavel.toLowerCase().includes(termo);
+                let matchStatus = statusSelecionado === 'TODAS' || a.status === statusSelecionado;
+                return matchTexto && matchStatus;
+            });
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 font-bold">Nenhuma tarefa encontrada com esses filtros ou equipe 100% livre.</td></tr>';
+                return;
             }
 
-            // Renderiza Concluídas
-            let filtradosConcluidas = dadosAtividadesConcluidas.filter(c => c.tarefa.toLowerCase().includes(termo) || c.status.toLowerCase().includes(termo));
-            if (filtradosConcluidas.length === 0) {
-                tbodyConcluidas.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400">Nenhuma atividade registrada hoje ainda.</td></tr>';
-            } else {
-                let htmlC = '';
-                filtradosConcluidas.forEach(c => {
-                    let corStatus = c.status === 'JUSTIFICADO' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700';
-                    htmlC += `<tr class="border-b hover:bg-slate-50">
-                        <td class="px-4 py-3 font-black text-slate-400 text-lg">🕒 ${c.hora}</td>
-                        <td class="px-4 py-3 font-bold text-slate-700 text-sm">${c.tarefa}</td>
-                        <td class="px-4 py-3 text-slate-500 text-xs">${c.responsavel}</td>
-                        <td class="px-4 py-3"><span class="${corStatus} px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider">${c.status}</span></td>
-                    </tr>`;
-                });
-                tbodyConcluidas.innerHTML = htmlC;
-            }
+            let html = '';
+            filtrados.forEach(c => {
+                let badge = ''; let linhaCor = '';
+                
+                if (c.status === 'ATRASADA') {
+                    badge = '<span class="bg-red-100 text-red-600 px-3 py-1.5 rounded text-[10px] font-black uppercase tracking-wider shadow-sm">ATRASADA</span>';
+                    linhaCor = 'bg-white hover:bg-red-50 border-l-4 border-l-red-500';
+                } else if (c.status === 'JUSTIFICADO') {
+                    badge = '<span class="bg-amber-100 text-amber-700 px-3 py-1.5 rounded text-[10px] font-black uppercase tracking-wider shadow-sm">JUSTIFICADA</span>';
+                    linhaCor = 'bg-slate-50 hover:bg-amber-50 border-l-4 border-l-amber-500';
+                } else {
+                    badge = '<span class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded text-[10px] font-black uppercase tracking-wider shadow-sm">CONCLUÍDA</span>';
+                    linhaCor = 'bg-slate-50 hover:bg-emerald-50 border-l-4 border-l-emerald-500';
+                }
+
+                html += `<tr class="border-b border-slate-100 ${linhaCor} transition-colors">
+                    <td class="px-6 py-4 font-black text-slate-400 text-sm whitespace-nowrap">${c.hora !== '--:--' ? '🕒 ' + c.hora : '<span class="text-slate-300">--:--</span>'}</td>
+                    <td class="px-6 py-4 font-bold text-slate-700 text-sm leading-tight">${c.tarefa}</td>
+                    <td class="px-6 py-4 text-slate-500 text-xs font-bold uppercase">${c.responsavel}</td>
+                    <td class="px-6 py-4 text-center">${badge}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
         }
 
         // ==========================================
-        // DEMAIS FUNÇÕES DO SISTEMA (MANTIDAS INTACTAS)
+        // DEMAIS FUNÇÕES DO SISTEMA
         // ==========================================
 
         function cancelarEdicao() {
