@@ -20,7 +20,10 @@
 
     <aside class="w-full md:w-72 bg-arca-dark text-slate-300 flex flex-col shadow-2xl z-50 border-r border-slate-800 relative">
         <div class="p-6 border-b border-slate-800 bg-slate-900/50 flex flex-col items-center">
-            <img src="https://raw.githubusercontent.com/CesarKAN/Projeto_Maui_Hills/main/img/arca-logo-vertical.png" alt="Arca" class="w-48 h-auto">
+            <div class="flex flex-col items-center gap-3">
+                <img src="logo-arca.png" alt="Arca Gestão de Condomínios" class="w-52 max-h-28 object-contain">
+                <img src="Logo-Condocheck.png" alt="CondoCheck" class="w-52 max-h-24 object-contain rounded-lg border border-slate-700/50 shadow-sm">
+            </div>
             <div class="mt-4 px-3 py-1 bg-arca-blue/20 text-arca-blue text-[10px] font-bold uppercase rounded-full tracking-widest shadow-sm border border-arca-blue/30">
                 Comando v29.0 - Supremo
             </div>
@@ -311,72 +314,278 @@
         // ==========================================
         // 1. OCORRÊNCIAS BENTO (DESINFECÇÃO DE JSON E FILTRO)
         // ==========================================
-        function limparDadosBento(t) {
-            let desc = t.descricao || t.descricao_completa || t.problema || 'Sem descrição';
-            let morador = t.morador || t.nome_morador || t.responsavel || t.nome || 'Morador não identificado';
-            let local = t.local || t.bloco || t.apto ? `${t.bloco||''} ${t.apto||''}`.trim() : 'Local não especificado';
-            
-            if (local.includes("CondoCheck")) local = "Local não especificado";
+        // HOTFIX-ENXADRISTA V29.1
+        // Objetivo: impedir que a tela "Ocorrências Bento" exiba tarefas operacionais do CondoCheck.
+        // Regra: a tela Bento recebe os dados do webhook, normaliza os campos e remove registros com
+        // características de atividade/checklist/vistoria/zeladoria antes de renderizar.
 
-            if (typeof desc === 'string' && desc.includes('{') && desc.includes('}')) {
+        function textoSeguro(valor) {
+            return (valor === null || valor === undefined) ? '' : String(valor);
+        }
+
+        function normalizarTexto(valor) {
+            return textoSeguro(valor)
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[“”"']/g, '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase();
+        }
+
+        function escaparHTML(valor) {
+            return textoSeguro(valor)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function primeiroValor(...valores) {
+            for (const valor of valores) {
+                if (valor !== null && valor !== undefined && String(valor).trim() !== '') {
+                    return String(valor).trim();
+                }
+            }
+            return '';
+        }
+
+        function limparDescricaoBento(descricaoOriginal) {
+            let desc = primeiroValor(descricaoOriginal, 'Sem descrição');
+
+            // Remove marcações técnicas que às vezes vêm do fluxo.
+            desc = desc
+                .replace(/```json/gi, '')
+                .replace(/```/g, '')
+                .replace(/\[GRAVAR\]/gi, '')
+                .trim();
+
+            // Alguns fluxos salvam o JSON inteiro no campo descrição.
+            if (desc.includes('{') && desc.includes('}')) {
                 try {
-                    let obj = JSON.parse(desc.replace(/```json/g, '').replace(/```/g, '').trim());
-                    desc = obj.problema || obj.descricao || desc;
-                    if (obj.local && local === 'Local não especificado') local = obj.local;
-                    if (obj.nome && morador === 'Morador não identificado') morador = obj.nome;
+                    const inicio = desc.indexOf('{');
+                    const fim = desc.lastIndexOf('}');
+                    const jsonPossivel = desc.substring(inicio, fim + 1);
+                    const obj = JSON.parse(jsonPossivel);
+                    desc = primeiroValor(obj.problema, obj.descricao, obj.descricao_completa, obj.resposta_morador, desc);
+                } catch(e) {
+                    // Mantém a descrição original se não for JSON válido.
+                }
+            }
+
+            return desc.trim();
+        }
+
+        function montarLocalBento(t, jsonInterno = null) {
+            const localDireto = primeiroValor(
+                t.local,
+                t.localizacao,
+                t.endereco,
+                jsonInterno?.local,
+                jsonInterno?.localizacao
+            );
+
+            if (localDireto && !normalizarTexto(localDireto).includes('condocheck')) {
+                return localDireto;
+            }
+
+            const torre = primeiroValor(t.torre, t.bloco, jsonInterno?.torre, jsonInterno?.bloco);
+            const apto = primeiroValor(t.apartamento, t.apto, jsonInterno?.apartamento, jsonInterno?.apto);
+
+            if (torre && apto) return `${torre} - Apto ${apto}`;
+            if (torre) return torre;
+            if (apto) return `Apto ${apto}`;
+
+            return 'Local não especificado';
+        }
+
+        function extrairJsonInterno(t) {
+            const candidatos = [
+                t.descricao,
+                t.descricao_completa,
+                t.problema,
+                t.resultadoFinal,
+                t.output,
+                t.json
+            ];
+
+            for (const candidato of candidatos) {
+                const texto = textoSeguro(candidato).replace(/```json/gi, '').replace(/```/g, '').trim();
+                if (!texto.includes('{') || !texto.includes('}')) continue;
+
+                try {
+                    const inicio = texto.indexOf('{');
+                    const fim = texto.lastIndexOf('}');
+                    return JSON.parse(texto.substring(inicio, fim + 1));
                 } catch(e) {}
             }
-            return { id: t.id, desc, morador, local, status: t.status || t.Status || 'ABERTO' };
+
+            return null;
+        }
+
+        function limparDadosBento(t) {
+            const jsonInterno = extrairJsonInterno(t);
+
+            const desc = limparDescricaoBento(
+                primeiroValor(
+                    t.descricao_completa,
+                    t.descricao,
+                    t.problema,
+                    jsonInterno?.problema,
+                    jsonInterno?.descricao,
+                    jsonInterno?.resposta_morador
+                )
+            );
+
+            const morador = primeiroValor(
+                t.morador,
+                t.nome_morador,
+                t.nome,
+                t.responsavel,
+                jsonInterno?.morador,
+                jsonInterno?.nome_morador,
+                'Morador não identificado'
+            );
+
+            const local = montarLocalBento(t, jsonInterno);
+
+            return {
+                id: t.id,
+                desc,
+                morador,
+                local,
+                status: primeiroValor(t.status, t.Status, 'ABERTO'),
+                categoria: primeiroValor(t.categoria, t.tipo, jsonInterno?.categoria),
+                origem: primeiroValor(t.origem, t.fonte, t.source, t.canal, t.sistema),
+                bruto: t
+            };
+        }
+
+        function ehStatusAberto(status) {
+            const s = normalizarTexto(status);
+            return !['fechado', 'fechada', 'concluido', 'concluida', 'finalizado', 'finalizada', 'resolvido', 'resolvida'].includes(s);
+        }
+
+        function ehAtividadeCondoCheck(t) {
+            const desc = normalizarTexto(t.desc);
+            const cat = normalizarTexto(t.categoria);
+            const origem = normalizarTexto(t.origem);
+            const morador = normalizarTexto(t.morador);
+            const local = normalizarTexto(t.local);
+
+            // Regra forte: campos estruturais indicando rotina operacional.
+            if (cat.includes('checklist') || cat === 'rotina' || cat === 'justificativa' || cat.includes('condocheck')) return true;
+            if (origem.includes('condocheck') || origem.includes('zelador') || origem.includes('funcionario') || origem.includes('equipe')) return true;
+
+            // Regra forte: descrições-padrão de tarefas operacionais.
+            const padroesInicio = [
+                'vistoria:',
+                'vistoria -',
+                'vistoria ',
+                'tarefa extra:',
+                'tarefa extra -',
+                'checklist:',
+                'ronda:',
+                'ronda -'
+            ];
+            if (padroesInicio.some(p => desc.startsWith(p))) return true;
+
+            // Regra complementar: expressões típicas das vistorias do zelador que estavam vazando.
+            const padroesOperacionais = [
+                'varrendo',
+                'recolhendo o lixo',
+                'lavando',
+                'limpando',
+                'jardim torre',
+                'espaco pet',
+                'trapiche',
+                'calcada'
+            ];
+            if (desc.startsWith('vistoria') || padroesOperacionais.some(p => desc.includes(p))) {
+                // Só classifica como CondoCheck se também não houver evidência mínima de morador real.
+                const temEvidenciaMorador = morador && morador !== 'morador nao identificado' && !morador.includes('equipe') && !morador.includes('zelador');
+                if (!temEvidenciaMorador || local.includes('condominio') || local.includes('condocheck')) return true;
+            }
+
+            return false;
+        }
+
+        function ehOcorrenciaBento(t) {
+            return ehStatusAberto(t.status) && !ehAtividadeCondoCheck(t);
         }
 
         async function carregarPendencias() {
-            const div = document.getElementById('lista-tarefas-aprovacao'); 
+            const div = document.getElementById('lista-tarefas-aprovacao');
             div.innerHTML = '<div class="p-8 text-center text-slate-400 font-bold">Lendo matriz de ocorrências...</div>';
+
             try {
                 const res = await fetch("https://condocheck-n8n.wsoxvx.easypanel.host/webhook/listar_tarefas", { cache: "no-store" });
-                if(!res.ok) throw new Error("Erro"); 
+                if(!res.ok) throw new Error("Webhook listar_tarefas retornou HTTP " + res.status);
+
                 let dados = await res.json();
                 dados = Array.isArray(dados) ? dados : [dados];
 
-                dadosOcorrenciasBento = dados.map(limparDadosBento).filter(t => t.status.toUpperCase() !== 'FECHADO' && t.status.toUpperCase() !== 'CONCLUÍDO' && t.status.toUpperCase() !== 'CONCLUIDO');
+                const normalizados = dados.map(limparDadosBento);
+                dadosOcorrenciasBento = normalizados.filter(ehOcorrenciaBento);
+
+                console.table(normalizados.map(item => ({
+                    id: item.id,
+                    status: item.status,
+                    categoria: item.categoria,
+                    origem: item.origem,
+                    morador: item.morador,
+                    desc: item.desc,
+                    removido_por_ser_condocheck: ehAtividadeCondoCheck(item)
+                })));
+
                 renderizarOcorrencias();
-            } catch(e) { 
-                div.innerHTML = '<div class="p-6 text-center text-red-500 font-bold">Erro de conexão com o painel do n8n.</div>'; 
+            } catch(e) {
+                console.error(e);
+                div.innerHTML = `<div class="p-6 text-center text-red-500 font-bold">Erro de conexão com o painel do n8n.<br><span class="text-xs text-slate-500">${escaparHTML(e.message)}</span></div>`;
             }
         }
 
         function renderizarOcorrencias() {
-            const div = document.getElementById('lista-tarefas-aprovacao'); 
-            const termo = document.getElementById('filtro-ocorrencias').value.toLowerCase().trim();
-            
-            if(dadosOcorrenciasBento.length === 0) { 
-                div.innerHTML = '<div class="p-8 text-center text-emerald-500 font-bold border-2 border-emerald-100 bg-emerald-50 rounded-xl">Excelente! Nenhuma ocorrência pendente.</div>'; 
-                return; 
+            const div = document.getElementById('lista-tarefas-aprovacao');
+            const termo = normalizarTexto(document.getElementById('filtro-ocorrencias').value);
+
+            if(dadosOcorrenciasBento.length === 0) {
+                div.innerHTML = '<div class="p-8 text-center text-emerald-500 font-bold border-2 border-emerald-100 bg-emerald-50 rounded-xl">Excelente! Nenhuma ocorrência Bento pendente.</div>';
+                return;
             }
 
-            let filtrados = dadosOcorrenciasBento.filter(t => (t.desc.toLowerCase().includes(termo) || t.morador.toLowerCase().includes(termo) || t.local.toLowerCase().includes(termo)));
+            let filtrados = dadosOcorrenciasBento.filter(t => {
+                const busca = normalizarTexto(`${t.desc} ${t.morador} ${t.local} ${t.categoria}`);
+                return busca.includes(termo);
+            });
 
             if(filtrados.length === 0) {
-                div.innerHTML = '<div class="p-6 text-center text-slate-400">Nenhuma ocorrência corresponde à sua busca.</div>'; 
+                div.innerHTML = '<div class="p-6 text-center text-slate-400">Nenhuma ocorrência corresponde à sua busca.</div>';
                 return;
             }
 
             let htmlAcumulado = '';
-            filtrados.forEach(t => { 
-                let descEnc = encodeURIComponent(t.desc); let moradorEnc = encodeURIComponent(t.morador); let localEnc = encodeURIComponent(t.local);
+            filtrados.forEach(t => {
+                const descEnc = encodeURIComponent(t.desc);
+                const moradorEnc = encodeURIComponent(t.morador);
+                const localEnc = encodeURIComponent(t.local);
+                const categoria = t.categoria || 'Ocorrência';
+
                 htmlAcumulado += `
                 <div class="bg-slate-50 p-5 rounded-lg border border-slate-200 flex flex-col md:flex-row justify-between md:items-center gap-4 hover:shadow-md transition">
                     <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">Urgente</span>
-                            <span class="text-xs font-bold text-slate-700">👤 ${t.morador}</span>
-                            <span class="text-xs text-arca-blue font-bold">📍 ${t.local}</span>
+                        <div class="flex flex-wrap items-center gap-2 mb-1">
+                            <span class="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[10px] font-black uppercase">${escaparHTML(categoria)}</span>
+                            <span class="text-xs font-bold text-slate-700">👤 ${escaparHTML(t.morador)}</span>
+                            <span class="text-xs text-arca-blue font-bold">📍 ${escaparHTML(t.local)}</span>
                         </div>
-                        <p class="font-bold text-slate-800 text-sm mt-2">"${t.desc}"</p>
+                        <p class="font-bold text-slate-800 text-sm mt-2">"${escaparHTML(t.desc)}"</p>
                     </div>
-                    <button onclick="abrirModalResolucao('${t.id}', '${descEnc}', '${moradorEnc}', '${localEnc}')" class="bg-red-500 text-white px-6 py-3 rounded-lg shadow text-sm font-bold hover:bg-red-600 shrink-0 transition">Resolver Agora</button>
-                </div>`; 
+                    <button onclick="abrirModalResolucao('${escaparHTML(t.id)}', '${descEnc}', '${moradorEnc}', '${localEnc}')" class="bg-red-500 text-white px-6 py-3 rounded-lg shadow text-sm font-bold hover:bg-red-600 shrink-0 transition">Resolver Agora</button>
+                </div>`;
             });
+
             div.innerHTML = htmlAcumulado;
         }
 
@@ -391,7 +600,7 @@
             }
         }
 
-        async function carregarAtrasos() {
+	async function carregarAtrasos() {
             initDataFiltro();
             const tbody = document.getElementById('tabela-unificada-atividades');
             tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-slate-400 font-bold">Consultando base de dados...</td></tr>';
@@ -400,20 +609,20 @@
                 const inputDataStr = document.getElementById('filtro-data-atividades').value;
                 if (!inputDataStr) return;
 
-                // Converter data e pegar dia da semana
                 const partes = inputDataStr.split('-');
                 const dataObj = new Date(partes[0], partes[1] - 1, partes[2]);
                 const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
                 const hojeStr = dias[dataObj.getDay()];
 
-                // Consultas Paralelas
-                const [resMatriz, resExec, resFuncs] = await Promise.all([
-                    supabaseDB.from('matriz_tarefas_v2').select('id, descricao_tarefa, funcionario_id').eq(hojeStr, true),
-                    supabaseDB.from('diario_execucoes_v2').select('tarefa_id, created_at, status, observacao, motivo').eq('data_execucao', inputDataStr),
-                    supabaseDB.from('funcionarios_v2').select('id, nome')
-                ]);
+                // Buscas separadas para isolar o ponto exato de falha
+                const resMatriz = await supabaseDB.from('matriz_tarefas_v2').select('id, descricao_tarefa, funcionario_id').eq(hojeStr, true);
+                if (resMatriz.error) throw new Error("Erro na Matriz: " + resMatriz.error.message);
 
-                if (resMatriz.error || resExec.error) throw new Error("Erro de consulta ao Supabase.");
+                const resExec = await supabaseDB.from('diario_execucoes_v2').select('tarefa_id, created_at, status, observacao, motivo').eq('data_execucao', inputDataStr);
+                if (resExec.error) throw new Error("Erro nas Execuções: " + resExec.error.message);
+
+                const resFuncs = await supabaseDB.from('funcionarios_v2').select('id, nome');
+                if (resFuncs.error) throw new Error("Erro nos Funcionários: " + resFuncs.error.message);
 
                 const mapFuncs = {}; 
                 if(resFuncs.data) resFuncs.data.forEach(f => mapFuncs[f.id] = f.nome);
@@ -454,12 +663,12 @@
 
                 // Ordenação: 1º Atrasadas, 2º Justificadas, 3º Concluídas
                 dadosAtividadesGeral.sort((a, b) => a.ordem - b.ordem);
-
                 renderizarAtividades();
 
             } catch(e) {
                 console.error(e);
-                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500 font-bold">Erro ao processar auditoria do dia.</td></tr>';
+                // Agora o erro EXATO será mostrado na tela para facilitar o nosso diagnóstico
+                tbody.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-red-500 font-bold bg-red-50">Falha Crítica Detectada:<br><span class="text-sm font-normal text-slate-600">${e.message}</span></td></tr>`;
             }
         }
 
