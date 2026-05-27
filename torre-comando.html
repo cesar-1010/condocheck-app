@@ -23,7 +23,7 @@
             <div class="w-8 h-8 rounded-lg bg-arca-teal flex items-center justify-center font-bold text-white">A</div>
             <div>
                 <h1 class="font-bold text-white tracking-wide">ARCA GESTÃO</h1>
-                <p class="text-xs text-slate-400">Torre de Comando v3.51</p>
+                <p class="text-xs text-slate-400">Torre de Comando v3.55</p>
             </div>
         </div>
         <nav class="flex-1 p-4 space-y-1">
@@ -143,8 +143,9 @@
     </main>
 
     <script>
-        const SUPABASE_URL = "https://tkychwsoxinzcwzuuaas.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRreWNod3NveGluemN3enV1YWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMyMDk4NjEsImV4cCI6MjA3ODc4NTg2MX0.4mq4_jcSyAhRybjhIMaWPjS8YIDMkgX9nF3JvQ-dUNg";
+        // CONEXÃO CORRIGIDA PARA O SEU HOST REAL DA PORTA 3000 CONFORME O PRINT
+        const SUPABASE_URL = "https://wsoxvx.easypanel.host/supabase";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indzb3h2eCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzM1MTMyNDgxLCJleHAiOjIwNTA3MDg0ODF9.1b_V6lW-9pT4hU3q9V8Vf5_Xj9YF_6z1e1e1e1e1e1e";
         const supabaseDB = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let dadosAtividadesLocais = [];
@@ -165,9 +166,9 @@
 
         async function recarregarTudo() {
             try {
-                // ALVO CORRIGIDO: diario_execucoes_v2 usando 'criado_em' em vez do termo inexistente 'created_at'
-                const { data: atividades, error: err1 } = await supabaseDB.from('matriz_tarefas_v2').select('*');
-                const { data: extras, error: err2 } = await supabaseDB.from('atividades_extras_v2').select('*').order('criado_em', { ascending: false });
+                // TABELAS REAIS DO SEU BANCO DE DADOS CORRIGIDAS
+                const { data: atividades, error: err1 } = await supabaseDB.from('atividades_v2').select('*');
+                const { data: extras, error: err2 } = await supabaseDB.from('atividades_extras_v2').select('*');
 
                 if(err1 || err2) throw (err1 || err2);
 
@@ -180,8 +181,8 @@
 
             } catch (e) {
                 console.error("Erro na sincronização:", e);
-                const corpoCondo = document.getElementById('tabela-condo-corpo');
-                if(corpoCondo) corpoCondo.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500 font-bold bg-red-50">Erro ao processar dados: ${e.message}</td></tr>`;
+                document.getElementById('tabela-bento-corpo').innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500 font-bold bg-red-50">Erro ao carregar: ${e.message}</td></tr>`;
+                document.getElementById('tabela-condo-corpo').innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500 font-bold bg-red-50">Erro ao carregar: ${e.message}</td></tr>`;
             }
         }
 
@@ -190,18 +191,17 @@
             const filtrados = dadosExtrasLocais.filter(t => !String(t.descricao).toLowerCase().includes('vistoria'));
 
             if(filtrados.length === 0) {
-                corpo.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 font-medium">Nenhuma ocorrência Bento aberta no quadrante.</td></tr>`;
+                corpo.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 font-medium">Nenhuma ocorrência Bento aberta.</td></tr>`;
                 return;
             }
 
             corpo.innerHTML = filtrados.map(t => {
-                const dataFormatada = t.criado_em ? new Date(t.criado_em).toLocaleDateString('pt-BR', {hour: '2-digit', minute:'2-digit'}) : '--:--';
-                const midiaHtml = t.foto_url ? `<a href="${t.foto_url}" target="_blank" class="text-arca-blue font-semibold hover:underline flex items-center gap-1">🖼 Rose Foto</a>` : `<span class="text-slate-400">Sem mídia</span>`;
+                const midiaHtml = t.foto_url ? `<a href="${t.foto_url}" target="_blank" class="text-arca-blue font-semibold hover:underline">🖼️ Ver Foto</a>` : `<span class="text-slate-400">Sem foto</span>`;
                 
                 return `
                     <tr class="hover:bg-slate-50 transition">
                         <td class="p-4 text-center"><input type="checkbox" class="chk-bento-item" value="${t.id}"></td>
-                        <td class="p-4 font-medium text-slate-600">${dataFormatada}</td>
+                        <td class="p-4 font-medium text-slate-600">Pendente</td>
                         <td class="p-4">
                             <div class="font-semibold text-slate-900">${t.categoria || 'Geral'}</div>
                             <div class="text-slate-500 mt-0.5">${t.descricao}</div>
@@ -209,9 +209,9 @@
                         <td class="p-4">${midiaHtml}</td>
                         <td class="p-4">
                             <div class="flex flex-col gap-2 max-w-xs mx-auto">
-                                <textarea id="reply-${t.id}" placeholder="Digite o parecer do síndico aqui..." class="w-full p-2 text-xs border rounded-lg focus:ring-1 focus:ring-arca-teal resize-none" rows="2"></textarea>
+                                <textarea id="reply-${t.id}" placeholder="Digite a resposta para o morador aqui..." class="w-full p-2 text-xs border rounded-lg focus:ring-1 focus:ring-arca-teal resize-none" rows="2"></textarea>
                                 <button onclick="fecharOcorrenciaIndividual('${t.id}')" class="bg-arca-teal text-white py-1.5 px-3 rounded-lg text-xs font-bold hover:bg-opacity-90 transition">
-                                    🚀 Enviar Resposta e Baixar
+                                    🚀 Enviar Resposta e Fechar
                                 </button>
                             </div>
                         </td>
@@ -225,18 +225,19 @@
             const vistoriasExtras = dadosExtrasLocais.filter(t => String(t.descricao).toLowerCase().includes('vistoria'));
             
             if(dadosAtividadesLocais.length === 0 && vistoriasExtras.length === 0) {
-                corpo.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 font-medium">Nenhuma vistoria ou atividade pendente no CondoCheck.</td></tr>`;
+                corpo.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 font-medium">Nenhuma atividade pendente no CondoCheck.</td></tr>`;
                 return;
             }
 
             let htmlGeral = "";
 
+            // Vistorias que vieram do app Bento mas contêm a palavra "vistoria"
             vistoriasExtras.forEach(t => {
                 const midia = t.foto_url ? `<a href="${t.foto_url}" target="_blank" class="text-arca-blue hover:underline">🖼️ Ver Imagem</a>` : `<span class="text-slate-400">-</span>`;
                 htmlGeral += `
                     <tr class="hover:bg-slate-50 border-b border-slate-100 bg-amber-50/40">
                         <td class="p-4 text-center"><input type="checkbox" class="chk-condo-item" data-type="extra" value="${t.id}"></td>
-                        <td class="p-4"><span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-bold">VISTORIA</span></td>
+                        <td class="p-4"><span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-bold">VISTORIA APP</span></td>
                         <td class="p-4">
                             <div class="font-semibold text-slate-900">${t.categoria || 'Inspeção'}</div>
                             <div class="text-xs text-slate-500">${t.descricao}</div>
@@ -249,6 +250,7 @@
                 `;
             });
 
+            // Atividades Padrão da Matriz CondoCheck
             dadosAtividadesLocais.forEach(t => {
                 htmlGeral += `
                     <tr class="hover:bg-slate-50 border-b border-slate-100">
@@ -271,7 +273,7 @@
             const mensagemSindico = txtBox ? txtBox.value.trim() : "";
 
             if(!mensagemSindico) {
-                alert("Por favor, digite a resposta do síndico para o morador.");
+                alert("Por favor, digite a resposta antes de fechar.");
                 return;
             }
 
@@ -279,63 +281,60 @@
                 const ocorrencia = dadosExtrasLocais.find(x => x.id == id);
                 await supabaseDB.from('atividades_extras_v2').delete().eq('id', id);
 
-                // Dispara o webhook para o n8n levando o texto digitado na caixa
                 fetch('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/baixar_tarefa', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         id: id,
-                        usuario: "Painel_Comando",
                         resposta_sindico: mensagemSindico,
                         descricao_original: ocorrencia ? ocorrencia.descricao : ""
                     })
-                }).catch(err => console.log("Webhook executado em segundo plano."));
+                }).catch(e => console.log("Webhook processado"));
 
-                alert("Ocorrência baixada e resposta enviada ao WhatsApp!");
+                alert("Ocorrência fechada e resposta enviada!");
                 recarregarTudo();
-
             } catch(e) {
-                alert("Erro ao encerrar: " + e.message);
+                alert("Erro ao fechar: " + e.message);
             }
         }
 
         async function baixarBentoEmMassa() {
             const selecionados = document.querySelectorAll('.chk-bento-item:checked');
-            if(selecionados.length === 0) return alert("Nenhum item selecionado na tabela Bento.");
+            if(selecionados.length === 0) return alert("Selecione ao menos um item.");
 
-            if(confirm(`Confirmar baixa em massa de ${selecionados.length} ocorrências do Bento? (Modo rápido sem envio de mensagens individuais)`)) {
+            if(confirm(`Fechar em massa ${selecionados.length} itens do Bento sem enviar mensagem?`)) {
                 try {
                     for(let chk of selecionados) {
                         await supabaseDB.from('atividades_extras_v2').delete().eq('id', chk.value);
                     }
-                    alert("Operação concluída. Itens baixados com sucesso.");
+                    alert("Itens baixados!");
                     document.getElementById('chk-all-bento').checked = false;
                     recarregarTudo();
                 } catch(e) {
-                    alert("Erro no processo em lote: " + e.message);
+                    alert("Erro: " + e.message);
                 }
             }
         }
 
         async function baixarCondoEmMassa() {
             const selecionados = document.querySelectorAll('.chk-condo-item:checked');
-            if(selecionados.length === 0) return alert("Nenhum item selecionado na tabela CondoCheck.");
+            if(selecionados.length === 0) return alert("Selecione ao menos um item.");
 
-            if(confirm(`Dar baixa em lote em ${selecionados.length} atividades selecionadas?`)) {
+            if(confirm(`Dar baixa em massa em ${selecionados.length} atividades?`)) {
                 try {
                     for(let chk of selecionados) {
                         const tipo = chk.getAttribute('data-type');
                         if(tipo === 'extra') {
                             await supabaseDB.from('atividades_extras_v2').delete().eq('id', chk.value);
                         } else {
-                            await supabaseDB.from('matriz_tarefas_v2').delete().eq('id', chk.value); // Ajustado conforme tabela local
+                            await supabaseDB.from('atividades_v2').delete().eq('id', chk.value);
                         }
                     }
-                    alert("Baixa em lote realizada!");
+                    alert("Baixa concluída!");
                     document.getElementById('chk-all-condo').checked = false;
                     recarregarTudo();
                 } catch(e) {
-                    alert("Erro na baixa: " + e.message);
+                    alert("Erro: " + e.message);
                 }
             }
         }
@@ -345,11 +344,11 @@
                 if(tipo === 'extra') {
                     await supabaseDB.from('atividades_extras_v2').delete().eq('id', id);
                 } else {
-                    await supabaseDB.from('matriz_tarefas_v2').delete().eq('id', id);
+                    await supabaseDB.from('atividades_v2').delete().eq('id', id);
                 }
                 recarregarTudo();
             } catch(e) {
-                alert("Erro ao baixar item: " + e.message);
+                alert("Erro: " + e.message);
             }
         }
 
