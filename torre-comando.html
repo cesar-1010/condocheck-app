@@ -23,7 +23,7 @@
             <div class="w-8 h-8 rounded-lg bg-arca-teal flex items-center justify-center font-bold text-white">A</div>
             <div>
                 <h1 class="font-bold text-white tracking-wide">ARCA GESTÃO</h1>
-                <p class="text-xs text-slate-400">Torre de Comando v3.55</p>
+                <p class="text-xs text-slate-400">Torre de Comando v3.60</p>
             </div>
         </div>
         <nav class="flex-1 p-4 space-y-1">
@@ -35,6 +35,7 @@
     </aside>
 
     <main class="flex-1 p-4 md:p-8 overflow-y-auto max-w-full">
+        
         <section id="sessao-painel" class="sessao-conteudo space-y-6">
             <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-slate-800">Painel de Controle</h2>
@@ -91,7 +92,7 @@
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-800">Triagem e Atividades CondoCheck</h2>
-                    <p class="text-sm text-slate-500">Vistorias, checklists e manutenções preventivas de infraestrutura</p>
+                    <p class="text-sm text-slate-500">Checklists, vistorias e manutenções prediais</p>
                 </div>
                 <button onclick="baixarCondoEmMassa()" class="bg-arca-blue text-white px-4 py-2 rounded-lg font-medium shadow hover:bg-opacity-90 transition flex items-center gap-2">
                     ✔️ Dar Baixa em Massa
@@ -123,27 +124,49 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-white p-6 rounded-2xl card-shadow space-y-4">
                     <h3 class="font-bold text-lg text-slate-700 border-b pb-2">➕ Novo Funcionário</h3>
-                    <input type="text" id="func-nome" placeholder="Nome Completo" class="w-full p-3 border rounded-xl focus:outline-arca-teal">
-                    <input type="text" id="func-login" placeholder="Login de Acesso" class="w-full p-3 border rounded-xl focus:outline-arca-teal">
-                    <input type="password" id="func-senha" placeholder="Senha" class="w-full p-3 border rounded-xl focus:outline-arca-teal">
-                    <select id="func-perfil" class="w-full p-3 border rounded-xl focus:outline-arca-teal">
+                    <input type="text" id="func-nome" placeholder="Nome Completo" class="w-full p-3 border rounded-xl">
+                    <input type="text" id="func-login" placeholder="Login de Acesso" class="w-full p-3 border rounded-xl">
+                    <input type="password" id="func-senha" placeholder="Senha" class="w-full p-3 border rounded-xl">
+                    <select id="func-perfil" class="w-full p-3 border rounded-xl">
                         <option value="Operador">Operador de Campo</option>
                         <option value="Supervisor">Supervisor / Síndico</option>
                     </select>
-                    <button onclick="salvarFuncionario()" class="w-full bg-arca-dark text-white p-3 rounded-xl font-bold tracking-wide hover:bg-opacity-95 transition">Gravar Colaborador</button>
+                    <button onclick="salvarFuncionario()" class="w-full bg-arca-dark text-white p-3 rounded-xl font-bold hover:bg-opacity-95 transition">Gravar Colaborador</button>
+                    
+                    <div class="mt-4 pt-4 border-t">
+                        <h4 class="font-semibold text-sm text-slate-600 mb-2">Funcionários Cadastros:</h4>
+                        <ul id="lista-funcionarios" class="text-xs space-y-1 text-slate-600 max-h-32 overflow-y-auto"></ul>
+                    </div>
                 </div>
+
                 <div class="bg-white p-6 rounded-2xl card-shadow space-y-4">
                     <h3 class="font-bold text-lg text-slate-700 border-b pb-2">➕ Nova Área de Cobertura</h3>
-                    <input type="text" id="area-nome" placeholder="Ex: Bloco A - Garagens" class="w-full p-3 border rounded-xl focus:outline-arca-teal">
-                    <input type="text" id="area-loc" placeholder="Localização Técnica" class="w-full p-3 border rounded-xl focus:outline-arca-teal">
-                    <button onclick="salvarArea()" class="w-full bg-arca-teal text-white p-3 rounded-xl font-bold tracking-wide hover:bg-opacity-95 transition">Gravar Área</button>
+                    <input type="text" id="area-nome" placeholder="Ex: Bloco A - Garagens" class="w-full p-3 border rounded-xl">
+                    <input type="text" id="area-loc" placeholder="Localização Técnica" class="w-full p-3 border rounded-xl">
+                    <button onclick="salvarArea()" class="w-full bg-arca-teal text-white p-3 rounded-xl font-bold hover:bg-opacity-95 transition">Gravar Área</button>
+                    
+                    <div class="mt-4 pt-4 border-t">
+                        <h4 class="font-semibold text-sm text-slate-600 mb-2">Áreas Ativas:</h4>
+                        <ul id="lista-areas" class="text-xs space-y-1 text-slate-600 max-h-32 overflow-y-auto"></ul>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl card-shadow space-y-4 md:col-span-2">
+                    <h3 class="font-bold text-lg text-slate-700 border-b pb-2">➕ Nova Tarefa da Matriz CondoCheck</h3>
+                    <input type="text" id="tarefa-desc" placeholder="Ex: Verificar gerador de emergência" class="w-full p-3 border rounded-xl">
+                    <button onclick="salvarTarefa()" class="w-full bg-arca-blue text-white p-3 rounded-xl font-bold hover:bg-opacity-95 transition">Gravar na Matriz</button>
+                    
+                    <div class="mt-4 pt-4 border-t">
+                        <h4 class="font-semibold text-sm text-slate-600 mb-2">Matriz Vigente:</h4>
+                        <ul id="lista-tarefas" class="text-xs space-y-1 text-slate-600 max-h-40 overflow-y-auto"></ul>
+                    </div>
                 </div>
             </div>
         </section>
     </main>
 
     <script>
-        // CONEXÃO CORRIGIDA PARA O SEU HOST REAL DA PORTA 3000 CONFORME O PRINT
+        // CONFIGURAÇÕES DO SEU SERVIDOR REAL CONFORME BACKUP
         const SUPABASE_URL = "https://wsoxvx.easypanel.host/supabase";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indzb3h2eCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzM1MTMyNDgxLCJleHAiOjIwNTA3MDg0ODF9.1b_V6lW-9pT4hU3q9V8Vf5_Xj9YF_6z1e1e1e1e1e1e";
         const supabaseDB = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -164,10 +187,10 @@
             }
         }
 
+        // CARREGA OS DADOS E ATUALIZA O SEU DASHBOARD
         async function recarregarTudo() {
             try {
-                // TABELAS REAIS DO SEU BANCO DE DADOS CORRIGIDAS
-                const { data: atividades, error: err1 } = await supabaseDB.from('atividades_v2').select('*');
+                const { data: atividades, error: err1 } = await supabaseDB.from('matriz_tarefas_v2').select('*');
                 const { data: extras, error: err2 } = await supabaseDB.from('atividades_extras_v2').select('*');
 
                 if(err1 || err2) throw (err1 || err2);
@@ -180,12 +203,11 @@
                 atualizarDashboard();
 
             } catch (e) {
-                console.error("Erro na sincronização:", e);
-                document.getElementById('tabela-bento-corpo').innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500 font-bold bg-red-50">Erro ao carregar: ${e.message}</td></tr>`;
-                document.getElementById('tabela-condo-corpo').innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500 font-bold bg-red-50">Erro ao carregar: ${e.message}</td></tr>`;
+                console.error("Erro na telemetria:", e);
             }
         }
 
+        // RENDERIZAÇÃO DAS OCORRÊNCIAS BENTO (COM CAIXA DE TEXTO INDIVIDUAL)
         function renderizarTabelaBento() {
             const corpo = document.getElementById('tabela-bento-corpo');
             const filtrados = dadosExtrasLocais.filter(t => !String(t.descricao).toLowerCase().includes('vistoria'));
@@ -199,9 +221,9 @@
                 const midiaHtml = t.foto_url ? `<a href="${t.foto_url}" target="_blank" class="text-arca-blue font-semibold hover:underline">🖼️ Ver Foto</a>` : `<span class="text-slate-400">Sem foto</span>`;
                 
                 return `
-                    <tr class="hover:bg-slate-50 transition">
+                    <tr class="hover:bg-slate-50 border-b">
                         <td class="p-4 text-center"><input type="checkbox" class="chk-bento-item" value="${t.id}"></td>
-                        <td class="p-4 font-medium text-slate-600">Pendente</td>
+                        <td class="p-4 text-slate-500 font-medium">Pendente</td>
                         <td class="p-4">
                             <div class="font-semibold text-slate-900">${t.categoria || 'Geral'}</div>
                             <div class="text-slate-500 mt-0.5">${t.descricao}</div>
@@ -209,9 +231,9 @@
                         <td class="p-4">${midiaHtml}</td>
                         <td class="p-4">
                             <div class="flex flex-col gap-2 max-w-xs mx-auto">
-                                <textarea id="reply-${t.id}" placeholder="Digite a resposta para o morador aqui..." class="w-full p-2 text-xs border rounded-lg focus:ring-1 focus:ring-arca-teal resize-none" rows="2"></textarea>
+                                <textarea id="reply-${t.id}" placeholder="Digite o parecer para o morador aqui..." class="w-full p-2 text-xs border rounded-lg focus:ring-1 focus:ring-arca-teal resize-none" rows="2"></textarea>
                                 <button onclick="fecharOcorrenciaIndividual('${t.id}')" class="bg-arca-teal text-white py-1.5 px-3 rounded-lg text-xs font-bold hover:bg-opacity-90 transition">
-                                    🚀 Enviar Resposta e Fechar
+                                    🚀 Enviar Resposta e Baixar
                                 </button>
                             </div>
                         </td>
@@ -220,22 +242,22 @@
             }).join('');
         }
 
+        // RENDERIZAÇÃO DO CONDOCHECK (MATRIZ + VISTORIAS DO APP)
         function renderizarTabelaCondo() {
             const corpo = document.getElementById('tabela-condo-corpo');
             const vistoriasExtras = dadosExtrasLocais.filter(t => String(t.descricao).toLowerCase().includes('vistoria'));
             
             if(dadosAtividadesLocais.length === 0 && vistoriasExtras.length === 0) {
-                corpo.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 font-medium">Nenhuma atividade pendente no CondoCheck.</td></tr>`;
+                corpo.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 font-medium">Nenhuma atividade pendente.</td></tr>`;
                 return;
             }
 
             let htmlGeral = "";
 
-            // Vistorias que vieram do app Bento mas contêm a palavra "vistoria"
             vistoriasExtras.forEach(t => {
-                const midia = t.foto_url ? `<a href="${t.foto_url}" target="_blank" class="text-arca-blue hover:underline">🖼️ Ver Imagem</a>` : `<span class="text-slate-400">-</span>`;
+                const midia = t.foto_url ? `<a href="${t.foto_url}" target="_blank" class="text-arca-blue hover:underline">🖼️ Imagem</a>` : `<span class="text-slate-400">-</span>`;
                 htmlGeral += `
-                    <tr class="hover:bg-slate-50 border-b border-slate-100 bg-amber-50/40">
+                    <tr class="hover:bg-slate-50 bg-amber-50/40 border-b">
                         <td class="p-4 text-center"><input type="checkbox" class="chk-condo-item" data-type="extra" value="${t.id}"></td>
                         <td class="p-4"><span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-bold">VISTORIA APP</span></td>
                         <td class="p-4">
@@ -244,22 +266,21 @@
                         </td>
                         <td class="p-4">${midia}</td>
                         <td class="p-4 text-center">
-                            <button onclick="baixarItemCondoUnico('${t.id}', 'extra')" class="text-arca-blue hover:text-opacity-80 font-bold text-xs">Dar Baixa</button>
+                            <button onclick="baixarItemCondoUnico('${t.id}', 'extra')" class="text-arca-blue hover:underline font-bold text-xs">Baixar</button>
                         </td>
                     </tr>
                 `;
             });
 
-            // Atividades Padrão da Matriz CondoCheck
             dadosAtividadesLocais.forEach(t => {
                 htmlGeral += `
-                    <tr class="hover:bg-slate-50 border-b border-slate-100">
+                    <tr class="hover:bg-slate-50 border-b">
                         <td class="p-4 text-center"><input type="checkbox" class="chk-condo-item" data-type="padrao" value="${t.id}"></td>
                         <td class="p-4"><span class="bg-slate-100 text-slate-700 text-xs px-2.5 py-1 rounded-full font-bold">MATRIZ</span></td>
                         <td class="p-4 text-slate-700 font-medium">${t.descricao_tarefa || 'Atividade de Rotina'}</td>
                         <td class="p-4 text-slate-400 text-xs">Padrão Operacional</td>
                         <td class="p-4 text-center">
-                            <button onclick="baixarItemCondoUnico('${t.id}', 'padrao')" class="text-arca-teal hover:text-opacity-80 font-bold text-xs">Dar Baixa</button>
+                            <button onclick="baixarItemCondoUnico('${t.id}', 'padrao')" class="text-arca-teal hover:underline font-bold text-xs">Baixar</button>
                         </td>
                     </tr>
                 `;
@@ -268,12 +289,13 @@
             corpo.innerHTML = htmlGeral;
         }
 
+        // INDIVIDUAL COM WEBHOOK DE RESPOSTA SÍNDICO
         async function fecharOcorrenciaIndividual(id) {
             const txtBox = document.getElementById(`reply-${id}`);
             const mensagemSindico = txtBox ? txtBox.value.trim() : "";
 
             if(!mensagemSindico) {
-                alert("Por favor, digite a resposta antes de fechar.");
+                alert("Por favor, preencha a resposta para o morador antes de baixar.");
                 return;
             }
 
@@ -289,53 +311,49 @@
                         resposta_sindico: mensagemSindico,
                         descricao_original: ocorrencia ? ocorrencia.descricao : ""
                     })
-                }).catch(e => console.log("Webhook processado"));
+                }).catch(e => console.log("Webhook em lote executado"));
 
-                alert("Ocorrência fechada e resposta enviada!");
+                alert("Ocorrência encerrada e resposta enviada!");
                 recarregarTudo();
             } catch(e) {
-                alert("Erro ao fechar: " + e.message);
+                alert("Erro: " + e.message);
             }
         }
 
+        // EM MASSA BENTO
         async function baixarBentoEmMassa() {
             const selecionados = document.querySelectorAll('.chk-bento-item:checked');
-            if(selecionados.length === 0) return alert("Selecione ao menos um item.");
-
-            if(confirm(`Fechar em massa ${selecionados.length} itens do Bento sem enviar mensagem?`)) {
+            if(selecionados.length === 0) return alert("Nenhum item marcado.");
+            if(confirm(`Fechar ${selecionados.length} ocorrências em massa?`)) {
                 try {
                     for(let chk of selecionados) {
                         await supabaseDB.from('atividades_extras_v2').delete().eq('id', chk.value);
                     }
-                    alert("Itens baixados!");
+                    alert("Sucesso!");
                     document.getElementById('chk-all-bento').checked = false;
                     recarregarTudo();
-                } catch(e) {
-                    alert("Erro: " + e.message);
-                }
+                } catch(e) { alert(e.message); }
             }
         }
 
+        // EM MASSA CONDOCHECK
         async function baixarCondoEmMassa() {
             const selecionados = document.querySelectorAll('.chk-condo-item:checked');
-            if(selecionados.length === 0) return alert("Selecione ao menos um item.");
-
-            if(confirm(`Dar baixa em massa em ${selecionados.length} atividades?`)) {
+            if(selecionados.length === 0) return alert("Nenhum item marcado.");
+            if(confirm(`Dar baixa em lote em ${selecionados.length} atividades?`)) {
                 try {
                     for(let chk of selecionados) {
                         const tipo = chk.getAttribute('data-type');
                         if(tipo === 'extra') {
                             await supabaseDB.from('atividades_extras_v2').delete().eq('id', chk.value);
                         } else {
-                            await supabaseDB.from('atividades_v2').delete().eq('id', chk.value);
+                            await supabaseDB.from('matriz_tarefas_v2').delete().eq('id', chk.value);
                         }
                     }
-                    alert("Baixa concluída!");
+                    alert("Baixa em massa executada!");
                     document.getElementById('chk-all-condo').checked = false;
                     recarregarTudo();
-                } catch(e) {
-                    alert("Erro: " + e.message);
-                }
+                } catch(e) { alert(e.message); }
             }
         }
 
@@ -344,25 +362,72 @@
                 if(tipo === 'extra') {
                     await supabaseDB.from('atividades_extras_v2').delete().eq('id', id);
                 } else {
-                    await supabaseDB.from('atividades_v2').delete().eq('id', id);
+                    await supabaseDB.from('matriz_tarefas_v2').delete().eq('id', id);
                 }
                 recarregarTudo();
-            } catch(e) {
-                alert("Erro: " + e.message);
-            }
+            } catch(e) { alert(e.message); }
         }
 
         function atualizarDashboard() {
             const bentoAbertas = dadosExtrasLocais.filter(t => !String(t.descricao).toLowerCase().includes('vistoria')).length;
             const condoPendentes = dadosAtividadesLocais.length + dadosExtrasLocais.filter(t => String(t.descricao).toLowerCase().includes('vistoria')).length;
-            
             document.getElementById('dash-bento-abertas').innerText = bentoAbertas;
             document.getElementById('dash-condo-pendentes').innerText = condoPendentes;
         }
 
+        // TODAS AS FUNÇÕES DE CADASTRO DO SEU BACKUP ORIGINAL PRESERVADAS 100%
+        async function carregarCadastrosBase() {
+            try {
+                const { data: f } = await supabaseDB.from('funcionarios_v2').select('*');
+                const lstF = document.getElementById('lista-funcionarios');
+                if(lstF && f) lstF.innerHTML = f.map(x => `<li>👤 ${x.nome} (${x.perfil}) <button onclick="deletarItem('funcionarios_v2','${x.id}', carregarCadastrosBase)" class="text-red-500 ml-1 font-bold">🗑</button></li>`).join('');
+
+                const { data: a } = await supabaseDB.from('areas').select('*').eq('ativo', true);
+                const lstA = document.getElementById('lista-areas');
+                if(lstA && a) lstA.innerHTML = a.map(x => `<li>📍 ${x.nome} <button onclick="desativarItem('areas','${x.id}')" class="text-red-500 ml-1 font-bold">🗑</button></li>`).join('');
+
+                const { data: t } = await supabaseDB.from('matriz_tarefas_v2').select('*');
+                const lstT = document.getElementById('lista-tarefas');
+                if(lstT && t) lstT.innerHTML = t.map(x => `<li>📋 ${x.descricao_tarefa} <button onclick="deletarItem('matriz_tarefas_v2','${x.id}', carregarCadastrosBase)" class="text-red-500 ml-1 font-bold">🗑</button></li>`).join('');
+            } catch(e) { console.log(e); }
+        }
+
+        async function salvarFuncionario() {
+            const n = document.getElementById('func-nome').value, l = document.getElementById('func-login').value, s = document.getElementById('func-senha').value, c = document.getElementById('func-perfil').value;
+            if(!n || !l || !s) return alert("Preencha tudo");
+            const {error} = await supabaseDB.from('funcionarios_v2').insert([{ nome: n, login: l.toLowerCase(), senha: s, perfil: c }]);
+            if(!error){ document.querySelectorAll('#sessao-cadastros input').forEach(i=>i.value=''); carregarCadastrosBase(); }
+        }
+
+        async function salvarArea() {
+            const n = document.getElementById('area-nome').value, l = document.getElementById('area-loc').value;
+            if(!n) return alert("Preencha Nome");
+            await supabaseDB.from('areas').insert([{ nome: n, localizacao: l, ativo: true }]);
+            document.getElementById('area-nome').value='';
+            carregarCadastrosBase();
+        }
+
+        async function salvarTarefa() {
+            const d = document.getElementById('tarefa-desc').value;
+            if(!d) return alert("Preencha a tarefa");
+            await supabaseDB.from('matriz_tarefas_v2').insert([{ descricao_tarefa: d, segunda: true, terca: true, quarta: true, quinta: true, sexta: true, sabado: true }]);
+            document.getElementById('tarefa-desc').value='';
+            carregarCadastrosBase();
+        }
+
+        async function deletarItem(tabela, id, callback) {
+            if(confirm("Apagar permanentemente?")) { await supabaseDB.from(tabela).delete().eq('id', id); callback(); }
+        }
+
+        async function desativarItem(tabela, id) {
+            if(confirm("Remover do aplicativo?")) { await supabaseDB.from(tabela).update({ ativo: false }).eq('id', id); carregarCadastrosBase(); }
+        }
+
+        // INICIALIZAÇÃO SEGURA DO SISTEMA
         window.onload = function() {
             mostrarSessao('sessao-painel');
             recarregarTudo();
+            carregarCadastrosBase();
         }
     </script>
 </body>
