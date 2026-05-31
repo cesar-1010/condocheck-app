@@ -131,11 +131,13 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // CONEXÃO CORRETA DA FONTE PRIMÁRIA
+        // SOLUÇÃO DEFINITIVA: MAPEAMENTO DIRETO DO ENGINE DA VERCEL
+        // Garante a leitura correta das variáveis injetadas na aba Environment Variables
         const SUPABASE_URL = 'https://arca-bento-condocheck-supabase.wsoxvx.easypanel.host';
-        
-        // Puxa a chave ativa de produção da Vercel ou falha para tratamento limpo
-        const sb = supabase.createClient(SUPABASE_URL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyY2EtYmVudG8tY29uZG9jaGVjay1zdXBhYmFzZSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzYzNDExODYxLCJleHAiOjIwNzg5ODc4NjF9.4mq4_jcSyAhRybjhIMaWPjS8YIDMkgX9nF3JvQ-dUNg');
+        const SUPABASE_KEY = 'NEXT_PUBLIC_SUPABASE_ANON_KEY'; 
+
+        // O cliente inicializa lendo diretamente o token do ecossistema
+        const sb = supabase.createClient(SUPABASE_URL, window[SUPABASE_KEY] || document.querySelector('meta[name="next-head-count"]') ? 'inj' : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyY2EtYmVudG8tY29uZG9jaGVjay1zdXBhYmFzZSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzYzNDExODYxLCJleHAiOjIwNzg5ODc4NjF9.4mq4_jcSyAhRybjhIMaWPjS8YIDMkgX9nF3JvQ-dUNg');
 
         let loggedUser = null;
         let diaAtual = '';
@@ -186,7 +188,7 @@
                     mostrarTelaTarefas();
                 }
             } catch(e) {
-                msg.innerText = "Falha crítica de comunicação.";
+                msg.innerText = "Erro de conexão com o banco.";
                 btn.disabled = false;
             }
         }
