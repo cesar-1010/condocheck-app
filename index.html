@@ -84,9 +84,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // ENDEREÇO DA FONTE PRIMÁRIA ESTABILIZADA NA HOSTINGER
+        // CALIBRAÇÃO EXATA VIA SENSOR DE SECRETS DA HOSTINGER
         const SUPABASE_URL = 'https://arca-bento-condocheck-supabase.wsoxvx.easypanel.host';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyY2EtYmVudG8tY29uZG9jaGVjay1zdXBhYmFzZSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzYzNDExODYxLCJleHAiOjIwNzg5ODc4NjF9.4mq4_jcSyAhRybjhIMaWPjS8YIDMkgX9nF3JvQ-dUNg';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
 
         const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -121,7 +121,6 @@
             btn.disabled = true;
 
             try {
-                // Modificado para maybeSingle() para evitar estouro de exceção interna do cliente Supabase
                 const { data, error } = await sb
                     .from('funcionarios_v2')
                     .select('*')
@@ -146,7 +145,7 @@
                     mostrarTelaTarefas();
                 }
             } catch(e) {
-                msg.innerText = "Falha de rede ou chave inválida.";
+                msg.innerText = "Falha de conexão com o banco.";
                 btn.disabled = false;
             }
         }
