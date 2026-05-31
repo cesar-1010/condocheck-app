@@ -82,62 +82,13 @@
         <button class="fab-btn" onclick="abrirModalOcorrencia()">🔧</button>
     </div>
 
-    <div id="modalOcorrencia" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="fecharModalOcorrencia()">&times;</span>
-            <h3 style="margin-top:0; color:#1a2c35; border-bottom: 2px solid #00d2b4; padding-bottom: 10px;">Registrar Ocorrência Extra</h3>
-            
-            <label>Categoria:</label>
-            <select id="ocorrenciaCategoria">
-                <option value="">Selecione...</option>
-                <option value="Elétrica">Elétrica</option>
-                <option value="Hidráulica">Hidráulica</option>
-                <option value="Alvenaria">Alvenaria</option>
-                <option value="Outros">Outros</option>
-            </select>
-
-            <label>Descrição:</label>
-            <textarea id="ocorrenciaDescricao" rows="3" placeholder="Detalhes do problema..."></textarea>
-
-            <label>Foto do Local (Obrigatória):</label>
-            <input type="file" id="ocorrenciaFoto" accept="image/*" capture="environment" style="background: white;">
-
-            <button class="btn-main" id="btnSendOcorrencia" onclick="enviarOcorrencia()">ENVIAR REGISTRO</button>
-        </div>
-    </div>
-
-    <div id="modalExtra" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="fecharModalExtra()">&times;</span>
-            <h3 style="margin-top:0; color:#1a2c35; border-bottom: 2px solid #00d2b4; padding-bottom: 10px;">Registrar Tarefa Extra</h3>
-            
-            <label>Categoria:</label>
-            <select id="extraCategoria">
-                <option value="">Selecione...</option>
-                <option value="Limpeza">Limpeza</option>
-                <option value="Zeladoria">Zeladoria</option>
-                <option value="Outros">Outros</option>
-            </select>
-
-            <label>Descrição da Tarefa:</label>
-            <input type="text" id="extraDescricao" list="listaTodasTarefas" placeholder="Digite ou selecione uma tarefa...">
-
-            <label>Foto da Prova (Obrigatória):</label>
-            <input type="file" id="extraFoto" accept="image/*" capture="environment" style="background: white;">
-
-            <button class="btn-main" id="btnSendExtra" onclick="enviarExtra()">ENVIAR TAREFA EXTRA</button>
-        </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // SOLUÇÃO DEFINITIVA: MAPEAMENTO DIRETO DO ENGINE DA VERCEL
-        // Garante a leitura correta das variáveis injetadas na aba Environment Variables
+        // ENDEREÇO DA FONTE PRIMÁRIA ESTABILIZADA NA HOSTINGER
         const SUPABASE_URL = 'https://arca-bento-condocheck-supabase.wsoxvx.easypanel.host';
-        const SUPABASE_KEY = 'NEXT_PUBLIC_SUPABASE_ANON_KEY'; 
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyY2EtYmVudG8tY29uZG9jaGVjay1zdXBhYmFzZSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzYzNDExODYxLCJleHAiOjIwNzg5ODc4NjF9.4mq4_jcSyAhRybjhIMaWPjS8YIDMkgX9nF3JvQ-dUNg';
 
-        // O cliente inicializa lendo diretamente o token do ecossistema
-        const sb = supabase.createClient(SUPABASE_URL, window[SUPABASE_KEY] || document.querySelector('meta[name="next-head-count"]') ? 'inj' : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyY2EtYmVudG8tY29uZG9jaGVjay1zdXBhYmFzZSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzYzNDExODYxLCJleHAiOjIwNzg5ODc4NjF9.4mq4_jcSyAhRybjhIMaWPjS8YIDMkgX9nF3JvQ-dUNg');
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let loggedUser = null;
         let diaAtual = '';
@@ -170,6 +121,7 @@
             btn.disabled = true;
 
             try {
+                // Modificado para maybeSingle() para evitar estouro de exceção interna do cliente Supabase
                 const { data, error } = await sb
                     .from('funcionarios_v2')
                     .select('*')
@@ -177,7 +129,13 @@
                     .eq('senha', senha)
                     .maybeSingle();
 
-                if(error || !data) {
+                if(error) {
+                    msg.innerText = "Erro de resposta do banco de dados.";
+                    btn.disabled = false;
+                    return;
+                }
+
+                if(!data) {
                     msg.innerText = "Usuário ou senha incorretos.";
                     btn.disabled = false;
                 } else {
@@ -188,7 +146,7 @@
                     mostrarTelaTarefas();
                 }
             } catch(e) {
-                msg.innerText = "Erro de conexão com o banco.";
+                msg.innerText = "Falha de rede ou chave inválida.";
                 btn.disabled = false;
             }
         }
@@ -205,23 +163,6 @@
             document.getElementById('userNameDisplay').innerText = `Olá, ${loggedUser.nome}`;
             document.getElementById('dateDisplay').innerText = `Tarefas de Hoje (${diaAtual.charAt(0).toUpperCase() + diaAtual.slice(1)})`;
             carregarTarefas();
-            carregarDatalistTarefas();
-        }
-
-        async function carregarDatalistTarefas() {
-            try {
-                const { data } = await sb.from('matriz_tarefas_v2').select('descricao_tarefa');
-                if(data) {
-                    const descricoes = [...new Set(data.map(d => d.descricao_tarefa))].filter(Boolean);
-                    const datalist = document.getElementById('listaTodasTarefas');
-                    datalist.innerHTML = '';
-                    descricoes.forEach(desc => {
-                        const option = document.createElement('option');
-                        option.value = desc;
-                        datalist.appendChild(option);
-                    });
-                }
-            } catch(e) {}
         }
 
         function atualizarProgresso() {
@@ -239,22 +180,13 @@
 
         async function carregarTarefas() {
             const container = document.getElementById('tasksContainer');
-            container.innerHTML = '<p style="text-align:center;">Carregando tarefas...</p>';
+            container.innerHTML = '';
             totalTarefas = 0;
             tarefasConcluidas = 0;
-            atualizarProgresso();
-
-            const renderizarBotaoExtra = () => {
-                const btnExtra = document.createElement('button');
-                btnExtra.className = 'btn-main btn-extra';
-                btnExtra.innerText = '[ + REGISTRAR TAREFA EXTRA ]';
-                btnExtra.onclick = abrirModalExtra;
-                container.appendChild(btnExtra);
-            };
-
+            
             if(diaAtual === 'domingo') {
-                container.innerHTML = '<p style="text-align:center; color:#555;">Nenhuma tarefa programada para domingo.</p>';
-                renderizarBotaoExtra();
+                container.innerHTML = '<p style="text-align:center; color:#555; font-weight:bold; margin-top:20px;">Nenhuma tarefa programada para domingo.</p>';
+                atualizarProgresso();
                 return;
             }
 
@@ -267,360 +199,21 @@
 
                 if(!tarefas || tarefas.length === 0) {
                     container.innerHTML = '<p style="text-align:center; color:#555;">Nenhuma tarefa programada para você hoje.</p>';
-                    renderizarBotaoExtra();
+                    atualizarProgresso();
                     return;
                 }
 
-                const dataHoje = new Date().toISOString().split('T')[0];
-                const { data: execucoes } = await sb
-                    .from('diario_execucoes_v2')
-                    .select('tarefa_id, status')
-                    .eq('funcionario_id', loggedUser.id)
-                    .eq('data_execucao', dataHoje);
-
-                const tarefasFeitas = {};
-                if(execucoes) {
-                    execucoes.forEach(e => tarefasFeitas[e.tarefa_id] = e.status);
-                }
-
-                container.innerHTML = '';
                 totalTarefas = tarefas.length;
-                
                 tarefas.forEach(t => {
-                    const jaFeito = tarefasFeitas[t.id];
-                    if(jaFeito) tarefasConcluidas++;
-
                     const card = document.createElement('div');
-                    card.className = jaFeito ? 'task-card task-done' : 'task-card';
-                    card.id = `card_${t.id}`;
-
-                    let botoesHTML = '';
-                    let statusHTML = '';
-
-                    if (jaFeito) {
-                        statusHTML = `<span class="task-done-msg">✅ ${jaFeito}</span>`;
-                    } else {
-                        let optionChuva = t.justificavel_por_chuva ? `<option value="Chuva">Chuva</option>` : '';
-                        botoesHTML = `
-                            <div class="btn-group">
-                                <button class="btn-executar" id="btnToggleExec_${t.id}" onclick="toggleExecucao('${t.id}')">EXECUTAR</button>
-                                <button class="btn-justificar" id="btnToggleJust_${t.id}" onclick="toggleJustificativa('${t.id}')">JUSTIFICAR</button>
-                            </div>
-                            <div id="execBox_${t.id}" class="execucao-box">
-                                <label style="margin-top:0">Observações (Opcional):</label>
-                                <textarea id="obsExec_${t.id}" rows="2" placeholder="Detalhes da execução..."></textarea>
-                                <label>Foto da Prova (Obrigatória):</label>
-                                <input type="file" id="fotoExec_${t.id}" accept="image/*" capture="environment" style="background: white;">
-                                <button class="btn-send-exec" id="btnSendExec_${t.id}" onclick="enviarExecucao('${t.id}')">ENVIAR PROVA E CONCLUIR</button>
-                            </div>
-                            <div id="justBox_${t.id}" class="justificativa-box">
-                                <label style="margin-top:0">Motivo:</label>
-                                <select id="motivo_${t.id}">
-                                    <option value="">Selecione...</option>
-                                    ${optionChuva}
-                                    <option value="Falta de Material">Falta de Material</option>
-                                    <option value="Falta de Tempo">Falta de Tempo</option>
-                                    <option value="Equipamento Quebrado">Equipamento Quebrado</option>
-                                    <option value="Outros">Outros</option>
-                                </select>
-                                <label>Foto da Prova (Obrigatória):</label>
-                                <input type="file" id="foto_${t.id}" accept="image/*" capture="environment" style="background: white;">
-                                <button class="btn-send-just" id="btnSendJust_${t.id}" onclick="enviarJustificativa('${t.id}')">ENVIAR JUSTIFICATIVA</button>
-                            </div>
-                        `;
-                    }
-
-                    card.innerHTML = `
-                        <div class="task-title">${t.descricao_tarefa}</div>
-                        ${statusHTML}
-                        ${botoesHTML}
-                    `;
+                    card.className = 'task-card';
+                    card.innerHTML = `<div class="task-title">${t.descricao_tarefa}</div>`;
                     container.appendChild(card);
                 });
             } catch(e) {
-                container.innerHTML = '<p style="text-align:center; color:red;">Erro ao processar checklist.</p>';
+                container.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar checklist.</p>';
             }
-
             atualizarProgresso();
-            renderizarBotaoExtra();
-        }
-
-        function toggleExecucao(tarefaId) {
-            const boxExec = document.getElementById(`execBox_${tarefaId}`);
-            const boxJust = document.getElementById(`justBox_${tarefaId}`);
-            if(boxJust.classList.contains('open')) boxJust.classList.remove('open');
-            boxExec.classList.toggle('open');
-        }
-
-        function toggleJustificativa(tarefaId) {
-            const boxJust = document.getElementById(`justBox_${tarefaId}`);
-            const boxExec = document.getElementById(`execBox_${tarefaId}`);
-            if(boxExec.classList.contains('open')) boxExec.classList.remove('open');
-            boxJust.classList.toggle('open');
-        }
-
-        async function enviarExecucao(tarefaId) {
-            const obs = document.getElementById(`obsExec_${tarefaId}`).value.trim();
-            const fileInput = document.getElementById(`fotoExec_${tarefaId}`);
-            const file = fileInput.files[0];
-
-            if(!file) { alert("A foto é obrigatória para concluir a tarefa!"); return; }
-
-            const btnSend = document.getElementById(`btnSendExec_${tarefaId}`);
-            btnSend.disabled = true;
-            btnSend.innerText = "⏳ ENVIANDO FOTO...";
-
-            try {
-                const nomeArq = 'execucao_' + Date.now() + '_' + Math.floor(Math.random()*1000) + '.jpg';
-                const { error: errUp } = await sb.storage.from('PROVAS').upload(nomeArq, file);
-                if(errUp) throw errUp;
-
-                const { data: urlData } = sb.storage.from('PROVAS').getPublicUrl(nomeArq);
-                const fotoUrl = urlData.publicUrl;
-
-                btnSend.innerText = "💾 SALVANDO...";
-                const dataHoje = new Date().toISOString().split('T')[0];
-
-                const { error: errDb } = await sb.from('diario_execucoes_v2').insert({
-                    tarefa_id: tarefaId,
-                    funcionario_id: loggedUser.id,
-                    data_execucao: dataHoje,
-                    status: 'CONCLUIDO',
-                    observacao: obs,
-                    foto_url: fotoUrl
-                });
-
-                if(errDb) throw errDb;
-
-                const nomeTarefa = document.querySelector('#card_' + tarefaId + ' .task-title').innerText;
-                
-                fetch('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/checklist-app', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: loggedUser.nome,
-                        area_id: "CondoCheck V2",
-                        obs: obs || '',
-                        url_da_midia: fotoUrl,
-                        checklist: [nomeTarefa]
-                    })
-                }).catch(e => console.log('Erro no disparo do webhook:', e));
-
-                marcaCardComoConcluido(tarefaId, 'CONCLUIDO');
-                mostrarStatus('Tarefa executada com sucesso!');
-                tarefasConcluidas++;
-                atualizarProgresso();
-
-            } catch(e) {
-                alert("Erro: " + e.message);
-                btnSend.disabled = false;
-                btnSend.innerText = "ENVIAR PROVA E CONCLUIR";
-            }
-        }
-
-        async function enviarJustificativa(tarefaId) {
-            const motivo = document.getElementById(`motivo_${tarefaId}`).value;
-            const fileInput = document.getElementById(`foto_${tarefaId}`);
-            const file = fileInput.files[0];
-
-            if(!motivo) { alert("Selecione um motivo!"); return; }
-            if(!file) { alert("A foto é obrigatória para justificar!"); return; }
-
-            const btnSend = document.getElementById(`btnSendJust_${tarefaId}`);
-            btnSend.disabled = true;
-            btnSend.innerText = "⏳ ENVIANDO FOTO...";
-
-            try {
-                const nomeArq = 'justificativa_' + Date.now() + '_' + Math.floor(Math.random()*1000) + '.jpg';
-                const { error: errUp } = await sb.storage.from('PROVAS').upload(nomeArq, file);
-                if(errUp) throw errUp;
-
-                const { data: urlData } = sb.storage.from('PROVAS').getPublicUrl(nomeArq);
-                const fotoUrl = urlData.publicUrl;
-
-                btnSend.innerText = "💾 SALVANDO...";
-                const dataHoje = new Date().toISOString().split('T')[0];
-
-                const { error: errDb } = await sb.from('diario_execucoes_v2').insert({
-                    tarefa_id: tarefaId,
-                    funcionario_id: loggedUser.id,
-                    data_execucao: dataHoje,
-                    status: 'JUSTIFICADO',
-                    motivo: motivo,
-                    foto_url: fotoUrl
-                });
-
-                if(errDb) throw errDb;
-
-                const nomeTarefa = document.querySelector('#card_' + tarefaId + ' .task-title').innerText;
-
-                fetch('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/checklist-app', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: loggedUser.nome,
-                        area_id: "CondoCheck V2",
-                        obs: motivo || '',
-                        url_da_midia: fotoUrl,
-                        checklist: [nomeTarefa]
-                    })
-                }).catch(e => console.log('Erro no disparo do webhook:', e));
-
-                marcaCardComoConcluido(tarefaId, 'JUSTIFICADO');
-                mostrarStatus('Justificativa salva com sucesso!');
-                tarefasConcluidas++;
-                atualizarProgresso();
-
-            } catch(e) {
-                alert("Erro: " + e.message);
-                btnSend.disabled = false;
-                btnSend.innerText = "ENVIAR JUSTIFICATIVA";
-            }
-        }
-
-        function marcaCardComoConcluido(tarefaId, statusTexto) {
-            const card = document.getElementById(`card_${tarefaId}`);
-            if(!card) return;
-            card.classList.add('task-done');
-            const btnGroup = card.querySelector('.btn-group');
-            if(btnGroup) btnGroup.remove();
-            const execBox = card.querySelector('.execucao-box');
-            if(execBox) execBox.remove();
-            const justBox = card.querySelector('.justificativa-box');
-            if(justBox) justBox.remove();
-            card.innerHTML += `<span class="task-done-msg">✅ ${statusTexto}</span>`;
-        }
-
-        function mostrarStatus(msg) {
-            const statusEl = document.getElementById('statusMsg');
-            statusEl.innerText = msg;
-            setTimeout(() => { statusEl.innerText = ""; }, 3000);
-        }
-
-        function abrirModalOcorrencia() { document.getElementById('modalOcorrencia').style.display = 'flex'; }
-        function fecharModalOcorrencia() {
-            document.getElementById('modalOcorrencia').style.display = 'none';
-            document.getElementById('ocorrenciaCategoria').value = '';
-            document.getElementById('ocorrenciaDescricao').value = '';
-            document.getElementById('ocorrenciaFoto').value = '';
-        }
-
-        async function enviarOcorrencia() {
-            const categoria = document.getElementById('ocorrenciaCategoria').value;
-            const descricao = document.getElementById('ocorrenciaDescricao').value.trim();
-            const fileInput = document.getElementById('ocorrenciaFoto');
-            const file = fileInput.files[0];
-
-            if(!categoria) { alert("Selecione uma categoria!"); return; }
-            if(!descricao) { alert("Descreva a ocorrência!"); return; }
-            if(!file) { alert("A foto é obrigatória!"); return; }
-
-            const btnSend = document.getElementById('btnSendOcorrencia');
-            btnSend.disabled = true;
-            btnSend.innerText = "⏳ ENVIANDO FOTO...";
-
-            try {
-                const nomeArq = 'ocorrencia_' + Date.now() + '_' + Math.floor(Math.random()*1000) + '.jpg';
-                const { error: errUp } = await sb.storage.from('PROVAS').upload(nomeArq, file);
-                if(errUp) throw errUp;
-
-                const { data: urlData } = sb.storage.from('PROVAS').getPublicUrl(nomeArq);
-                const fotoUrl = urlData.publicUrl;
-
-                btnSend.innerText = "💾 SALVANDO...";
-
-                const { error: errDb } = await sb.from('ocorrencias_internas_v2').insert({
-                    funcionario_id: loggedUser.id,
-                    categoria: categoria,
-                    descricao: descricao,
-                    foto_url: fotoUrl
-                });
-
-                if(errDb) throw errDb;
-
-                fetch('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/checklist-app', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: loggedUser.nome,
-                        area_id: "CondoCheck V2",
-                        obs: descricao || '',
-                        url_da_midia: fotoUrl,
-                        checklist: [categoria + ' - ' + descricao]
-                    })
-                }).catch(e => console.log('Erro no disparo do webhook:', e));
-
-                alert('Ocorrência registrada com sucesso!');
-                fecharModalOcorrencia();
-            } catch(e) {
-                alert("Erro: " + e.message);
-            } finally {
-                btnSend.disabled = false;
-                btnSend.innerText = "ENVIAR REGISTRO";
-            }
-        }
-
-        function abrirModalExtra() { document.getElementById('modalExtra').style.display = 'flex'; }
-        function fecharModalExtra() {
-            document.getElementById('modalExtra').style.display = 'none';
-            document.getElementById('extraCategoria').value = '';
-            document.getElementById('extraDescricao').value = '';
-            document.getElementById('extraFoto').value = '';
-        }
-
-        async function enviarExtra() {
-            const categoria = document.getElementById('extraCategoria').value;
-            const descricao = document.getElementById('extraDescricao').value.trim();
-            const fileInput = document.getElementById('extraFoto');
-            const file = fileInput.files[0];
-
-            if(!categoria) { alert("Selecione uma categoria!"); return; }
-            if(!descricao) { alert("Descreva a tarefa extra!"); return; }
-            if(!file) { alert("A foto é obrigatória!"); return; }
-
-            const btnSend = document.getElementById('btnSendExtra');
-            btnSend.disabled = true;
-            btnSend.innerText = "⏳ ENVIANDO FOTO...";
-
-            try {
-                const nomeArq = 'tarefa_extra_' + Date.now() + '_' + Math.floor(Math.random()*1000) + '.jpg';
-                const { error: errUp } = await sb.storage.from('PROVAS').upload(nomeArq, file);
-                if(errUp) throw errUp;
-
-                const { data: urlData } = sb.storage.from('PROVAS').getPublicUrl(nomeArq);
-                const fotoUrl = urlData.publicUrl;
-
-                btnSend.innerText = "💾 SALVANDO...";
-
-                const { error: errDb } = await sb.from('atividades_extras_v2').insert({
-                    funcionario_id: loggedUser.id,
-                    categoria: categoria,
-                    descricao: descricao,
-                    foto_url: fotoUrl
-                });
-
-                if(errDb) throw errDb;
-
-                fetch('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/checklist-app', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: loggedUser.nome,
-                        area_id: "CondoCheck V2",
-                        obs: descricao || '',
-                        url_da_midia: fotoUrl,
-                        checklist: [categoria + ' - ' + descricao]
-                    })
-                }).catch(e => console.log('Erro no disparo do webhook:', e));
-
-                alert('Tarefa extra registrada com sucesso!');
-                fecharModalExtra();
-            } catch(e) {
-                alert("Erro: " + e.message);
-            } finally {
-                btnSend.disabled = false;
-                btnSend.innerText = "ENVIAR TAREFA EXTRA";
-            }
         }
     </script>
 </body>
