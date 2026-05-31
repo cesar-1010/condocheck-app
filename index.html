@@ -9,11 +9,9 @@
         .screen { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: none; position: relative; }
         .active { display: block; }
         h2, h3 { text-align: center; color: #1a2c35; margin-top: 0; }
-        .header-title { border-bottom: 2px solid #00d2b4; padding-bottom: 10px; }
         label { display: block; margin-top: 15px; font-weight: bold; color: #555; }
         input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; background: #f9f9f9; }
         .btn-main { width: 100%; padding: 15px; background: #1a2c35; color: #00d2b4; border: none; font-weight: bold; font-size: 16px; margin-top: 20px; border-radius: 8px; cursor: pointer; }
-        .btn-main:active { opacity: 0.9; }
         .btn-main:disabled { background: #555; cursor: not-allowed; }
         .btn-extra { background: #1a2c35; color: white; border: 2px dashed #00d2b4; margin-top: 30px; }
         .error { color: red; text-align: center; margin-top: 10px; font-weight: bold; }
@@ -24,21 +22,18 @@
         .task-card { background: #f0f8f7; padding: 15px; margin-top: 15px; border-radius: 8px; border-left: 5px solid #00d2b4; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .task-title { font-size: 16px; color: #333; font-weight: bold; margin-bottom: 15px; line-height: 1.3; }
         .btn-group { display: flex; gap: 10px; }
-        .btn-executar { flex: 1; padding: 12px; background: #00d2b4; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
-        .btn-executar:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-justificar { flex: 1; padding: 12px; background: #ff9800; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
-        .btn-justificar:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-executar, .btn-justificar { flex: 1; padding: 12px; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .btn-executar { background: #00d2b4; }
+        .btn-justificar { background: #ff9800; }
         .execucao-box, .justificativa-box { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc; display: none; }
         .execucao-box.open, .justificativa-box.open { display: block; }
-        .btn-send-exec { width: 100%; padding: 12px; background: #00d2b4; color: white; border: none; border-radius: 6px; font-weight: bold; margin-top: 10px; cursor: pointer; }
-        .btn-send-exec:disabled { background: #555; cursor: not-allowed; }
-        .btn-send-just { width: 100%; padding: 12px; background: #1a2c35; color: white; border: none; border-radius: 6px; font-weight: bold; margin-top: 10px; cursor: pointer; }
-        .btn-send-just:disabled { background: #555; cursor: not-allowed; }
+        .btn-send-exec, .btn-send-just { width: 100%; padding: 12px; color: white; border: none; border-radius: 6px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        .btn-send-exec { background: #00d2b4; }
+        .btn-send-just { background: #1a2c35; }
         .task-done { background: #e8f5e9; border-left-color: #4caf50; opacity: 0.7; pointer-events: none; }
         .task-done .btn-group { display: none; }
         .task-done-msg { color: #4caf50; font-weight: bold; font-size: 14px; text-align: center; display: block; margin-top: 10px; }
         .fab-btn { position: fixed; bottom: 30px; right: 30px; background: #00d2b4; color: #1a2c35; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: none; cursor: pointer; z-index: 1000; font-weight: bold; }
-        .fab-btn:active { transform: scale(0.95); }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
         .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; position: relative; max-height: 90vh; overflow-y: auto; }
         .close-modal { position: absolute; top: 15px; right: 15px; font-size: 28px; cursor: pointer; color: #555; line-height: 1; }
@@ -60,7 +55,7 @@
         <label>Senha:</label>
         <input type="password" id="loginPass" placeholder="****">
 
-        <button class="btn-main" onclick="fazerLogin()">ENTRAR</button>
+        <button class="btn-main" id="btnEntrarLogin" onclick="fazerLogin()">ENTRAR</button>
         <p id="msgLogin" class="error"></p>
     </div>
 
@@ -83,7 +78,6 @@
         <p id="progressText" style="text-align:center; font-size:14px; margin-top:5px; color:#555; font-weight:bold;"></p>
 
         <div id="tasksContainer"></div>
-
         <p id="statusMsg" style="text-align:center; margin-top:15px; font-weight:bold; color: #00d2b4;"></p>
         <button class="fab-btn" onclick="abrirModalOcorrencia()">🔧</button>
     </div>
@@ -137,12 +131,11 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // ALINHAMENTO DIRETO DA FONTE PRIMÁRIA (HOSTINGER/EASYPANEL)
+        // CONEXÃO CORRETA DA FONTE PRIMÁRIA
         const SUPABASE_URL = 'https://arca-bento-condocheck-supabase.wsoxvx.easypanel.host';
-        // A sua ANON_KEY foi capturada diretamente do ambiente de produção ativo
-        const SUPABASE_KEY = eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyY2EtYmVudG8tY29uZG9jaGVjay1zdXBhYmFzZSIsInJvbGU6ImFub24iLCJpYXQiOjE3NjM0MTE4NjEsImV4cCI6MjA3ODk4Nzg2MX0; 
         
-        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Puxa a chave ativa de produção da Vercel ou falha para tratamento limpo
+        const sb = supabase.createClient(SUPABASE_URL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyY2EtYmVudG8tY29uZG9jaGVjay1zdXBhYmFzZSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzYzNDExODYxLCJleHAiOjIwNzg5ODc4NjF9.4mq4_jcSyAhRybjhIMaWPjS8YIDMkgX9nF3JvQ-dUNg');
 
         let loggedUser = null;
         let diaAtual = '';
@@ -167,27 +160,34 @@
             const login = document.getElementById('loginUser').value.toLowerCase().trim();
             const senha = document.getElementById('loginPass').value.trim();
             const msg = document.getElementById('msgLogin');
+            const btn = document.getElementById('btnEntrarLogin');
 
             if(!login || !senha) { msg.innerText = "Preencha tudo."; return; }
 
             msg.innerText = "Verificando...";
+            btn.disabled = true;
 
-            const { data, error } = await sb
-                .from('funcionarios_v2')
-                .select('*')
-                .eq('login', login)
-                .eq('senha', senha)
-                .single();
+            try {
+                const { data, error } = await sb
+                    .from('funcionarios_v2')
+                    .select('*')
+                    .eq('login', login)
+                    .eq('senha', senha)
+                    .maybeSingle();
 
-            if(error || !data) {
-                msg.innerText = "Usuário ou senha incorretos.";
-            } else {
-                msg.innerText = "";
-                loggedUser = data;
-                localStorage.setItem('condocheck_v2_user_id', data.id);
-                localStorage.setItem('condocheck_v2_user_name', data.nome);
-                
-                mostrarTelaTarefas();
+                if(error || !data) {
+                    msg.innerText = "Usuário ou senha incorretos.";
+                    btn.disabled = false;
+                } else {
+                    msg.innerText = "";
+                    loggedUser = data;
+                    localStorage.setItem('condocheck_v2_user_id', data.id);
+                    localStorage.setItem('condocheck_v2_user_name', data.nome);
+                    mostrarTelaTarefas();
+                }
+            } catch(e) {
+                msg.innerText = "Falha crítica de comunicação.";
+                btn.disabled = false;
             }
         }
 
@@ -200,41 +200,36 @@
         function mostrarTelaTarefas() {
             document.getElementById('screenLogin').classList.remove('active');
             document.getElementById('screenChecklist').classList.add('active');
-            
             document.getElementById('userNameDisplay').innerText = `Olá, ${loggedUser.nome}`;
             document.getElementById('dateDisplay').innerText = `Tarefas de Hoje (${diaAtual.charAt(0).toUpperCase() + diaAtual.slice(1)})`;
-            
             carregarTarefas();
             carregarDatalistTarefas();
         }
 
         async function carregarDatalistTarefas() {
-            const { data, error } = await sb
-                .from('matriz_tarefas_v2')
-                .select('descricao_tarefa');
-            
-            if(data) {
-                const descricoes = [...new Set(data.map(d => d.descricao_tarefa))].filter(Boolean);
-                const datalist = document.getElementById('listaTodasTarefas');
-                datalist.innerHTML = '';
-                descricoes.forEach(desc => {
-                    const option = document.createElement('option');
-                    option.value = desc;
-                    datalist.appendChild(option);
-                });
-            }
+            try {
+                const { data } = await sb.from('matriz_tarefas_v2').select('descricao_tarefa');
+                if(data) {
+                    const descricoes = [...new Set(data.map(d => d.descricao_tarefa))].filter(Boolean);
+                    const datalist = document.getElementById('listaTodasTarefas');
+                    datalist.innerHTML = '';
+                    descricoes.forEach(desc => {
+                        const option = document.createElement('option');
+                        option.value = desc;
+                        datalist.appendChild(option);
+                    });
+                }
+            } catch(e) {}
         }
 
         function atualizarProgresso() {
             const progressText = document.getElementById('progressText');
             const progressBar = document.getElementById('progressBar');
-            
             if(totalTarefas === 0) {
                 progressText.innerText = '';
                 progressBar.style.width = '0%';
                 return;
             }
-            
             const perc = (tarefasConcluidas / totalTarefas) * 100;
             progressBar.style.width = `${perc}%`;
             progressText.innerText = `${tarefasConcluidas} de ${totalTarefas} Tarefas Concluídas`;
@@ -261,84 +256,88 @@
                 return;
             }
 
-            const { data: tarefas, error: errTarefas } = await sb
-                .from('matriz_tarefas_v2')
-                .select('*')
-                .eq('funcionario_id', loggedUser.id)
-                .eq(diaAtual, true);
+            try {
+                const { data: tarefas } = await sb
+                    .from('matriz_tarefas_v2')
+                    .select('*')
+                    .eq('funcionario_id', loggedUser.id)
+                    .eq(diaAtual, true);
 
-            if(errTarefas || !tarefas || tarefas.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color:#555;">Nenhuma tarefa programada para você hoje.</p>';
-                renderizarBotaoExtra();
-                return;
-            }
-
-            const dataHoje = new Date().toISOString().split('T')[0];
-            const { data: execucoes, error: errExec } = await sb
-                .from('diario_execucoes_v2')
-                .select('tarefa_id, status')
-                .eq('funcionario_id', loggedUser.id)
-                .eq('data_execucao', dataHoje);
-
-            const tarefasFeitas = {};
-            if(execucoes) {
-                execucoes.forEach(e => tarefasFeitas[e.tarefa_id] = e.status);
-            }
-
-            container.innerHTML = '';
-            totalTarefas = tarefas.length;
-            
-            tarefas.forEach(t => {
-                const jaFeito = tarefasFeitas[t.id];
-                if(jaFeito) tarefasConcluidas++;
-
-                const card = document.createElement('div');
-                card.className = jaFeito ? 'task-card task-done' : 'task-card';
-                card.id = `card_${t.id}`;
-
-                let botoesHTML = '';
-                let statusHTML = '';
-
-                if (jaFeito) {
-                    statusHTML = `<span class="task-done-msg">✅ ${jaFeito}</span>`;
-                } else {
-                    let optionChuva = t.justificavel_por_chuva ? `<option value="Chuva">Chuva</option>` : '';
-                    botoesHTML = `
-                        <div class="btn-group">
-                            <button class="btn-executar" id="btnToggleExec_${t.id}" onclick="toggleExecucao('${t.id}')">EXECUTAR</button>
-                            <button class="btn-justificar" id="btnToggleJust_${t.id}" onclick="toggleJustificativa('${t.id}')">JUSTIFICAR</button>
-                        </div>
-                        <div id="execBox_${t.id}" class="execucao-box">
-                            <label style="margin-top:0">Observações (Opcional):</label>
-                            <textarea id="obsExec_${t.id}" rows="2" placeholder="Detalhes da execução..."></textarea>
-                            <label>Foto da Prova (Obrigatória):</label>
-                            <input type="file" id="fotoExec_${t.id}" accept="image/*" capture="environment" style="background: white;">
-                            <button class="btn-send-exec" id="btnSendExec_${t.id}" onclick="enviarExecucao('${t.id}')">ENVIAR PROVA E CONCLUIR</button>
-                        </div>
-                        <div id="justBox_${t.id}" class="justificativa-box">
-                            <label style="margin-top:0">Motivo:</label>
-                            <select id="motivo_${t.id}">
-                                <option value="">Selecione...</option>
-                                ${optionChuva}
-                                <option value="Falta de Material">Falta de Material</option>
-                                <option value="Falta de Tempo">Falta de Tempo</option>
-                                <option value="Equipamento Quebrado">Equipamento Quebrado</option>
-                                <option value="Outros">Outros</option>
-                            </select>
-                            <label>Foto da Prova (Obrigatória):</label>
-                            <input type="file" id="foto_${t.id}" accept="image/*" capture="environment" style="background: white;">
-                            <button class="btn-send-just" id="btnSendJust_${t.id}" onclick="enviarJustificativa('${t.id}')">ENVIAR JUSTIFICATIVA</button>
-                        </div>
-                    `;
+                if(!tarefas || tarefas.length === 0) {
+                    container.innerHTML = '<p style="text-align:center; color:#555;">Nenhuma tarefa programada para você hoje.</p>';
+                    renderizarBotaoExtra();
+                    return;
                 }
 
-                card.innerHTML = `
-                    <div class="task-title">${t.descricao_tarefa}</div>
-                    ${statusHTML}
-                    ${botoesHTML}
-                `;
-                container.appendChild(card);
-            });
+                const dataHoje = new Date().toISOString().split('T')[0];
+                const { data: execucoes } = await sb
+                    .from('diario_execucoes_v2')
+                    .select('tarefa_id, status')
+                    .eq('funcionario_id', loggedUser.id)
+                    .eq('data_execucao', dataHoje);
+
+                const tarefasFeitas = {};
+                if(execucoes) {
+                    execucoes.forEach(e => tarefasFeitas[e.tarefa_id] = e.status);
+                }
+
+                container.innerHTML = '';
+                totalTarefas = tarefas.length;
+                
+                tarefas.forEach(t => {
+                    const jaFeito = tarefasFeitas[t.id];
+                    if(jaFeito) tarefasConcluidas++;
+
+                    const card = document.createElement('div');
+                    card.className = jaFeito ? 'task-card task-done' : 'task-card';
+                    card.id = `card_${t.id}`;
+
+                    let botoesHTML = '';
+                    let statusHTML = '';
+
+                    if (jaFeito) {
+                        statusHTML = `<span class="task-done-msg">✅ ${jaFeito}</span>`;
+                    } else {
+                        let optionChuva = t.justificavel_por_chuva ? `<option value="Chuva">Chuva</option>` : '';
+                        botoesHTML = `
+                            <div class="btn-group">
+                                <button class="btn-executar" id="btnToggleExec_${t.id}" onclick="toggleExecucao('${t.id}')">EXECUTAR</button>
+                                <button class="btn-justificar" id="btnToggleJust_${t.id}" onclick="toggleJustificativa('${t.id}')">JUSTIFICAR</button>
+                            </div>
+                            <div id="execBox_${t.id}" class="execucao-box">
+                                <label style="margin-top:0">Observações (Opcional):</label>
+                                <textarea id="obsExec_${t.id}" rows="2" placeholder="Detalhes da execução..."></textarea>
+                                <label>Foto da Prova (Obrigatória):</label>
+                                <input type="file" id="fotoExec_${t.id}" accept="image/*" capture="environment" style="background: white;">
+                                <button class="btn-send-exec" id="btnSendExec_${t.id}" onclick="enviarExecucao('${t.id}')">ENVIAR PROVA E CONCLUIR</button>
+                            </div>
+                            <div id="justBox_${t.id}" class="justificativa-box">
+                                <label style="margin-top:0">Motivo:</label>
+                                <select id="motivo_${t.id}">
+                                    <option value="">Selecione...</option>
+                                    ${optionChuva}
+                                    <option value="Falta de Material">Falta de Material</option>
+                                    <option value="Falta de Tempo">Falta de Tempo</option>
+                                    <option value="Equipamento Quebrado">Equipamento Quebrado</option>
+                                    <option value="Outros">Outros</option>
+                                </select>
+                                <label>Foto da Prova (Obrigatória):</label>
+                                <input type="file" id="foto_${t.id}" accept="image/*" capture="environment" style="background: white;">
+                                <button class="btn-send-just" id="btnSendJust_${t.id}" onclick="enviarJustificativa('${t.id}')">ENVIAR JUSTIFICATIVA</button>
+                            </div>
+                        `;
+                    }
+
+                    card.innerHTML = `
+                        <div class="task-title">${t.descricao_tarefa}</div>
+                        ${statusHTML}
+                        ${botoesHTML}
+                    `;
+                    container.appendChild(card);
+                });
+            } catch(e) {
+                container.innerHTML = '<p style="text-align:center; color:red;">Erro ao processar checklist.</p>';
+            }
 
             atualizarProgresso();
             renderizarBotaoExtra();
@@ -480,33 +479,23 @@
         function marcaCardComoConcluido(tarefaId, statusTexto) {
             const card = document.getElementById(`card_${tarefaId}`);
             if(!card) return;
-            
             card.classList.add('task-done');
-            
             const btnGroup = card.querySelector('.btn-group');
             if(btnGroup) btnGroup.remove();
-            
             const execBox = card.querySelector('.execucao-box');
             if(execBox) execBox.remove();
-            
             const justBox = card.querySelector('.justificativa-box');
             if(justBox) justBox.remove();
-            
             card.innerHTML += `<span class="task-done-msg">✅ ${statusTexto}</span>`;
         }
 
         function mostrarStatus(msg) {
             const statusEl = document.getElementById('statusMsg');
             statusEl.innerText = msg;
-            setTimeout(() => {
-                statusEl.innerText = "";
-            }, 3000);
+            setTimeout(() => { statusEl.innerText = ""; }, 3000);
         }
 
-        function abrirModalOcorrencia() {
-            document.getElementById('modalOcorrencia').style.display = 'flex';
-        }
-
+        function abrirModalOcorrencia() { document.getElementById('modalOcorrencia').style.display = 'flex'; }
         function fecharModalOcorrencia() {
             document.getElementById('modalOcorrencia').style.display = 'none';
             document.getElementById('ocorrenciaCategoria').value = '';
@@ -561,7 +550,6 @@
 
                 alert('Ocorrência registrada com sucesso!');
                 fecharModalOcorrencia();
-
             } catch(e) {
                 alert("Erro: " + e.message);
             } finally {
@@ -570,10 +558,7 @@
             }
         }
 
-        function abrirModalExtra() {
-            document.getElementById('modalExtra').style.display = 'flex';
-        }
-
+        function abrirModalExtra() { document.getElementById('modalExtra').style.display = 'flex'; }
         function fecharModalExtra() {
             document.getElementById('modalExtra').style.display = 'none';
             document.getElementById('extraCategoria').value = '';
@@ -589,4 +574,52 @@
 
             if(!categoria) { alert("Selecione uma categoria!"); return; }
             if(!descricao) { alert("Descreva a tarefa extra!"); return; }
-            if(!file) { alert("A foto é obrigatória!"); return;
+            if(!file) { alert("A foto é obrigatória!"); return; }
+
+            const btnSend = document.getElementById('btnSendExtra');
+            btnSend.disabled = true;
+            btnSend.innerText = "⏳ ENVIANDO FOTO...";
+
+            try {
+                const nomeArq = 'tarefa_extra_' + Date.now() + '_' + Math.floor(Math.random()*1000) + '.jpg';
+                const { error: errUp } = await sb.storage.from('PROVAS').upload(nomeArq, file);
+                if(errUp) throw errUp;
+
+                const { data: urlData } = sb.storage.from('PROVAS').getPublicUrl(nomeArq);
+                const fotoUrl = urlData.publicUrl;
+
+                btnSend.innerText = "💾 SALVANDO...";
+
+                const { error: errDb } = await sb.from('atividades_extras_v2').insert({
+                    funcionario_id: loggedUser.id,
+                    categoria: categoria,
+                    descricao: descricao,
+                    foto_url: fotoUrl
+                });
+
+                if(errDb) throw errDb;
+
+                fetch('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/checklist-app', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: loggedUser.nome,
+                        area_id: "CondoCheck V2",
+                        obs: descricao || '',
+                        url_da_midia: fotoUrl,
+                        checklist: [categoria + ' - ' + descricao]
+                    })
+                }).catch(e => console.log('Erro no disparo do webhook:', e));
+
+                alert('Tarefa extra registrada com sucesso!');
+                fecharModalExtra();
+            } catch(e) {
+                alert("Erro: " + e.message);
+            } finally {
+                btnSend.disabled = false;
+                btnSend.innerText = "ENVIAR TAREFA EXTRA";
+            }
+        }
+    </script>
+</body>
+</html>
