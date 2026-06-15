@@ -13,11 +13,9 @@
         input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; background: #f9f9f9; }
         .btn-main { width: 100%; padding: 15px; background: #1a2c35; color: #00d2b4; border: none; font-weight: bold; font-size: 16px; margin-top: 20px; border-radius: 8px; cursor: pointer; }
         .btn-main:disabled { background: #555; cursor: not-allowed; }
-        .btn-extra { background: #1a2c35; color: white; border: 2px dashed #00d2b4; margin-top: 30px; }
         .error { color: red; text-align: center; margin-top: 10px; font-weight: bold; }
         .progress-container { width: 100%; background-color: #ddd; border-radius: 8px; margin-top: 15px; overflow: hidden; height: 10px; }
         .progress-bar { height: 10px; background-color: #00d2b4; width: 0%; transition: width 0.3s; }
-        .logo-arca { position: fixed; bottom: 20px; left: 20px; width: 60px; height: auto; opacity: 0.6; z-index: 100; transition: opacity 0.3s; }
         .logo-condocheck { width: 160px; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: block; margin: 0 auto 10px auto; }
         .task-card { background: #f0f8f7; padding: 15px; margin-top: 15px; border-radius: 8px; border-left: 5px solid #00d2b4; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .task-title { font-size: 16px; color: #333; font-weight: bold; margin-bottom: 15px; line-height: 1.3; }
@@ -37,6 +35,8 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
         .modal-content { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; position: relative; max-height: 90vh; overflow-y: auto; }
         .close-modal { position: absolute; top: 15px; right: 15px; font-size: 28px; cursor: pointer; color: #555; line-height: 1; }
+        .camera-preview { width: 100%; height: auto; margin-top: 10px; border-radius: 6px; display: none; border: 2px solid #00d2b4; }
+        .input-file-camera { background: #00d2b4; color: #1a2c35; font-weight: bold; padding: 10px; border-radius: 6px; text-align: center; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -48,13 +48,10 @@
             <img src="Logo-Condocheck.png" class="logo-condocheck" alt="CondoCheck">
             <p style="color: #555; font-size: 14px; margin-top: 10px; font-weight: bold;">Acesso Operacional Restrito - V2</p>
         </div>
-        
         <label>Usuário:</label>
         <input type="text" id="loginUser" placeholder="Ex: maria">
-        
         <label>Senha:</label>
         <input type="password" id="loginPass" placeholder="****">
-
         <button class="btn-main" id="btnEntrarLogin" onclick="fazerLogin()">ENTRAR</button>
         <p id="msgLogin" class="error"></p>
     </div>
@@ -66,19 +63,15 @@
             <small onclick="sair()" style="color:red; cursor:pointer; font-weight:bold;">Sair</small>
         </div>
         <hr style="border:0; border-top:1px solid #eee; margin:10px 0">
-
         <div style="background:#e9ecef; padding:10px; border-radius:6px; margin-bottom:15px; text-align:center;">
             <span style="color:#555; font-weight:bold" id="userNameDisplay"></span><br>
             <span style="color:#888; font-size:14px" id="dateDisplay"></span>
         </div>
-
         <div class="progress-container">
             <div class="progress-bar" id="progressBar"></div>
         </div>
         <p id="progressText" style="text-align:center; font-size:14px; margin-top:5px; color:#555; font-weight:bold;"></p>
-
         <div id="tasksContainer"></div>
-        <p id="statusMsg" style="text-align:center; margin-top:15px; font-weight:bold; color: #00d2b4;"></p>
         <button class="fab-btn" onclick="abrirModalOcorrencia()">🔧</button>
     </div>
 
@@ -87,13 +80,10 @@
         <div class="modal-content">
             <span class="close-modal" onclick="fecharModalOcorrencia()">&times;</span>
             <h3>Registrar Ocorrência Avulsa</h3>
-            
             <label>Selecione a Tarefa/Atividade:</label>
-            <input type="text" id="ocorrencaTarefaInput" list="listaTodasTarefas" placeholder="Digite ou selecione a atividade...">
-            
+            <input type="text" id="ocorrencaTarefaInput" list="listaTodasTarefas" placeholder="Digite a atividade...">
             <label>Descrição Detalhada do Problema:</label>
-            <textarea id="ocorrenciaDescricao" rows="4" placeholder="Relate o que aconteceu ou o que precisa de manutenção..."></textarea>
-            
+            <textarea id="ocorrenciaDescricao" rows="4" placeholder="Relate o problema ou manutenção..."></textarea>
             <button class="btn-main" id="btnEnviarOcorrenciaAvulsa" onclick="salvarOcorrenciaAvulsa()">REGISTRAR OCORRÊNCIA</button>
             <p id="msgOcorrenciaModal" style="text-align:center; font-weight:bold; margin-top:10px;"></p>
         </div>
@@ -103,14 +93,13 @@
     <script>
         const SUPABASE_URL = 'https://arca-bento-condocheck-supabase.wsoxvx.easypanel.host';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
-
         const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let loggedUser = null;
         let diaAtual = '';
         let totalTarefas = 0;
         let tarefasConcluidas = 0;
-        let listaIdsTarefasCarregadas = [];
+        let fotosBase64 = {};
 
         const diasSemana = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
         const hoje = new Date();
@@ -131,48 +120,19 @@
             const login = document.getElementById('loginUser').value.toLowerCase().trim();
             const senha = document.getElementById('loginPass').value.trim();
             const msg = document.getElementById('msgLogin');
-            const btn = document.getElementById('btnEntrarLogin');
-
             if(!login || !senha) { msg.innerText = "Preencha tudo."; return; }
-
             msg.innerText = "Verificando...";
-            btn.disabled = true;
-
             try {
-                const { data, error } = await sb
-                    .from('funcionarios_v2')
-                    .select('*')
-                    .eq('login', login)
-                    .eq('senha', senha)
-                    .maybeSingle();
-
-                if(error) {
-                    msg.innerText = "Erro de resposta do banco de dados.";
-                    btn.disabled = false;
-                    return;
-                }
-
-                if(!data) {
-                    msg.innerText = "Usuário ou senha incorretos.";
-                    btn.disabled = false;
-                } else {
-                    msg.innerText = "";
-                    loggedUser = data;
-                    localStorage.setItem('condocheck_v2_user_id', data.id);
-                    localStorage.setItem('condocheck_v2_user_name', data.nome);
-                    mostrarTelaTarefas();
-                }
-            } catch(e) {
-                msg.innerText = "Falha de conexão com o banco.";
-                btn.disabled = false;
-            }
+                const { data, error } = await sb.from('funcionarios_v2').select('*').eq('login', login).eq('senha', senha).maybeSingle();
+                if(error || !data) { msg.innerText = "Acesso incorreto."; return; }
+                loggedUser = data;
+                localStorage.setItem('condocheck_v2_user_id', data.id);
+                localStorage.setItem('condocheck_v2_user_name', data.nome);
+                mostrarTelaTarefas();
+            } catch(e) { msg.innerText = "Erro de rede."; }
         }
 
-        function sair() {
-            localStorage.removeItem('condocheck_v2_user_id');
-            localStorage.removeItem('condocheck_v2_user_name');
-            location.reload();
-        }
+        function sair() { localStorage.clear(); location.reload(); }
 
         function mostrarTelaTarefas() {
             document.getElementById('screenLogin').classList.remove('active');
@@ -185,11 +145,7 @@
         function atualizarProgresso() {
             const progressText = document.getElementById('progressText');
             const progressBar = document.getElementById('progressBar');
-            if(totalTarefas === 0) {
-                progressText.innerText = '';
-                progressBar.style.width = '0%';
-                return;
-            }
+            if(totalTarefas === 0) { return; }
             const perc = (tarefasConcluidas / totalTarefas) * 100;
             progressBar.style.width = `${perc}%`;
             progressText.innerText = `${tarefasConcluidas} de ${totalTarefas} Tarefas Concluídas`;
@@ -198,159 +154,132 @@
         async function carregarTarefas() {
             const container = document.getElementById('tasksContainer');
             container.innerHTML = 'Carregando atividades...';
-            totalTarefas = 0;
-            tarefasConcluidas = 0;
-            listaIdsTarefasCarregadas = [];
-            
-            if(diaAtual === 'domingo') {
-                container.innerHTML = '<p style="text-align:center; color:#555; font-weight:bold; margin-top:20px;">Nenhuma tarefa programada para domingo.</p>';
-                atualizarProgresso();
-                return;
-            }
-
             try {
-                const { data: tarefas, error: errT } = await sb
-                    .from('matriz_tarefas_v2')
-                    .select('*')
-                    .eq('funcionario_id', loggedUser.id)
-                    .eq(diaAtual, true);
-
-                if(errT) throw errT;
-
-                if(!tarefas || tarefas.length === 0) {
-                    container.innerHTML = '<p style="text-align:center; color:#555; margin-top:20px;">Nenhuma tarefa programada para você hoje.</p>';
-                    atualizarProgresso();
-                    return;
-                }
-
+                const { data: tarefas } = await sb.from('matriz_tarefas_v2').select('*').eq('funcionario_id', loggedUser.id).eq(diaAtual, true);
+                if(!tarefas || tarefas.length === 0) { container.innerHTML = 'Sem tarefas hoje.'; return; }
                 totalTarefas = tarefas.length;
-                listaIdsTarefasCarregadas = tarefas.map(t => String(t.id));
-
                 const hojeString = hoje.toISOString().split('T')[0];
-                const { data: executadas, error: errE } = await sb
-                    .from('diario_execucoes_v2')
-                    .select('tarefa_id, status')
-                    .eq('funcionario_id', loggedUser.id)
-                    .eq('data_execucao', hojeString);
-
-                if(errE) throw errE;
-
-                const mapaExecutadas = {};
-                if(executadas) {
-                    executadas.forEach(e => { mapaExecutadas[String(e.tarefa_id)] = e.status; });
-                }
+                const { data: executadas } = await sb.from('diario_execucoes_v2').select('tarefa_id, status').eq('funcionario_id', loggedUser.id).eq('data_execucao', hojeString);
+                
+                const mapa = {};
+                if(executadas) executadas.forEach(e => { mapa[String(e.tarefa_id)] = e.status; });
 
                 container.innerHTML = '';
                 tarefas.forEach(t => {
-                    const tIdStr = String(t.id);
-                    const jaConcluida = mapaExecutadas[tIdStr];
-
+                    const tId = String(t.id);
+                    const status = mapa[tId];
                     const card = document.createElement('div');
-                    card.id = `card-${tIdStr}`;
-                    card.className = `task-card ${jaConcluida ? 'task-done' : ''}`;
+                    card.id = `card-${tId}`;
+                    card.className = `task-card ${status ? 'task-done' : ''}`;
                     
-                    let htmlInterno = `<div class="task-title">${t.descricao_tarefa}</div>`;
-                    
-                    if(jaConcluida) {
+                    let html = `<div class="task-title">${t.descricao_tarefa}</div>`;
+                    if(status) {
                         tarefasConcluidas++;
-                        htmlInterno += `<span class="task-done-msg">✓ ${jaConcluida}</span>`;
+                        html += `<span class="task-done-msg">✓ ${status}</span>`;
                     } else {
-                        htmlInterno += `
-                            <div class="btn-group" id="actions-${tIdStr}">
-                                <button class="btn-executar" onclick="abrirExecucao('${tIdStr}')">Concluir</button>
-                                <button class="btn-justificar" onclick="abrirJustificativa('${tIdStr}')">Justificar</button>
+                        html += `
+                            <div class="btn-group" id="actions-${tId}">
+                                <button class="btn-executar" onclick="abrirExecucao('${tId}')">Concluir</button>
+                                <button class="btn-justificar" onclick="abrirJustificativa('${tId}')">Justificar</button>
                             </div>
-                            <div class="execucao-box" id="box-exec-${tIdStr}">
-                                <label>Evidência/Foto Link (Opcional):</label>
-                                <input type="text" id="foto-${tIdStr}" placeholder="http://...">
-                                <button class="btn-send-exec" onclick="enviarExecucao('${tIdStr}', 'CONCLUIDO')">CONFIRMAR CONCLUSÃO</button>
+                            <div class="execucao-box" id="box-exec-${tId}">
+                                <label style="color:red;">Capturar Evidência (Obrigatória):</label>
+                                <!-- COMPORTAMENTO ESTRITO: accept="image/*" capture="environment" bloqueia a galeria e força a câmera traseira -->
+                                <input type="file" class="input-file-camera" accept="image/*" capture="environment" id="cam-${tId}" onchange="processarFoto(this, '${tId}')">
+                                <img id="prev-${tId}" class="camera-preview">
+                                <button class="btn-send-exec" onclick="enviarExecucao('${tId}', 'CONCLUIDO')">CONFIRMAR CONCLUSÃO</button>
                             </div>
-                            <div class="justificativa-box" id="box-just-${tIdStr}">
-                                <label>Motivo da Justificativa:</label>
-                                <select id="motivo-${tIdStr}">
-                                    <option value="Chuva">Chuva / Tempo Ruim</option>
-                                    <option value="Falta de Material">Falta de Material</option>
-                                    <option value="Equipamento Quebrado">Equipamento Quebrado</option>
-                                    <option value="Outros">Outros (Descrever abaixo)</option>
-                                </select>
-                                <label>Detalhes:</label>
-                                <textarea id="detalhe-just-${tIdStr}" rows="2" placeholder="Explique o motivo..."></textarea>
-                                <button class="btn-send-just" onclick="enviarExecucao('${tIdStr}', 'JUSTIFICADO')">GRAVAR JUSTIFICATIVA</button>
-                            </div>
-                        `;
+                            <div class="justificativa-box" id="box-just-${tId}">
+                                <label>Motivo da Não Execução:</label>
+                                <select id="motivo-${tId}"><option value="Chuva">Chuva / Tempo Ruim</option><option value="Material">Falta de Material</option><option value="Outros">Outros</option></select>
+                                <textarea id="detalhe-${tId}" rows="2" placeholder="Descreva os detalhes..."></textarea>
+                                <button class="btn-send-just" onclick="enviarExecucao('${tId}', 'JUSTIFICADO')">GRAVAR JUSTIFICATIVA</button>
+                            </div>`;
                     }
-                    
-                    card.innerHTML = htmlInterno;
+                    card.innerHTML = html;
                     container.appendChild(card);
                 });
+                atualizarProgresso();
+            } catch(e) { container.innerHTML = 'Erro ao carregar banco de dados.'; }
+        }
 
-            } catch(e) {
-                container.innerHTML = '<p style="text-align:center; color:red; margin-top:20px;">Erro ao carregar o checklist de hoje.</p>';
+        // MOTOR DE COMPRESSÃO DE IMAGEM PARA BLINDAR O BANCO DE DADOS
+        function processarFoto(input, id) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800; // Limite técnico seguro para Supabase
+                        const MAX_HEIGHT = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                        } else {
+                            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Converte para JPEG com 70% de qualidade
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        fotosBase64[id] = dataUrl;
+
+                        const prev = document.getElementById(`prev-${id}`);
+                        prev.src = dataUrl;
+                        prev.style.display = 'block';
+                    }
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
             }
-            atualizarProgresso();
         }
 
-        function abrirExecucao(id) {
-            document.getElementById(`box-just-${id}`).classList.remove('open');
-            document.getElementById(`box-exec-${id}`).classList.toggle('open');
-        }
-
-        function abrirJustificativa(id) {
-            document.getElementById(`box-exec-${id}`).classList.remove('open');
-            document.getElementById(`box-just-${id}`).classList.toggle('open');
-        }
+        function abrirExecucao(id) { document.getElementById(`box-just-${id}`).style.display = 'none'; document.getElementById(`box-exec-${id}`).style.display = 'block'; }
+        function abrirJustificativa(id) { document.getElementById(`box-exec-${id}`).style.display = 'none'; document.getElementById(`box-just-${id}`).style.display = 'block'; }
 
         async function enviarExecucao(tarefaId, statusAlvo) {
             const hojeString = hoje.toISOString().split('T')[0];
-            let fotoUrl = null;
-            let motivoEscolhido = null;
+            let motivo = null;
+            let fotoFinal = null;
 
+            // VALIDAÇÃO ESTRITA DE AUDITORIA
             if(statusAlvo === 'CONCLUIDO') {
-                fotoUrl = document.getElementById(`foto-${tarefaId}`).value.trim() || null;
-            } else {
-                const sel = document.getElementById(`motivo-${tarefaId}`).value;
-                const det = document.getElementById(`detalhe-just-${tarefaId}`).value.trim();
-                motivoEscolhido = det ? `${sel} - ${det}` : sel;
-            }
-
-            const novoIdUuid = crypto.randomUUID();
-
-            try {
-                const { error } = await sb
-                    .from('diario_execucoes_v2')
-                    .insert([{
-                        id: novoIdUuid, 
-                        tarefa_id: tarefaId,
-                        funcionario_id: loggedUser.id,
-                        data_execucao: hojeString,
-                        status: statusAlvo,
-                        motivo: motivoEscolhido,
-                        foto_evidencia: fotoUrl
-                    }]);
-
-                if(error) {
-                    alert('Erro ao gravar no banco: ' + error.message);
+                if(!fotosBase64[tarefaId]) {
+                    alert('FALHA DE AUDITORIA: A foto de evidência é OBRIGATÓRIA para confirmar a conclusão da tarefa.');
                     return;
                 }
-
-                const card = document.getElementById(`card-${tarefaId}`);
-                card.className = 'task-card task-done';
-                card.innerHTML = `
-                    <div class="task-title">${card.querySelector('.task-title').innerText}</div>
-                    <span class="task-done-msg">✓ ${statusAlvo}</span>
-                `;
-                
-                tarefasConcluidas++;
-                atualizarProgresso();
-
-            } catch(e) {
-                alert('Falha crítica na execução do comando.');
+                fotoFinal = fotosBase64[tarefaId];
+            } else {
+                const sel = document.getElementById(`motivo-${tarefaId}`).value;
+                const det = document.getElementById(`detalhe-${tarefaId}`).value.trim();
+                motivo = det ? `${sel} - ${det}` : sel;
             }
+
+            try {
+                const { error } = await sb.from('diario_execucoes_v2').insert([{
+                    id: crypto.randomUUID(), 
+                    tarefa_id: tarefaId,
+                    funcionario_id: loggedUser.id,
+                    data_execucao: hojeString,
+                    status: statusAlvo,
+                    motivo: motivo,
+                    foto_evidencia: fotoFinal
+                }]);
+                if(error) { alert('Erro no banco: ' + error.message); return; }
+                location.reload();
+            } catch(e) { alert('Falha ao processar o comando.'); }
         }
 
         async function carregarTodasTarefasParaDatalist() {
             try {
-                // CORREÇÃO DA FONTE PRIMÁRIA: APONTANDO PARA A TABELA DE MATRIZ DE TAREFAS ATIVA
                 const { data } = await sb.from('matriz_tarefas_v2').select('id, descricao_tarefa');
                 if(data) {
                     const dl = document.getElementById('listaTodasTarefas');
@@ -358,7 +287,6 @@
                     data.forEach(x => {
                         const opt = document.createElement('option');
                         opt.value = x.descricao_tarefa;
-                        opt.setAttribute('data-id', x.id);
                         dl.appendChild(opt);
                     });
                 }
@@ -369,37 +297,19 @@
         function fecharModalOcorrencia() { document.getElementById('modalOcorrencia').style.display = 'none'; }
 
         async function salvarOcorrenciaAvulsa() {
-            const txtTarefa = document.getElementById('ocorrencaTarefaInput').value.trim();
+            const txt = document.getElementById('ocorrencaTarefaInput').value.trim();
             const desc = document.getElementById('ocorrenciaDescricao').value.trim();
-            const msg = document.getElementById('msgOcorrenciaModal');
-
-            if(!txtTarefa || !desc) { msg.style.color = 'red'; msg.innerText = "Preencha todos os campos."; return; }
-
-            msg.style.color = '#1a2c35';
-            msg.innerText = "Gravando ocorrência...";
+            
+            if(!txt || !desc) { alert("Preencha todos os campos da ocorrência."); return; }
 
             try {
-                const { error } = await sb
-                    .from('ocorrencias')
-                    .insert([{
-                        id: crypto.randomUUID(),
-                        descricao: `Atividade: ${txtTarefa} | Relato: ${desc}`,
-                        funcionario_id: loggedUser.id,
-                        data_registro: new Date().toISOString()
-                    }]);
-
-                if(error) { msg.style.color = 'red'; msg.innerText = error.message; }
-                else {
-                    msg.style.color = 'green';
-                    msg.innerText = "Ocorrência registrada com sucesso!";
-                    setTimeout(() => {
-                        fecharModalOcorrencia();
-                        document.getElementById('ocorrencaTarefaInput').value = '';
-                        document.getElementById('ocorrenciaDescricao').value = '';
-                        msg.innerText = '';
-                    }, 1500);
-                }
-            } catch(e) { msg.style.color = 'red'; msg.innerText = "Falha de conexão."; }
+                const { error } = await sb.from('ocorrencias').insert([{
+                    id: crypto.randomUUID(),
+                    descricao: `Atividade Extra: ${txt} | Relato: ${desc}`,
+                    funcionario_id: loggedUser.id
+                }]);
+                if(error) { alert("Erro ao gravar: " + error.message); } else { location.reload(); }
+            } catch(e) { alert('Falha de conexão.'); }
         }
     </script>
 </body>
