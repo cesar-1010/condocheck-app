@@ -82,9 +82,25 @@
         <button class="fab-btn" onclick="abrirModalOcorrencia()">🔧</button>
     </div>
 
+    <!-- MODAL DE OCORRÊNCIAS AVULSAS -->
+    <div id="modalOcorrencia" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="fecharModalOcorrencia()">&times;</span>
+            <h3>Registrar Ocorrência Avulsa</h3>
+            
+            <label>Selecione a Tarefa/Atividade:</label>
+            <input type="text" id="ocorrencaTarefaInput" list="listaTodasTarefas" placeholder="Digite ou selecione a atividade...">
+            
+            <label>Descrição Detalhada do Problema:</label>
+            <textarea id="ocorrenciaDescricao" rows="4" placeholder="Relate o que aconteceu ou o que precisa de manutenção..."></textarea>
+            
+            <button class="btn-main" id="btnEnviarOcorrenciaAvulsa" onclick="salvarOcorrenciaAvulsa()">REGISTRAR OCORRÊNCIA</button>
+            <p id="msgOcorrenciaModal" style="text-align:center; font-weight:bold; margin-top:10px;"></p>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // CALIBRAÇÃO EXATA VIA SENSOR DE SECRETS DA HOSTINGER
         const SUPABASE_URL = 'https://arca-bento-condocheck-supabase.wsoxvx.easypanel.host';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
 
@@ -94,6 +110,7 @@
         let diaAtual = '';
         let totalTarefas = 0;
         let tarefasConcluidas = 0;
+        let listaIdsTarefasCarregadas = [];
 
         const diasSemana = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
         const hoje = new Date();
@@ -106,8 +123,9 @@
                 loggedUser = { id: savedUserId, nome: savedUserName };
                 mostrarTelaTarefas();
             }
+            carregarTodasTarefasParaDatalist();
         }
-        init();
+        window.onload = init;
 
         async function fazerLogin() {
             const login = document.getElementById('loginUser').value.toLowerCase().trim();
@@ -179,9 +197,10 @@
 
         async function carregarTarefas() {
             const container = document.getElementById('tasksContainer');
-            container.innerHTML = '';
+            container.innerHTML = 'Carregando atividades...';
             totalTarefas = 0;
             tarefasConcluidas = 0;
+            listaIdsTarefasCarregadas = [];
             
             if(diaAtual === 'domingo') {
                 container.innerHTML = '<p style="text-align:center; color:#555; font-weight:bold; margin-top:20px;">Nenhuma tarefa programada para domingo.</p>';
@@ -190,29 +209,197 @@
             }
 
             try {
-                const { data: tarefas } = await sb
+                const { data: tarefas, error: errT } = await sb
                     .from('matriz_tarefas_v2')
                     .select('*')
                     .eq('funcionario_id', loggedUser.id)
                     .eq(diaAtual, true);
 
+                if(errT) throw errT;
+
                 if(!tarefas || tarefas.length === 0) {
-                    container.innerHTML = '<p style="text-align:center; color:#555;">Nenhuma tarefa programada para você hoje.</p>';
+                    container.innerHTML = '<p style="text-align:center; color:#555; margin-top:20px;">Nenhuma tarefa programada para você hoje.</p>';
                     atualizarProgresso();
                     return;
                 }
 
                 totalTarefas = tarefas.length;
+                listaIdsTarefasCarregadas = tarefas.map(t => String(t.id));
+
+                const hojeString = hoje.toISOString().split('T')[0];
+                const { data: executadas, error: errE } = await sb
+                    .from('diario_execucoes_v2')
+                    .select('tarefa_id, status')
+                    .eq('funcionario_id', loggedUser.id)
+                    .eq('data_execucao', hojeString);
+
+                if(errE) throw errE;
+
+                const mapaExecutadas = {};
+                if(executadas) {
+                    executadas.forEach(e => { mapaExecutadas[String(e.tarefa_id)] = e.status; });
+                }
+
+                container.innerHTML = '';
                 tarefas.forEach(t => {
+                    const tIdStr = String(t.id);
+                    const jaConcluida = mapaExecutadas[tIdStr];
+
                     const card = document.createElement('div');
-                    card.className = 'task-card';
-                    card.innerHTML = `<div class="task-title">${t.descricao_tarefa}</div>`;
+                    card.id = `card-${tIdStr}`;
+                    card.className = `task-card ${jaConcluida ? 'task-done' : ''}`;
+                    
+                    let htmlInterno = `<div class="task-title">${t.descricao_tarefa}</div>`;
+                    
+                    if(jaConcluida) {
+                        tarefasConcluidas++;
+                        htmlInterno += `<span class="task-done-msg">✓ ${jaConcluida}</span>`;
+                    } else {
+                        htmlInterno += `
+                            <div class="btn-group" id="actions-${tIdStr}">
+                                <button class="btn-executar" onclick="abrirExecucao('${tIdStr}')">Concluir</button>
+                                <button class="btn-justificar" onclick="abrirJustificativa('${tIdStr}')">Justificar</button>
+                            </div>
+                            <div class="execucao-box" id="box-exec-${tIdStr}">
+                                <label>Evidência/Foto Link (Opcional):</label>
+                                <input type="text" id="foto-${tIdStr}" placeholder="http://...">
+                                <button class="btn-send-exec" onclick="enviarExecucao('${tIdStr}', 'CONCLUIDO')">CONFIRMAR CONCLUSÃO</button>
+                            </div>
+                            <div class="justificativa-box" id="box-just-${tIdStr}">
+                                <label>Motivo da Justificativa:</label>
+                                <select id="motivo-${tIdStr}">
+                                    <option value="Chuva">Chuva / Tempo Ruim</option>
+                                    <option value="Falta de Material">Falta de Material</option>
+                                    <option value="Equipamento Quebrado">Equipamento Quebrado</option>
+                                    <option value="Outros">Outros (Descrever abaixo)</option>
+                                </select>
+                                <label>Detalhes:</label>
+                                <textarea id="detalhe-just-${tIdStr}" rows="2" placeholder="Explique o motivo..."></textarea>
+                                <button class="btn-send-just" onclick="enviarExecucao('${tIdStr}', 'JUSTIFICADO')">GRAVAR JUSTIFICATIVA</button>
+                            </div>
+                        `;
+                    }
+                    
+                    card.innerHTML = htmlInterno;
                     container.appendChild(card);
                 });
+
             } catch(e) {
-                container.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar checklist.</p>';
+                container.innerHTML = '<p style="text-align:center; color:red; margin-top:20px;">Erro ao carregar o checklist de hoje.</p>';
             }
             atualizarProgresso();
+        }
+
+        function abrirExecucao(id) {
+            document.getElementById(`box-just-${id}`).classList.remove('open');
+            document.getElementById(`box-exec-${id}`).classList.toggle('open');
+        }
+
+        function abrirJustificativa(id) {
+            document.getElementById(`box-exec-${id}`).classList.remove('open');
+            document.getElementById(`box-just-${id}`).classList.toggle('open');
+        }
+
+        async function enviarExecucao(tarefaId, statusAlvo) {
+            const hojeString = hoje.toISOString().split('T')[0];
+            let fotoUrl = null;
+            let motivoEscolhido = null;
+
+            if(statusAlvo === 'CONCLUIDO') {
+                fotoUrl = document.getElementById(`foto-${tarefaId}`).value.trim() || null;
+            } else {
+                const sel = document.getElementById(`motivo-${tarefaId}`).value;
+                const det = document.getElementById(`detalhe-just-${tarefaId}`).value.trim();
+                motivoEscolhido = det ? `${sel} - ${det}` : sel;
+            }
+
+            const novoIdUuid = crypto.randomUUID();
+
+            try {
+                const { error } = await sb
+                    .from('diario_execucoes_v2')
+                    .insert([{
+                        id: novoIdUuid, 
+                        tarefa_id: tarefaId,
+                        funcionario_id: loggedUser.id,
+                        data_execucao: hojeString,
+                        status: statusAlvo,
+                        motivo: motivoEscolhido,
+                        foto_evidencia: fotoUrl
+                    }]);
+
+                if(error) {
+                    alert('Erro ao gravar no banco: ' + error.message);
+                    return;
+                }
+
+                const card = document.getElementById(`card-${tarefaId}`);
+                card.className = 'task-card task-done';
+                card.innerHTML = `
+                    <div class="task-title">${card.querySelector('.task-title').innerText}</div>
+                    <span class="task-done-msg">✓ ${statusAlvo}</span>
+                `;
+                
+                tarefasConcluidas++;
+                atualizarProgresso();
+
+            } catch(e) {
+                alert('Falha crítica na execução do comando.');
+            }
+        }
+
+        async function carregarTodasTarefasParaDatalist() {
+            try {
+                // CORREÇÃO DA FONTE PRIMÁRIA: APONTANDO PARA A TABELA DE MATRIZ DE TAREFAS ATIVA
+                const { data } = await sb.from('matriz_tarefas_v2').select('id, descricao_tarefa');
+                if(data) {
+                    const dl = document.getElementById('listaTodasTarefas');
+                    dl.innerHTML = '';
+                    data.forEach(x => {
+                        const opt = document.createElement('option');
+                        opt.value = x.descricao_tarefa;
+                        opt.setAttribute('data-id', x.id);
+                        dl.appendChild(opt);
+                    });
+                }
+            } catch(e){}
+        }
+
+        function abrirModalOcorrencia() { document.getElementById('modalOcorrencia').style.display = 'flex'; }
+        function fecharModalOcorrencia() { document.getElementById('modalOcorrencia').style.display = 'none'; }
+
+        async function salvarOcorrenciaAvulsa() {
+            const txtTarefa = document.getElementById('ocorrencaTarefaInput').value.trim();
+            const desc = document.getElementById('ocorrenciaDescricao').value.trim();
+            const msg = document.getElementById('msgOcorrenciaModal');
+
+            if(!txtTarefa || !desc) { msg.style.color = 'red'; msg.innerText = "Preencha todos os campos."; return; }
+
+            msg.style.color = '#1a2c35';
+            msg.innerText = "Gravando ocorrência...";
+
+            try {
+                const { error } = await sb
+                    .from('ocorrencias')
+                    .insert([{
+                        id: crypto.randomUUID(),
+                        descricao: `Atividade: ${txtTarefa} | Relato: ${desc}`,
+                        funcionario_id: loggedUser.id,
+                        data_registro: new Date().toISOString()
+                    }]);
+
+                if(error) { msg.style.color = 'red'; msg.innerText = error.message; }
+                else {
+                    msg.style.color = 'green';
+                    msg.innerText = "Ocorrência registrada com sucesso!";
+                    setTimeout(() => {
+                        fecharModalOcorrencia();
+                        document.getElementById('ocorrencaTarefaInput').value = '';
+                        document.getElementById('ocorrenciaDescricao').value = '';
+                        msg.innerText = '';
+                    }, 1500);
+                }
+            } catch(e) { msg.style.color = 'red'; msg.innerText = "Falha de conexão."; }
         }
     </script>
 </body>
