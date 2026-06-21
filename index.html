@@ -94,6 +94,7 @@
         const SUPABASE_URL = 'https://arca-bento-condocheck-supabase.wsoxvx.easypanel.host';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
         const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+	const WEBHOOK_CONDOCHECK_TELEGRAM = 'https://condocheck-n8n.wsoxvx.easypanel.host/webhook/checklist-app';
 
         let loggedUser = null;
         let diaAtual = '';
@@ -245,38 +246,94 @@
         function abrirExecucao(id) { document.getElementById(`box-just-${id}`).style.display = 'none'; document.getElementById(`box-exec-${id}`).style.display = 'block'; }
         function abrirJustificativa(id) { document.getElementById(`box-exec-${id}`).style.display = 'none'; document.getElementById(`box-just-${id}`).style.display = 'block'; }
 
-        async function enviarExecucao(tarefaId, statusAlvo) {
-            const hojeString = hoje.toISOString().split('T')[0];
-            let motivo = null;
-            let fotoFinal = null;
+       async function enviarExecucao(tarefaId, statusAlvo) {
+    const hojeString = hoje.toISOString().split('T')[0];
+    let motivo = null;
+    let fotoFinal = null;
 
-            // VALIDAÇÃO ESTRITA DE AUDITORIA
-            if(statusAlvo === 'CONCLUIDO') {
-                if(!fotosBase64[tarefaId]) {
-                    alert('FALHA DE AUDITORIA: A foto de evidência é OBRIGATÓRIA para confirmar a conclusão da tarefa.');
-                    return;
-                }
-                fotoFinal = fotosBase64[tarefaId];
-            } else {
-                const sel = document.getElementById(`motivo-${tarefaId}`).value;
-                const det = document.getElementById(`detalhe-${tarefaId}`).value.trim();
-                motivo = det ? `${sel} - ${det}` : sel;
+    // VALIDAÇÃO ESTRITA DE AUDITORIA
+    if (statusAlvo === 'CONCLUIDO') {
+        if (!fotosBase64[tarefaId]) {
+            alert('FALHA DE AUDITORIA: A foto de evidência é OBRIGATÓRIA para confirmar a conclusão da tarefa.');
+            return;
+        }
+        fotoFinal = fotosBase64[tarefaId];
+    } else {
+        const sel = document.getElementById(`motivo-${tarefaId}`).value;
+        const det = document.getElementById(`detalhe-${tarefaId}`).value.trim();
+        motivo = det ? `${sel} - ${det}` : sel;
+    }
+
+    try {
+        // 1. Busca a descrição da tarefa para enviar ao Telegram
+        let descricaoTarefa = 'Tarefa não identificada';
+
+        try {
+            const { data: tarefaInfo } = await sb
+                .from('matriz_tarefas_v2')
+                .select('descricao_tarefa')
+                .eq('id', tarefaId)
+                .maybeSingle();
+
+            if (tarefaInfo && tarefaInfo.descricao_tarefa) {
+                descricaoTarefa = tarefaInfo.descricao_tarefa;
             }
+        } catch (e) {
+            console.warn('Não foi possível buscar a descrição da tarefa:', e);
+        }
 
-            try {
-                const { error } = await sb.from('diario_execucoes_v2').insert([{
-                    id: crypto.randomUUID(), 
-                    tarefa_id: tarefaId,
+        // 2. Grava a execução no Supabase
+        const payloadExecucao = {
+            id: crypto.randomUUID(),
+            tarefa_id: tarefaId,
+            funcionario_id: loggedUser.id,
+            data_execucao: hojeString,
+            status: statusAlvo,
+            motivo: motivo,
+            foto_evidencia: fotoFinal
+        };
+
+        const { error } = await sb
+            .from('diario_execucoes_v2')
+            .insert([payloadExecucao]);
+
+        if (error) {
+            alert('Erro no banco: ' + error.message);
+            return;
+        }
+
+        // 3. Envia aviso ao Telegram via n8n
+        // Importante: se o Telegram falhar, a tarefa continua gravada.
+        try {
+            await fetch(WEBHOOK_CONDOCHECK_TELEGRAM, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    origem: 'CondoCheck V2',
+                    tipo_evento: 'EXECUCAO_TAREFA',
                     funcionario_id: loggedUser.id,
+                    funcionario_nome: loggedUser.nome || 'Funcionário não identificado',
+                    tarefa_id: tarefaId,
+                    tarefa_descricao: descricaoTarefa,
                     data_execucao: hojeString,
                     status: statusAlvo,
                     motivo: motivo,
-                    foto_evidencia: fotoFinal
-                }]);
-                if(error) { alert('Erro no banco: ' + error.message); return; }
-                location.reload();
-            } catch(e) { alert('Falha ao processar o comando.'); }
+                    tem_foto: !!fotoFinal,
+                    criado_em_front: new Date().toISOString()
+                })
+            });
+        } catch (webhookError) {
+            console.warn('Tarefa gravada, mas falhou o aviso no Telegram:', webhookError);
         }
+
+        // 4. Recarrega o app depois de gravar e tentar notificar
+        location.reload();
+
+    } catch (e) {
+        alert('Falha ao processar o comando.');
+        console.error(e);
+    }
+}
 
         async function carregarTodasTarefasParaDatalist() {
             try {
