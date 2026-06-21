@@ -25,7 +25,7 @@
                 <img src="Logo-Condocheck.png" alt="CondoCheck" class="w-52 max-h-24 object-contain rounded-lg border border-slate-700/50 shadow-sm" onerror="this.style.display='none'">
             </div>
             <div class="mt-4 px-3 py-1 bg-arca-blue/20 text-arca-blue text-[10px] font-bold uppercase rounded-full tracking-widest shadow-sm border border-arca-blue/30">
-                Comando v29.2 - Blindada
+                COMANDO NÍOBIO — Evidência & Baixa
             </div>
         </div>
         <nav class="p-4 space-y-2 overflow-y-auto no-scrollbar flex-1">
@@ -303,7 +303,7 @@
         function limparDadosBento(t) {
             let desc = t.descricao || t.descricao_completa || t.problema || 'Sem descrição';
             let morador = t.morador || t.nome_morador || t.responsavel || t.nome || 'Morador não identificado';
-            let local = t.local || t.bloco || t.apto ? `${t.bloco||''} ${t.apto||''}`.trim() : 'Local não especificado';
+            let local = t.local || t.local_operacional || [t.bloco, t.apto || t.apartamento].filter(Boolean).join(' - ') || 'Local não especificado';
             
             if (local.includes("CondoCheck")) local = "Local não especificado";
 
@@ -412,25 +412,33 @@
             if(!resposta) return alert("Por favor, digite a resposta do síndico.");
             
             const btn = document.getElementById('btn-confirmar-resolucao');
-            btn.innerText = "Processando..."; btn.disabled = true;
+            btn.innerText = "Processando..."; 
+            btn.disabled = true;
 
-            fetch('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/baixar_tarefa', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id: tarefaAtualId,
-                    usuario: "Painel_Comando",
-                    resposta_sindico: resposta
-                })
-            }).then(() => {
+            // HOTFIX COMANDO NIOBIO:
+            // O workflow n8n "baixar_tarefa" antigo espera dados em query.id/query.usuario.
+            // Por isso enviamos os dados também na URL, preservando compatibilidade.
+            const urlBaixa = new URL('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/baixar_tarefa');
+            urlBaixa.searchParams.set('id', tarefaAtualId);
+            urlBaixa.searchParams.set('usuario', 'Painel_Comando');
+            urlBaixa.searchParams.set('resposta_sindico', resposta);
+
+            fetch(urlBaixa.toString(), {
+                method: 'POST'
+            }).then((res) => {
+                if(!res.ok) throw new Error('n8n respondeu com erro: ' + res.status);
                 setTimeout(() => {
                     fecharModalResolucao();
-                    btn.innerText = "Baixar e Enviar WhatsApp"; btn.disabled = false;
+                    btn.innerText = "Baixar e Enviar WhatsApp"; 
+                    btn.disabled = false;
                     carregarPendencias(); 
                     alert("Ocorrência fechada e mensagem enviada com sucesso!");
-                }, 1500);
-            }).catch(() => {
-                alert("Falha de rede ao contatar o n8n."); btn.innerText = "Baixar e Enviar WhatsApp"; btn.disabled = false;
+                }, 1000);
+            }).catch((err) => {
+                console.error('Erro ao contatar n8n baixar_tarefa:', err);
+                alert("Falha de rede ao contatar o n8n. Verifique se o workflow BAIXAR_TAREFA está ativo e com CORS liberado."); 
+                btn.innerText = "Baixar e Enviar WhatsApp"; 
+                btn.disabled = false;
             });
         }
 
@@ -459,7 +467,7 @@
                 const resMatriz = await supabaseDB.from('matriz_tarefas_v2').select('id, descricao_tarefa, funcionario_id').eq(hojeStr, true);
                 if (resMatriz.error) throw new Error("Erro na Matriz: " + resMatriz.error.message);
 
-                const resExec = await supabaseDB.from('diario_execucoes_v2').select('id, tarefa_id, created_at, status, observacao, motivo').eq('data_execucao', inputDataStr);
+                const resExec = await supabaseDB.from('diario_execucoes_v2').select('id, tarefa_id, created_at, status, observacao, motivo, foto_evidencia').eq('data_execucao', inputDataStr);
                 if (resExec.error) throw new Error("Erro nas Execuções: " + resExec.error.message);
 
                 const resFuncs = await supabaseDB.from('funcionarios_v2').select('id, nome');
@@ -491,7 +499,8 @@
                                 tarefa: t.descricao_tarefa + comp,
                                 responsavel: responsavel,
                                 status: exec.status === 'CONCLUIDO' ? 'FECHADO' : exec.status,
-                                ordem: exec.status === 'JUSTIFICADO' ? 2 : 3
+                                ordem: exec.status === 'JUSTIFICADO' ? 2 : 3,
+                                foto_url: exec.foto_evidencia || ''
                             });
                         } else {
                             dadosAtividadesGeral.push({
@@ -550,7 +559,7 @@
                 html += `<tr class="border-b border-slate-100 ${linhaCor} transition-colors">
                     <td class="px-6 py-4 text-center"><input type="checkbox" class="chk-condo-item" data-idexec="${c.id_exec}" data-idtarefa="${c.id_tarefa}" data-idfunc="${c.id_func}"></td>
                     <td class="px-6 py-4 font-black text-slate-400 text-sm whitespace-nowrap">${c.hora !== '--:--' ? '🕒 ' + c.hora : '<span class="text-slate-300">--:--</span>'}</td>
-                    <td class="px-6 py-4 font-bold text-slate-700 text-sm leading-tight">${c.tarefa}</td>
+                    <td class="px-6 py-4 font-bold text-slate-700 text-sm leading-tight">${c.tarefa}${c.foto_url ? `<br><a href="${c.foto_url}" target="_blank" class="inline-block mt-2 bg-emerald-500 text-white px-2 py-1 rounded text-[10px] font-black shadow hover:bg-emerald-600">📷 Ver evidência</a>` : ''}</td>
                     <td class="px-6 py-4 text-slate-500 text-xs font-bold uppercase">${c.responsavel}</td>
                     <td class="px-6 py-4 text-center">${badge}</td>
                 </tr>`;
@@ -608,7 +617,7 @@
                         let dataN8n = await res.json();
                         let arr = Array.isArray(dataN8n) ? dataN8n : [dataN8n];
                         arr = arr.map(item => {
-                            item.foto_url = item.foto_url || item.link_imagem || item.imagem_url || item.url_foto || "";
+                            item.foto_url = item.foto_url || item.foto_evidencia || item.link_imagem || item.imagem_url || item.url_foto || "";
                             return item;
                         });
                         dadosGlobaisPesquisa = dadosGlobaisPesquisa.concat(arr);
@@ -626,7 +635,7 @@
                         let nomeT = mapMatriz[e.tarefa_id] || 'Tarefa Operacional';
                         let nomeF = mapFuncs[e.funcionario_id] || 'Equipe';
                         dadosGlobaisPesquisa.push({
-                            data_abertura: e.data_execucao, morador: nomeF, local: 'Condomínio', categoria: e.status === 'JUSTIFICADO' ? 'Justificativa' : 'Rotina', descricao: nomeT + (e.observacao ? ` (Obs: ${e.observacao})` : '') + (e.motivo ? ` (Motivo: ${e.motivo})` : ''), status: e.status, foto_url: e.foto_url || e.link_imagem || e.imagem_url || ""
+                            data_abertura: e.data_execucao, morador: nomeF, local: 'Condomínio', categoria: e.status === 'JUSTIFICADO' ? 'Justificativa' : 'Rotina', descricao: nomeT + (e.observacao ? ` (Obs: ${e.observacao})` : '') + (e.motivo ? ` (Motivo: ${e.motivo})` : ''), status: e.status, foto_url: e.foto_evidencia || e.foto_url || e.link_imagem || e.imagem_url || ""
                         });
                     });
                 }
