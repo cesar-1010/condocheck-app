@@ -94,7 +94,6 @@
         const SUPABASE_URL = 'https://arca-bento-condocheck-supabase.wsoxvx.easypanel.host';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
         const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-	const WEBHOOK_CONDOCHECK_TELEGRAM = 'https://condocheck-n8n.wsoxvx.easypanel.host/webhook/checklist-app';
 
         let loggedUser = null;
         let diaAtual = '';
@@ -243,97 +242,178 @@
             }
         }
 
+        function dataURLParaBlob(dataUrl) {
+            const partes = dataUrl.split(',');
+            const mimeMatch = partes[0].match(/:(.*?);/);
+            const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+            const binario = atob(partes[1]);
+            const array = new Uint8Array(binario.length);
+
+            for (let i = 0; i < binario.length; i++) {
+                array[i] = binario.charCodeAt(i);
+            }
+
+            return new Blob([array], { type: mime });
+        }
+
+        function limparNomeArquivo(v) {
+            return String(v || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-zA-Z0-9-_]/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '')
+                .toLowerCase();
+        }
+
+        async function subirFotoEvidencia(tarefaId, dataUrl) {
+            if (!dataUrl) {
+                throw new Error('Foto obrigatória não encontrada.');
+            }
+
+            const blob = dataURLParaBlob(dataUrl);
+            const agora = new Date();
+            const dataPasta = hoje.toISOString().split('T')[0];
+            const funcionarioSeguro = limparNomeArquivo(loggedUser?.nome || loggedUser?.id || 'funcionario');
+            const tarefaSegura = limparNomeArquivo(tarefaId);
+            const nomeArquivo = `${dataPasta}/${funcionarioSeguro}/${tarefaSegura}-${crypto.randomUUID()}.jpg`;
+
+            const { error: uploadError } = await sb.storage
+                .from(STORAGE_BUCKET_EVIDENCIAS)
+                .upload(nomeArquivo, blob, {
+                    contentType: 'image/jpeg',
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (uploadError) {
+                throw new Error('Falha ao subir foto para o Supabase Storage: ' + uploadError.message);
+            }
+
+            const { data: publicData } = sb.storage
+                .from(STORAGE_BUCKET_EVIDENCIAS)
+                .getPublicUrl(nomeArquivo);
+
+            if (!publicData || !publicData.publicUrl) {
+                throw new Error('Foto enviada, mas não foi possível gerar link público.');
+            }
+
+            return publicData.publicUrl;
+        }
+
         function abrirExecucao(id) { document.getElementById(`box-just-${id}`).style.display = 'none'; document.getElementById(`box-exec-${id}`).style.display = 'block'; }
         function abrirJustificativa(id) { document.getElementById(`box-exec-${id}`).style.display = 'none'; document.getElementById(`box-just-${id}`).style.display = 'block'; }
 
-       async function enviarExecucao(tarefaId, statusAlvo) {
-    const hojeString = hoje.toISOString().split('T')[0];
-    let motivo = null;
-    let fotoFinal = null;
+         async function enviarExecucao(tarefaId, statusAlvo) {
+            const hojeString = hoje.toISOString().split('T')[0];
+            let motivo = null;
+            let fotoFinal = null;
+            let urlDaMidia = null;
 
-    // VALIDAÇÃO ESTRITA DE AUDITORIA
-    if (statusAlvo === 'CONCLUIDO') {
-        if (!fotosBase64[tarefaId]) {
-            alert('FALHA DE AUDITORIA: A foto de evidência é OBRIGATÓRIA para confirmar a conclusão da tarefa.');
-            return;
-        }
-        fotoFinal = fotosBase64[tarefaId];
-    } else {
-        const sel = document.getElementById(`motivo-${tarefaId}`).value;
-        const det = document.getElementById(`detalhe-${tarefaId}`).value.trim();
-        motivo = det ? `${sel} - ${det}` : sel;
-    }
-
-    try {
-        // 1. Busca a descrição da tarefa para enviar ao Telegram
-        let descricaoTarefa = 'Tarefa não identificada';
-
-        try {
-            const { data: tarefaInfo } = await sb
-                .from('matriz_tarefas_v2')
-                .select('descricao_tarefa')
-                .eq('id', tarefaId)
-                .maybeSingle();
-
-            if (tarefaInfo && tarefaInfo.descricao_tarefa) {
-                descricaoTarefa = tarefaInfo.descricao_tarefa;
+            // VALIDAÇÃO ESTRITA DE AUDITORIA
+            // Para CONCLUIR, a foto é obrigatória.
+            // O input usa capture="environment" para orientar abertura da câmera traseira.
+            if (statusAlvo === 'CONCLUIDO') {
+                if (!fotosBase64[tarefaId]) {
+                    alert('FALHA DE AUDITORIA: A foto de evidência é OBRIGATÓRIA para confirmar a conclusão da tarefa.');
+                    return;
+                }
+                fotoFinal = fotosBase64[tarefaId];
+            } else {
+                const sel = document.getElementById(`motivo-${tarefaId}`).value;
+                const det = document.getElementById(`detalhe-${tarefaId}`).value.trim();
+                motivo = det ? `${sel} - ${det}` : sel;
             }
-        } catch (e) {
-            console.warn('Não foi possível buscar a descrição da tarefa:', e);
-        }
 
-        // 2. Grava a execução no Supabase
-        const payloadExecucao = {
-            id: crypto.randomUUID(),
-            tarefa_id: tarefaId,
-            funcionario_id: loggedUser.id,
-            data_execucao: hojeString,
-            status: statusAlvo,
-            motivo: motivo,
-            foto_evidencia: fotoFinal
-        };
+            try {
+                // 1. Busca a descrição da tarefa para enviar ao Telegram
+                let descricaoTarefa = 'Tarefa não identificada';
 
-        const { error } = await sb
-            .from('diario_execucoes_v2')
-            .insert([payloadExecucao]);
+                try {
+                    const { data: tarefaInfo } = await sb
+                        .from('matriz_tarefas_v2')
+                        .select('descricao_tarefa')
+                        .eq('id', tarefaId)
+                        .maybeSingle();
 
-        if (error) {
-            alert('Erro no banco: ' + error.message);
-            return;
-        }
+                    if (tarefaInfo && tarefaInfo.descricao_tarefa) {
+                        descricaoTarefa = tarefaInfo.descricao_tarefa;
+                    }
+                } catch (e) {
+                    console.warn('Não foi possível buscar a descrição da tarefa:', e);
+                }
 
-        // 3. Envia aviso ao Telegram via n8n
-        // Importante: se o Telegram falhar, a tarefa continua gravada.
-        try {
-            await fetch(WEBHOOK_CONDOCHECK_TELEGRAM, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    origem: 'CondoCheck V2',
-                    tipo_evento: 'EXECUCAO_TAREFA',
-                    funcionario_id: loggedUser.id,
-                    funcionario_nome: loggedUser.nome || 'Funcionário não identificado',
+                // 2. Sobe a foto para o Supabase Storage e gera link público
+                // Esta etapa é obrigatória para CONCLUIDO.
+                // Se a foto não gerar link, a tarefa NÃO será gravada como concluída.
+                if (statusAlvo === 'CONCLUIDO') {
+                    try {
+                        urlDaMidia = await subirFotoEvidencia(tarefaId, fotoFinal);
+                    } catch (uploadError) {
+                        console.error(uploadError);
+                        alert(
+                            'FALHA DE AUDITORIA: a foto foi capturada, mas não foi possível gerar o link da evidência. ' +
+                            'A tarefa não será concluída. Verifique o bucket do Supabase Storage.'
+                        );
+                        return;
+                    }
+                }
+
+                // 3. Grava a execução no Supabase
+                // A evidência passa a ser a URL pública da imagem.
+                const payloadExecucao = {
+                    id: crypto.randomUUID(),
                     tarefa_id: tarefaId,
-                    tarefa_descricao: descricaoTarefa,
+                    funcionario_id: loggedUser.id,
                     data_execucao: hojeString,
                     status: statusAlvo,
                     motivo: motivo,
-                    tem_foto: !!fotoFinal,
-                    criado_em_front: new Date().toISOString()
-                })
-            });
-        } catch (webhookError) {
-            console.warn('Tarefa gravada, mas falhou o aviso no Telegram:', webhookError);
+                    foto_evidencia: urlDaMidia
+                };
+
+                const { error } = await sb
+                    .from('diario_execucoes_v2')
+                    .insert([payloadExecucao]);
+
+                if (error) {
+                    alert('Erro no banco: ' + error.message);
+                    return;
+                }
+
+                // 4. Envia aviso ao Telegram via n8n
+                // Importante: se o Telegram falhar, a tarefa continua gravada,
+                // pois a evidência já foi salva e a execução já foi registrada.
+                try {
+                    await fetch(WEBHOOK_CONDOCHECK_TELEGRAM, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            origem: 'CondoCheck V2',
+                            tipo_evento: 'EXECUCAO_TAREFA',
+                            funcionario_id: loggedUser.id,
+                            funcionario_nome: loggedUser.nome || 'Funcionário não identificado',
+                            tarefa_id: tarefaId,
+                            tarefa_descricao: descricaoTarefa,
+                            data_execucao: hojeString,
+                            status: statusAlvo,
+                            motivo: motivo,
+                            tem_foto: !!urlDaMidia,
+                            url_da_midia: urlDaMidia,
+                            criado_em_front: new Date().toISOString()
+                        })
+                    });
+                } catch (webhookError) {
+                    console.warn('Tarefa gravada, mas falhou o aviso no Telegram:', webhookError);
+                }
+
+                // 5. Recarrega o app depois de gravar e tentar notificar
+                location.reload();
+
+            } catch (e) {
+                alert('Falha ao processar o comando.');
+                console.error(e);
+            }
         }
-
-        // 4. Recarrega o app depois de gravar e tentar notificar
-        location.reload();
-
-    } catch (e) {
-        alert('Falha ao processar o comando.');
-        console.error(e);
-    }
-}
 
         async function carregarTodasTarefasParaDatalist() {
             try {
