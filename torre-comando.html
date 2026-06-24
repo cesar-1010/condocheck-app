@@ -14,6 +14,95 @@
         body { background-color: #f1f5f9; font-family: 'Segoe UI', sans-serif; }
         .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        /* HOTFIX MOBILE — Torre na mão do síndico em ronda.
+           Não muda banco, não muda n8n e não altera a lógica de baixa.
+           Só reorganiza a tela pequena para o síndico baixar pelo celular. */
+        .mobile-cards-atividades { display: none; }
+
+        @media (max-width: 768px) {
+            body { display: block !important; }
+            aside {
+                width: 100% !important;
+                max-height: none !important;
+                border-right: 0 !important;
+                border-bottom: 1px solid rgba(255,255,255,.08);
+            }
+            aside .p-6 { padding: 14px !important; }
+            aside img { max-width: 150px !important; max-height: 64px !important; }
+            aside nav {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 8px !important;
+                overflow-x: auto !important;
+                padding: 10px !important;
+                white-space: nowrap !important;
+            }
+            aside nav button {
+                min-width: max-content !important;
+                padding: 10px 12px !important;
+                font-size: 12px !important;
+            }
+            main { height: auto !important; min-height: 100vh !important; overflow: visible !important; }
+            header {
+                position: sticky !important;
+                top: 0 !important;
+                z-index: 60 !important;
+                padding: 12px 14px !important;
+                gap: 10px !important;
+            }
+            header h1 { font-size: 18px !important; line-height: 1.15 !important; }
+            header button { padding: 8px 10px !important; font-size: 12px !important; }
+            main > div.flex-1 { padding: 14px !important; overflow: visible !important; }
+
+            #sessao-atividades .sticky {
+                position: static !important;
+                top: auto !important;
+                margin: 0 !important;
+                padding: 0 0 12px 0 !important;
+                background: transparent !important;
+            }
+            #sessao-atividades .sticky .bg-white { padding: 14px !important; }
+            #sessao-atividades h2 { font-size: 18px !important; }
+            #sessao-atividades .flex.flex-col.md\:flex-row,
+            #sessao-atividades .flex.flex-col.lg\:flex-row { gap: 10px !important; }
+            #sessao-atividades button,
+            #sessao-atividades input,
+            #sessao-atividades select {
+                width: 100% !important;
+                min-height: 44px !important;
+                font-size: 14px !important;
+            }
+
+            .desktop-tabela-atividades { display: none !important; }
+            .mobile-cards-atividades { display: block !important; }
+
+            .card-mobile-tarefa {
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-left: 5px solid #ef4444;
+                border-radius: 14px;
+                padding: 14px;
+                box-shadow: 0 4px 8px rgba(15, 23, 42, .06);
+                margin-bottom: 12px;
+            }
+            .card-mobile-tarefa.ok { border-left-color: #10b981; }
+            .card-mobile-tarefa.justificada { border-left-color: #f59e0b; }
+            .card-mobile-tarefa .titulo-tarefa { font-size: 15px; font-weight: 900; color: #0f172a; line-height: 1.25; }
+            .card-mobile-tarefa .meta-tarefa { font-size: 12px; color: #64748b; margin-top: 8px; font-weight: 700; }
+            .card-mobile-tarefa .acoes-mobile { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 12px; }
+            .card-mobile-tarefa .btn-baixar-mobile {
+                width: 100%; min-height: 46px; border-radius: 10px; background: #0FBC7F; color: white;
+                font-weight: 900; font-size: 14px; box-shadow: 0 4px 8px rgba(15,188,127,.2);
+            }
+            .card-mobile-tarefa .btn-evidencia-mobile {
+                display: block; text-align: center; padding: 11px; border-radius: 10px; background: #e0f2fe; color: #0369a1;
+                font-weight: 900; font-size: 13px;
+            }
+            .card-mobile-tarefa .chk-condo-item { width: 22px !important; height: 22px !important; min-height: 22px !important; }
+            #lista-tarefas-aprovacao > div { flex-direction: column !important; align-items: stretch !important; }
+            #lista-tarefas-aprovacao button { width: 100% !important; min-height: 48px !important; margin-top: 10px !important; }
+        }
     </style>
 </head>
 <body class="text-slate-800 flex flex-col md:flex-row min-h-screen relative">
@@ -112,7 +201,7 @@
                 </div>
 
                 <div class="bg-white rounded-xl card-shadow overflow-hidden border border-slate-200 mt-2 relative z-20">
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto desktop-tabela-atividades">
                         <table class="w-full text-sm text-left">
                             <thead class="bg-slate-100 text-slate-500 uppercase text-[10px] font-bold border-b border-slate-200">
                                 <tr>
@@ -127,6 +216,9 @@
                                 <tr><td colspan="5" class="p-10 text-center text-slate-400 font-bold">Iniciando máquina de auditoria...</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                    <div id="cards-mobile-atividades" class="mobile-cards-atividades p-3">
+                        <div class="p-6 text-center text-slate-400 font-bold border-2 border-dashed rounded-xl">Iniciando ronda mobile...</div>
                     </div>
                 </div>
             </div>
@@ -605,6 +697,7 @@
 
         function renderizarAtividades() {
             const tbody = document.getElementById('tabela-unificada-atividades');
+            const mobileDiv = document.getElementById('cards-mobile-atividades');
             const termo = document.getElementById('filtro-texto-atividades').value.toLowerCase().trim();
             const statusSelecionado = document.getElementById('filtro-status-atividades').value;
 
@@ -615,34 +708,96 @@
             });
 
             if (filtrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400 font-bold">Nenhuma tarefa encontrada com esses filtros.</td></tr>';
+                const vazio = 'Nenhuma tarefa encontrada com esses filtros.';
+                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-slate-400 font-bold">${vazio}</td></tr>`;
+                if (mobileDiv) mobileDiv.innerHTML = `<div class="p-6 text-center text-slate-400 font-bold border-2 border-dashed rounded-xl">${vazio}</div>`;
                 return;
             }
 
             let html = '';
+            let htmlMobile = '';
+
             filtrados.forEach(c => {
-                let badge = ''; let linhaCor = '';
+                let badge = ''; let linhaCor = ''; let classeMobile = '';
                 
                 if (c.status === 'ATRASADA') {
                     badge = '<span class="bg-red-100 text-red-600 px-3 py-1.5 rounded text-[10px] font-black uppercase tracking-wider shadow-sm">ATRASADA</span>';
                     linhaCor = 'bg-white hover:bg-red-50 border-l-4 border-l-red-500';
+                    classeMobile = '';
                 } else if (c.status === 'JUSTIFICADO') {
                     badge = '<span class="bg-amber-100 text-amber-700 px-3 py-1.5 rounded text-[10px] font-black uppercase tracking-wider shadow-sm">JUSTIFICADA</span>';
                     linhaCor = 'bg-slate-50 hover:bg-amber-50 border-l-4 border-l-amber-500';
+                    classeMobile = 'justificada';
                 } else {
                     badge = '<span class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded text-[10px] font-black uppercase tracking-wider shadow-sm">CONCLUÍDA</span>';
                     linhaCor = 'bg-slate-50 hover:bg-emerald-50 border-l-4 border-l-emerald-500';
+                    classeMobile = 'ok';
                 }
+
+                const evidencia = c.foto_url ? `<br><a href="${c.foto_url}" target="_blank" class="inline-block mt-2 bg-emerald-500 text-white px-2 py-1 rounded text-[10px] font-black shadow hover:bg-emerald-600">📷 Ver evidência</a>` : '';
+                const evidenciaMobile = c.foto_url ? `<a href="${c.foto_url}" target="_blank" class="btn-evidencia-mobile">📷 Abrir evidência</a>` : '';
+                const tarefaLimpa = String(c.tarefa || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').trim();
 
                 html += `<tr class="border-b border-slate-100 ${linhaCor} transition-colors">
                     <td class="px-6 py-4 text-center"><input type="checkbox" class="chk-condo-item" data-idexec="${c.id_exec}" data-idtarefa="${c.id_tarefa}" data-idfunc="${c.id_func}"></td>
                     <td class="px-6 py-4 font-black text-slate-400 text-sm whitespace-nowrap">${c.hora !== '--:--' ? '🕒 ' + c.hora : '<span class="text-slate-300">--:--</span>'}</td>
-                    <td class="px-6 py-4 font-bold text-slate-700 text-sm leading-tight">${c.tarefa}${c.foto_url ? `<br><a href="${c.foto_url}" target="_blank" class="inline-block mt-2 bg-emerald-500 text-white px-2 py-1 rounded text-[10px] font-black shadow hover:bg-emerald-600">📷 Ver evidência</a>` : ''}</td>
+                    <td class="px-6 py-4 font-bold text-slate-700 text-sm leading-tight">${c.tarefa}${evidencia}</td>
                     <td class="px-6 py-4 text-slate-500 text-xs font-bold uppercase">${c.responsavel}</td>
                     <td class="px-6 py-4 text-center">${badge}</td>
                 </tr>`;
+
+                htmlMobile += `<div class="card-mobile-tarefa ${classeMobile}">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" class="chk-condo-item mt-1" data-idexec="${c.id_exec}" data-idtarefa="${c.id_tarefa}" data-idfunc="${c.id_func}">
+                        <div class="flex-1">
+                            <div class="titulo-tarefa">${tarefaLimpa}</div>
+                            <div class="meta-tarefa">👤 ${c.responsavel || 'Equipe'} · ${c.hora !== '--:--' ? '🕒 ' + c.hora : '⏱️ sem horário'} </div>
+                            <div class="mt-2">${badge}</div>
+                        </div>
+                    </div>
+                    <div class="acoes-mobile">
+                        ${evidenciaMobile}
+                        <button type="button" class="btn-baixar-mobile" data-idexec="${c.id_exec}" data-idtarefa="${c.id_tarefa}" data-idfunc="${c.id_func}" onclick="baixarCondoUnica(this)">✔️ Baixar esta tarefa</button>
+                    </div>
+                </div>`;
             });
             tbody.innerHTML = html;
+            if (mobileDiv) mobileDiv.innerHTML = htmlMobile;
+        }
+
+        async function baixarCondoUnica(btn) {
+            const idExec = btn.getAttribute('data-idexec');
+            const idTarefa = btn.getAttribute('data-idtarefa');
+            const idFunc = btn.getAttribute('data-idfunc');
+            const inputDataStr = document.getElementById('filtro-data-atividades').value;
+
+            if (!confirm('Confirmar baixa desta tarefa pelo síndico?')) return;
+
+            const textoOriginal = btn.innerText;
+            btn.innerText = 'Processando...';
+            btn.disabled = true;
+
+            try {
+                if (idExec && idExec !== 'null') {
+                    const { error } = await supabaseDB.from('diario_execucoes_v2').update({ status: 'FECHADO' }).eq('id', idExec);
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabaseDB.from('diario_execucoes_v2').insert([{
+                        tarefa_id: idTarefa,
+                        funcionario_id: idFunc,
+                        data_execucao: inputDataStr,
+                        status: 'FECHADO',
+                        observacao: 'Baixa administrativa via Torre Mobile'
+                    }]);
+                    if (error) throw error;
+                }
+                alert('Tarefa baixada com sucesso.');
+                carregarAtrasos();
+            } catch (e) {
+                alert('Erro ao baixar tarefa: ' + e.message);
+                btn.innerText = textoOriginal;
+                btn.disabled = false;
+            }
         }
 
         async function baixarCondoEmMassa() {
