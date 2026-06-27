@@ -103,6 +103,26 @@
             #lista-tarefas-aprovacao > div { flex-direction: column !important; align-items: stretch !important; }
             #lista-tarefas-aprovacao button { width: 100% !important; min-height: 48px !important; margin-top: 10px !important; }
         }
+
+
+        /* HOTFIX AGENDA PREVENTIVA — layout profissional e funções seguras.
+           Cerca elétrica: não altera Supabase, n8n, Bento, CondoCheck ou fechamento. */
+        .agenda-chip { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-size:11px; font-weight:900; }
+        .agenda-card-mobile { display:none; }
+        .agenda-form-label { display:block; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.04em; color:#64748b; margin-bottom:5px; }
+        .agenda-input { width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; background:white; }
+        .agenda-input:focus { outline:2px solid rgba(147,51,234,.18); border-color:#9333ea; }
+        .agenda-toast { position:fixed; right:18px; bottom:18px; z-index:9999; padding:12px 16px; border-radius:12px; font-weight:900; font-size:13px; box-shadow:0 10px 25px rgba(15,23,42,.18); }
+        .agenda-toast.ok { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+        .agenda-toast.erro { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
+
+        @media (max-width: 768px) {
+            #sessao-agenda .agenda-desktop-table { display:none !important; }
+            #sessao-agenda .agenda-card-mobile { display:block !important; }
+            #sessao-agenda .agenda-grid-kpi { grid-template-columns:1fr 1fr !important; }
+            #sessao-agenda .agenda-form-grid { grid-template-columns:1fr !important; }
+            #sessao-agenda button, #sessao-agenda input, #sessao-agenda select, #sessao-agenda textarea { min-height:44px; }
+        }
     </style>
 </head>
 <body class="text-slate-800 flex flex-col md:flex-row min-h-screen relative">
@@ -253,77 +273,98 @@
         
 
         <div id="sessao-agenda" class="hidden space-y-6">
-            <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-purple-600">
-                <div class="flex flex-col lg:flex-row justify-between lg:items-start gap-4 mb-6">
+            <div class="bg-gradient-to-r from-purple-900 via-purple-800 to-slate-900 text-white p-6 rounded-2xl card-shadow">
+                <div class="flex flex-col lg:flex-row justify-between gap-5">
                     <div>
-                        <h2 class="text-xl font-black text-slate-800 mb-1">🗓️ Agenda Preventiva do Condomínio</h2>
-                        <p class="text-sm text-slate-500 max-w-3xl">Controle de vencimentos, contratos, seguros, limpezas obrigatórias e manutenções preventivas. O Bento acompanha os prazos e poderá enviar avisos automáticos ao responsável.</p>
-                        <p class="text-xs text-purple-700 bg-purple-50 border border-purple-100 rounded-lg px-3 py-2 mt-3 inline-block font-bold">Regra do piloto: avisos aos 30, 25, 20, 15, 10, 5, 3, 2, 1 e 0 dias antes/do vencimento.</p>
+                        <p class="text-xs font-black uppercase tracking-[0.22em] text-purple-200 mb-2">Bento Síndico · Controle preventivo</p>
+                        <h2 class="text-2xl md:text-3xl font-black mb-2">🗓️ Agenda Preventiva</h2>
+                        <p class="text-sm text-purple-100 max-w-4xl leading-relaxed">Controle profissional de vencimentos, contratos, seguros, dedetização, caixa d’água, elevadores e obrigações do condomínio. O objetivo é simples: o síndico não depender de memória, papel solto ou WhatsApp perdido.</p>
                     </div>
-                    <button onclick="limparAgendaForm(); document.getElementById('agenda-titulo').focus();" class="bg-purple-600 text-white px-5 py-3 rounded-lg shadow text-sm font-bold hover:bg-purple-700 transition">+ Novo Compromisso</button>
-                </div>
-
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] text-slate-400 font-bold uppercase">Até 30 dias</p><p id="agenda-kpi-30" class="text-2xl font-black text-blue-600">--</p></div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] text-slate-400 font-bold uppercase">Até 7 dias</p><p id="agenda-kpi-7" class="text-2xl font-black text-amber-500">--</p></div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] text-slate-400 font-bold uppercase">Vencem hoje</p><p id="agenda-kpi-hoje" class="text-2xl font-black text-red-600">--</p></div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100"><p class="text-[10px] text-slate-400 font-bold uppercase">Vencidos</p><p id="agenda-kpi-vencidos" class="text-2xl font-black text-red-800">--</p></div>
-                </div>
-
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6">
-                    <input type="hidden" id="agenda-id">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <input type="text" id="agenda-titulo" placeholder="Título: Ex. Limpeza da caixa d'água" class="p-2 border rounded text-sm">
-                        <select id="agenda-categoria" class="p-2 border rounded text-sm">
-                            <option value="Contrato">Contrato</option>
-                            <option value="Seguro">Seguro</option>
-                            <option value="Limpeza Caixa d'água">Limpeza Caixa d'água</option>
-                            <option value="Dedetização">Dedetização</option>
-                            <option value="Elevador">Elevador</option>
-                            <option value="Extintores">Extintores</option>
-                            <option value="PPCI / AVCB">PPCI / AVCB</option>
-                            <option value="Manutenção Preventiva">Manutenção Preventiva</option>
-                            <option value="Assembleia">Assembleia</option>
-                            <option value="Outro">Outro</option>
-                        </select>
-                        <input type="date" id="agenda-data" class="p-2 border rounded text-sm">
-                        <input type="text" id="agenda-responsavel" placeholder="Responsável: Síndico / Administradora / Zelador" class="p-2 border rounded text-sm">
-                        <input type="text" id="agenda-fornecedor" placeholder="Fornecedor vinculado (opcional)" class="p-2 border rounded text-sm">
-                        <input type="text" id="agenda-telefone" placeholder="WhatsApp fornecedor (opcional)" class="p-2 border rounded text-sm">
-                        <select id="agenda-canal" class="p-2 border rounded text-sm">
-                            <option value="WhatsApp Síndico">WhatsApp Síndico</option>
-                            <option value="Telegram Grupo">Telegram Grupo</option>
-                            <option value="Ambos">Ambos</option>
-                        </select>
-                        <select id="agenda-status" class="p-2 border rounded text-sm">
-                            <option value="PENDENTE">PENDENTE</option>
-                            <option value="AVISADO">AVISADO</option>
-                            <option value="CONCLUIDO">CONCLUIDO</option>
-                            <option value="CANCELADO">CANCELADO</option>
-                        </select>
-                        <input type="text" id="agenda-descricao" placeholder="Descrição resumida" class="p-2 border rounded text-sm">
-                    </div>
-                    <textarea id="agenda-observacoes" rows="2" placeholder="Observações: providências, detalhes do contrato, lembretes internos..." class="w-full p-2 border rounded text-sm mt-3"></textarea>
-                    <div class="flex flex-col md:flex-row gap-2 mt-4">
-                        <button id="btn-salvar-agenda" onclick="salvarCompromissoAgenda()" class="bg-purple-600 text-white font-bold py-2 px-6 rounded shadow hover:bg-purple-700 transition">Salvar Compromisso</button>
-                        <button onclick="limparAgendaForm()" class="bg-slate-200 text-slate-600 font-bold py-2 px-6 rounded transition">Limpar</button>
+                    <div class="flex flex-col sm:flex-row gap-2 lg:items-start">
+                        <button onclick="abrirNovoCompromissoAgenda()" class="bg-white text-purple-800 px-5 py-3 rounded-xl shadow text-sm font-black hover:bg-purple-50 transition">+ Novo compromisso</button>
+                        <button onclick="carregarAgendaPreventiva()" class="bg-purple-600 text-white px-5 py-3 rounded-xl shadow text-sm font-black hover:bg-purple-700 transition">🔄 Atualizar agenda</button>
                     </div>
                 </div>
+                <div class="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-purple-200">Próximo compromisso</p>
+                        <p id="agenda-proximo-info" class="text-sm font-bold mt-1">Carregue a agenda para visualizar.</p>
+                    </div>
+                    <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-purple-200">Regra automática</p>
+                        <p class="text-sm font-bold mt-1">Avisos em 30, 25, 20, 15, 10, 5, 3, 2, 1 e no dia do vencimento.</p>
+                    </div>
+                    <div class="bg-white/10 border border-white/10 rounded-xl p-4">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-purple-200">Uso gerencial</p>
+                        <p class="text-sm font-bold mt-1">Base preparada para consultas futuras do Bento Síndico por texto ou áudio.</p>
+                    </div>
+                </div>
+            </div>
 
-                <div class="bg-white border border-slate-100 rounded-xl p-4 mb-4 flex flex-col md:flex-row gap-3 md:items-end">
-                    <div class="flex-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Status</label><select id="agenda-filtro-status" onchange="renderizarAgenda()" class="w-full p-2 border rounded text-sm"><option value="TODOS">Todos</option><option value="PENDENTE">Pendentes</option><option value="AVISADO">Avisados</option><option value="CONCLUIDO">Concluídos</option><option value="CANCELADO">Cancelados</option></select></div>
-                    <div class="flex-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Categoria</label><input id="agenda-filtro-categoria" onkeyup="renderizarAgenda()" placeholder="Seguro, Elevador..." class="w-full p-2 border rounded text-sm"></div>
-                    <div class="flex-1"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Buscar</label><input id="agenda-filtro-busca" onkeyup="renderizarAgenda()" placeholder="contrato, caixa, limpeza..." class="w-full p-2 border rounded text-sm"></div>
+            <div class="grid agenda-grid-kpi grid-cols-2 md:grid-cols-5 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-100 card-shadow"><p class="text-[10px] text-slate-400 font-black uppercase">Ativos</p><p id="agenda-kpi-ativos" class="text-2xl font-black text-slate-800">--</p></div>
+                <div class="bg-white p-4 rounded-xl border border-slate-100 card-shadow"><p class="text-[10px] text-slate-400 font-black uppercase">Até 30 dias</p><p id="agenda-kpi-30" class="text-2xl font-black text-blue-600">--</p></div>
+                <div class="bg-white p-4 rounded-xl border border-slate-100 card-shadow"><p class="text-[10px] text-slate-400 font-black uppercase">Até 7 dias</p><p id="agenda-kpi-7" class="text-2xl font-black text-amber-500">--</p></div>
+                <div class="bg-white p-4 rounded-xl border border-slate-100 card-shadow"><p class="text-[10px] text-slate-400 font-black uppercase">Vencem hoje</p><p id="agenda-kpi-hoje" class="text-2xl font-black text-red-600">--</p></div>
+                <div class="bg-white p-4 rounded-xl border border-slate-100 card-shadow"><p class="text-[10px] text-slate-400 font-black uppercase">Vencidos</p><p id="agenda-kpi-vencidos" class="text-2xl font-black text-red-800">--</p></div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl card-shadow border border-slate-100">
+                <div class="flex flex-col md:flex-row justify-between md:items-center gap-3 mb-4">
+                    <div>
+                        <h3 class="text-lg font-black text-slate-800">Lançamento / edição de compromisso</h3>
+                        <p class="text-xs text-slate-500">Campos com título e data são obrigatórios. Os demais qualificam a informação para o síndico e para o Bento.</p>
+                    </div>
+                    <span id="agenda-modo-form" class="agenda-chip bg-purple-50 text-purple-700">Novo compromisso</span>
+                </div>
+                <input type="hidden" id="agenda-id">
+                <div class="grid agenda-form-grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div><label class="agenda-form-label">Título obrigatório</label><input type="text" id="agenda-titulo" placeholder="Ex.: Limpeza da caixa d'água" class="agenda-input"></div>
+                    <div><label class="agenda-form-label">Categoria</label><select id="agenda-categoria" class="agenda-input"><option value="Contrato">Contrato</option><option value="Seguro">Seguro</option><option value="Limpeza Caixa d'água">Limpeza Caixa d'água</option><option value="Dedetização">Dedetização</option><option value="Elevador">Elevador</option><option value="Extintores">Extintores</option><option value="PPCI / AVCB">PPCI / AVCB</option><option value="Manutenção Preventiva">Manutenção Preventiva</option><option value="Assembleia">Assembleia</option><option value="Financeiro">Financeiro</option><option value="Fornecedor">Fornecedor</option><option value="Outro">Outro</option></select></div>
+                    <div><label class="agenda-form-label">Data de vencimento obrigatória</label><input type="date" id="agenda-data" class="agenda-input"></div>
+                    <div><label class="agenda-form-label">Responsável</label><input type="text" id="agenda-responsavel" placeholder="Síndico / Administradora / Zelador" class="agenda-input"></div>
+                    <div><label class="agenda-form-label">Fornecedor vinculado</label><input type="text" id="agenda-fornecedor" placeholder="Opcional" class="agenda-input"></div>
+                    <div><label class="agenda-form-label">WhatsApp fornecedor</label><input type="text" id="agenda-telefone" placeholder="Opcional" class="agenda-input"></div>
+                    <div><label class="agenda-form-label">Canal de aviso</label><select id="agenda-canal" class="agenda-input"><option value="WhatsApp Síndico">WhatsApp Síndico</option><option value="Telegram Grupo">Telegram Grupo</option><option value="Ambos">Ambos</option></select></div>
+                    <div><label class="agenda-form-label">Status</label><select id="agenda-status" class="agenda-input"><option value="PENDENTE">PENDENTE</option><option value="AVISADO">AVISADO</option><option value="CONCLUIDO">CONCLUIDO</option><option value="CANCELADO">CANCELADO</option></select></div>
+                    <div><label class="agenda-form-label">Descrição curta</label><input type="text" id="agenda-descricao" placeholder="Ex.: limpeza semestral obrigatória" class="agenda-input"></div>
+                </div>
+                <div class="mt-4"><label class="agenda-form-label">Observações internas</label><textarea id="agenda-observacoes" rows="3" placeholder="Providências, detalhes de contrato, instruções, próximos passos..." class="agenda-input"></textarea></div>
+                <div class="flex flex-col md:flex-row gap-2 mt-4">
+                    <button id="btn-salvar-agenda" onclick="salvarCompromissoAgenda()" class="bg-purple-600 text-white font-black py-3 px-6 rounded-xl shadow hover:bg-purple-700 transition">Salvar Compromisso</button>
+                    <button onclick="limparAgendaForm()" class="bg-slate-200 text-slate-700 font-black py-3 px-6 rounded-xl transition">Limpar formulário</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl card-shadow border border-slate-100">
+                <div class="flex flex-col md:flex-row justify-between md:items-end gap-4 mb-4">
+                    <div>
+                        <h3 class="text-lg font-black text-slate-800">Consulta da agenda</h3>
+                        <p class="text-xs text-slate-500">Use os filtros para consultar vencimentos por período, status, categoria ou texto livre.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="limparFiltrosAgenda()" class="bg-slate-100 text-slate-700 font-black py-2 px-4 rounded-xl text-xs">Limpar filtros</button>
+                        <button onclick="gerarResumoAgenda()" class="bg-blue-600 text-white font-black py-2 px-4 rounded-xl text-xs">Resumo do síndico</button>
+                    </div>
+                </div>
+                <div id="agenda-resumo-operacional" class="hidden mb-4 p-4 rounded-xl border border-blue-100 bg-blue-50 text-sm text-blue-900 font-bold"></div>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
+                    <div><label class="agenda-form-label">Status</label><select id="agenda-filtro-status" onchange="renderizarAgenda()" class="agenda-input"><option value="TODOS">Todos</option><option value="PENDENTE">Pendentes</option><option value="AVISADO">Avisados</option><option value="CONCLUIDO">Concluídos</option><option value="CANCELADO">Cancelados</option></select></div>
+                    <div><label class="agenda-form-label">Data inicial</label><input type="date" id="agenda-filtro-data-inicial" onchange="renderizarAgenda()" class="agenda-input"></div>
+                    <div><label class="agenda-form-label">Data final</label><input type="date" id="agenda-filtro-data-final" onchange="renderizarAgenda()" class="agenda-input"></div>
+                    <div><label class="agenda-form-label">Categoria</label><input id="agenda-filtro-categoria" onkeyup="renderizarAgenda()" placeholder="Seguro, Elevador..." class="agenda-input"></div>
+                    <div><label class="agenda-form-label">Buscar</label><input id="agenda-filtro-busca" onkeyup="renderizarAgenda()" placeholder="contrato, caixa, limpeza..." class="agenda-input"></div>
                 </div>
 
-                <div class="overflow-x-auto rounded-xl border border-slate-100">
+                <div class="agenda-desktop-table overflow-x-auto rounded-xl border border-slate-100">
                     <table class="w-full text-sm text-left bg-white">
-                        <thead class="bg-slate-100 text-slate-500 uppercase text-[10px] font-bold">
-                            <tr><th class="px-4 py-3">Vencimento</th><th class="px-4 py-3">Dias</th><th class="px-4 py-3">Categoria</th><th class="px-4 py-3">Compromisso</th><th class="px-4 py-3">Responsável</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Avisos</th><th class="px-4 py-3 text-right">Ações</th></tr>
+                        <thead class="bg-slate-100 text-slate-500 uppercase text-[10px] font-black">
+                            <tr><th class="px-4 py-3">Vencimento</th><th class="px-4 py-3">Prazo</th><th class="px-4 py-3">Categoria</th><th class="px-4 py-3">Compromisso</th><th class="px-4 py-3">Responsável</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Aviso</th><th class="px-4 py-3 text-right">Ações</th></tr>
                         </thead>
-                        <tbody id="tabela-agenda" class="divide-y divide-slate-100"><tr><td colspan="8" class="p-8 text-center text-slate-400">Clique em Agenda Preventiva para carregar.</td></tr></tbody>
+                        <tbody id="tabela-agenda" class="divide-y divide-slate-100"><tr><td colspan="8" class="p-8 text-center text-slate-400">Clique em Atualizar agenda para carregar.</td></tr></tbody>
                     </table>
                 </div>
+                <div id="agenda-mobile-lista" class="agenda-card-mobile"></div>
             </div>
         </div>
 
@@ -1170,6 +1211,14 @@
             return new Date(Number(partes[0]), Number(partes[1])-1, Number(partes[2]));
         }
 
+        function dataHojeISOAgenda() {
+            const d = hojeLocalData();
+            const ano = d.getFullYear();
+            const mes = String(d.getMonth()+1).padStart(2,'0');
+            const dia = String(d.getDate()).padStart(2,'0');
+            return `${ano}-${mes}-${dia}`;
+        }
+
         function formatarDataBR(dataStr) {
             if(!dataStr) return '--';
             const partes = String(dataStr).split('T')[0].split('-');
@@ -1184,11 +1233,20 @@
             return Math.round((alvo - hoje) / (1000 * 60 * 60 * 24));
         }
 
-        function avisosAgenda(dias) {
+        function avisoAgendaTexto(dias) {
             if(dias === null || dias === undefined) return '--';
-            if(dias < 0) return 'Vencido';
+            if(dias < 0) return 'Vencido — exige providência';
             const regra = [30,25,20,15,10,5,3,2,1,0];
-            return regra.includes(dias) ? 'Aviso hoje' : '30,25,20,15,10,5,3,2,1,0';
+            if(dias === 0) return 'Aviso hoje — vence hoje';
+            return regra.includes(dias) ? `Aviso hoje — faltam ${dias} dias` : 'Sem aviso hoje';
+        }
+
+        function prazoAgendaTexto(dias) {
+            if(dias === null || dias === undefined) return '--';
+            if(dias < 0) return `${Math.abs(dias)} dia(s) vencido(s)`;
+            if(dias === 0) return 'Vence hoje';
+            if(dias === 1) return 'Falta 1 dia';
+            return `Faltam ${dias} dias`;
         }
 
         function classeStatusAgenda(dias, status) {
@@ -1203,9 +1261,34 @@
             return 'bg-emerald-100 text-emerald-700';
         }
 
+        function mostrarToastAgenda(msg, tipo='ok') {
+            const antigo = document.getElementById('agenda-toast');
+            if(antigo) antigo.remove();
+            const div = document.createElement('div');
+            div.id = 'agenda-toast';
+            div.className = `agenda-toast ${tipo}`;
+            div.innerText = msg;
+            document.body.appendChild(div);
+            setTimeout(() => { if(div) div.remove(); }, 3500);
+        }
+
+        function compromissosAtivosAgenda() {
+            return dadosAgendaPreventiva.filter(x => !['CONCLUIDO','CANCELADO'].includes(String(x.status || '').toUpperCase()));
+        }
+
+        function proximoCompromissoAgenda() {
+            const ativos = compromissosAtivosAgenda()
+                .map(x => ({ ...x, dias: diasAteVencimento(x.data_vencimento) }))
+                .filter(x => x.dias !== null)
+                .sort((a,b) => a.dias - b.dias);
+            return ativos[0] || null;
+        }
+
         async function carregarAgendaPreventiva() {
             const tb = document.getElementById('tabela-agenda');
-            tb.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-400 font-bold">Carregando agenda preventiva...</td></tr>';
+            const mobile = document.getElementById('agenda-mobile-lista');
+            if(tb) tb.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-400 font-bold">Carregando agenda preventiva...</td></tr>';
+            if(mobile) mobile.innerHTML = '<div class="p-4 text-center text-slate-400 font-bold">Carregando agenda...</div>';
             try {
                 const { data, error } = await supabaseDB
                     .from('agenda_preventiva')
@@ -1216,71 +1299,141 @@
                 dadosAgendaPreventiva = data || [];
                 renderizarAgenda();
             } catch(e) {
-                tb.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-red-500 font-bold">Não foi possível carregar a agenda. Verifique se a tabela agenda_preventiva foi criada no Supabase.<br><span class="text-xs text-slate-500">${e.message || e}</span></td></tr>`;
+                const msg = `Não foi possível carregar a agenda. ${e.message || e}`;
+                if(tb) tb.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-red-500 font-bold">${msg}</td></tr>`;
+                if(mobile) mobile.innerHTML = `<div class="p-4 text-center text-red-500 font-bold">${msg}</div>`;
+                mostrarToastAgenda(msg, 'erro');
             }
         }
 
-        function atualizarKpisAgenda(dados) {
-            const ativos = dados.filter(x => !['CONCLUIDO','CANCELADO'].includes(String(x.status || '').toUpperCase()));
+        function atualizarKpisAgenda() {
+            const ativos = compromissosAtivosAgenda();
             const ate30 = ativos.filter(x => { const d = diasAteVencimento(x.data_vencimento); return d !== null && d >= 0 && d <= 30; }).length;
             const ate7 = ativos.filter(x => { const d = diasAteVencimento(x.data_vencimento); return d !== null && d >= 0 && d <= 7; }).length;
             const hoje = ativos.filter(x => diasAteVencimento(x.data_vencimento) === 0).length;
             const vencidos = ativos.filter(x => { const d = diasAteVencimento(x.data_vencimento); return d !== null && d < 0; }).length;
-            document.getElementById('agenda-kpi-30').innerText = ate30;
-            document.getElementById('agenda-kpi-7').innerText = ate7;
-            document.getElementById('agenda-kpi-hoje').innerText = hoje;
-            document.getElementById('agenda-kpi-vencidos').innerText = vencidos;
+            const prox = proximoCompromissoAgenda();
+
+            const set = (id, valor) => { const el = document.getElementById(id); if(el) el.innerText = valor; };
+            set('agenda-kpi-ativos', ativos.length);
+            set('agenda-kpi-30', ate30);
+            set('agenda-kpi-7', ate7);
+            set('agenda-kpi-hoje', hoje);
+            set('agenda-kpi-vencidos', vencidos);
+            const proxEl = document.getElementById('agenda-proximo-info');
+            if(proxEl) proxEl.innerText = prox ? `${prox.titulo || 'Compromisso'} — ${formatarDataBR(prox.data_vencimento)} (${prazoAgendaTexto(prox.dias)})` : 'Nenhum compromisso ativo cadastrado.';
+        }
+
+        function filtrarDadosAgenda() {
+            const stEl = document.getElementById('agenda-filtro-status');
+            const dataIniEl = document.getElementById('agenda-filtro-data-inicial');
+            const dataFimEl = document.getElementById('agenda-filtro-data-final');
+            const catEl = document.getElementById('agenda-filtro-categoria');
+            const buscaEl = document.getElementById('agenda-filtro-busca');
+            const stFiltro = stEl ? stEl.value : 'TODOS';
+            const dataInicial = dataIniEl ? dataIniEl.value : '';
+            const dataFinal = dataFimEl ? dataFimEl.value : '';
+            const catFiltro = normalizarTextoFiltro(catEl ? catEl.value : '');
+            const busca = normalizarTextoFiltro(buscaEl ? buscaEl.value : '');
+
+            let dados = [...dadosAgendaPreventiva];
+            if(stFiltro !== 'TODOS') dados = dados.filter(x => String(x.status || '').toUpperCase() === stFiltro);
+            if(dataInicial) dados = dados.filter(x => String(x.data_vencimento || '') >= dataInicial);
+            if(dataFinal) dados = dados.filter(x => String(x.data_vencimento || '') <= dataFinal);
+            if(catFiltro) dados = dados.filter(x => normalizarTextoFiltro(x.categoria).includes(catFiltro));
+            if(busca) dados = dados.filter(x => normalizarTextoFiltro([x.titulo, x.descricao, x.responsavel, x.fornecedor, x.observacoes].join(' ')).includes(busca));
+            return dados.sort((a,b) => String(a.data_vencimento || '').localeCompare(String(b.data_vencimento || '')));
         }
 
         function renderizarAgenda() {
             const tb = document.getElementById('tabela-agenda');
-            const stFiltro = document.getElementById('agenda-filtro-status').value;
-            const catFiltro = normalizarTextoFiltro(document.getElementById('agenda-filtro-categoria').value);
-            const busca = normalizarTextoFiltro(document.getElementById('agenda-filtro-busca').value);
-
-            let dados = [...dadosAgendaPreventiva];
-            if(stFiltro !== 'TODOS') dados = dados.filter(x => String(x.status || '').toUpperCase() === stFiltro);
-            if(catFiltro) dados = dados.filter(x => normalizarTextoFiltro(x.categoria).includes(catFiltro));
-            if(busca) dados = dados.filter(x => normalizarTextoFiltro([x.titulo, x.descricao, x.responsavel, x.fornecedor, x.observacoes].join(' ')).includes(busca));
-
-            atualizarKpisAgenda(dadosAgendaPreventiva);
+            const mobile = document.getElementById('agenda-mobile-lista');
+            if(!tb) return;
+            atualizarKpisAgenda();
+            const dados = filtrarDadosAgenda();
 
             if(!dados.length) {
-                tb.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-400">Nenhum compromisso encontrado.</td></tr>';
+                tb.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-400">Nenhum compromisso encontrado com os filtros selecionados.</td></tr>';
+                if(mobile) mobile.innerHTML = '<div class="p-4 rounded-xl bg-white border text-center text-slate-400 font-bold">Nenhum compromisso encontrado.</div>';
                 return;
             }
 
-            tb.innerHTML = dados.map(x => {
-                const dias = diasAteVencimento(x.data_vencimento);
-                const status = String(x.status || 'PENDENTE').toUpperCase();
-                const badge = classeStatusAgenda(dias ?? 9999, status);
-                const diasTxt = dias === null ? '--' : (dias < 0 ? `${Math.abs(dias)} vencido(s)` : (dias === 0 ? 'Hoje' : `${dias} dia(s)`));
-                return `<tr class="hover:bg-slate-50">
-                    <td class="px-4 py-3 font-bold text-slate-700">${formatarDataBR(x.data_vencimento)}</td>
-                    <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs font-bold ${badge}">${diasTxt}</span></td>
-                    <td class="px-4 py-3 text-xs font-bold text-purple-700 uppercase">${x.categoria || '--'}</td>
-                    <td class="px-4 py-3"><b>${x.titulo || '--'}</b><br><span class="text-xs text-slate-500">${x.descricao || ''}</span></td>
-                    <td class="px-4 py-3 text-xs text-slate-600">${x.responsavel || '--'}</td>
-                    <td class="px-4 py-3 text-xs font-black">${status}</td>
-                    <td class="px-4 py-3 text-xs text-slate-500">${avisosAgenda(dias)}</td>
-                    <td class="px-4 py-3 text-right whitespace-nowrap">
-                        <button onclick="editarCompromissoAgenda('${x.id}')" class="text-blue-600 font-bold text-xs mr-3">Editar</button>
-                        <button onclick="concluirCompromissoAgenda('${x.id}')" class="text-emerald-600 font-bold text-xs mr-3">Concluir</button>
-                        <button onclick="excluirCompromissoAgenda('${x.id}')" class="text-red-500 font-bold text-xs">Excluir</button>
-                    </td>
-                </tr>`;
-            }).join('');
+            tb.innerHTML = dados.map(x => linhaAgendaHTML(x)).join('');
+            if(mobile) mobile.innerHTML = dados.map(x => cardAgendaMobileHTML(x)).join('');
+        }
+
+        function linhaAgendaHTML(x) {
+            const dias = diasAteVencimento(x.data_vencimento);
+            const status = String(x.status || 'PENDENTE').toUpperCase();
+            const badge = classeStatusAgenda(dias ?? 9999, status);
+            return `<tr class="hover:bg-slate-50">
+                <td class="px-4 py-3 font-black text-slate-700">${formatarDataBR(x.data_vencimento)}</td>
+                <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs font-black ${badge}">${prazoAgendaTexto(dias)}</span></td>
+                <td class="px-4 py-3 text-xs font-black text-purple-700 uppercase">${x.categoria || '--'}</td>
+                <td class="px-4 py-3"><b>${x.titulo || '--'}</b><br><span class="text-xs text-slate-500">${x.descricao || ''}</span>${x.observacoes ? `<br><span class="text-[11px] text-slate-400">Obs.: ${x.observacoes}</span>` : ''}</td>
+                <td class="px-4 py-3 text-xs text-slate-600"><b>${x.responsavel || '--'}</b>${x.fornecedor ? `<br><span class="text-slate-400">${x.fornecedor}</span>` : ''}</td>
+                <td class="px-4 py-3 text-xs font-black">${status}</td>
+                <td class="px-4 py-3 text-xs text-slate-500">${avisoAgendaTexto(dias)}</td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                    <button onclick="editarCompromissoAgenda('${x.id}')" class="text-blue-600 font-black text-xs mr-3">Editar</button>
+                    ${status === 'CONCLUIDO' || status === 'CANCELADO' ? `<button onclick="reabrirCompromissoAgenda('${x.id}')" class="text-purple-600 font-black text-xs mr-3">Reabrir</button>` : `<button onclick="concluirCompromissoAgenda('${x.id}')" class="text-emerald-600 font-black text-xs mr-3">Concluir</button><button onclick="cancelarCompromissoAgenda('${x.id}')" class="text-amber-600 font-black text-xs mr-3">Cancelar</button>`}
+                    <button onclick="excluirCompromissoAgenda('${x.id}')" class="text-red-500 font-black text-xs">Excluir</button>
+                </td>
+            </tr>`;
+        }
+
+        function cardAgendaMobileHTML(x) {
+            const dias = diasAteVencimento(x.data_vencimento);
+            const status = String(x.status || 'PENDENTE').toUpperCase();
+            const badge = classeStatusAgenda(dias ?? 9999, status);
+            return `<div class="bg-white border border-slate-100 rounded-2xl p-4 mb-3 card-shadow">
+                <div class="flex justify-between gap-3 items-start">
+                    <div><p class="text-[10px] font-black uppercase text-purple-700">${x.categoria || 'Sem categoria'}</p><h4 class="text-base font-black text-slate-800 leading-tight">${x.titulo || '--'}</h4></div>
+                    <span class="px-2 py-1 rounded text-[11px] font-black ${badge}">${prazoAgendaTexto(dias)}</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-2"><b>Vencimento:</b> ${formatarDataBR(x.data_vencimento)} · <b>Status:</b> ${status}</p>
+                <p class="text-xs text-slate-500 mt-1"><b>Responsável:</b> ${x.responsavel || '--'}${x.fornecedor ? ` · <b>Fornecedor:</b> ${x.fornecedor}` : ''}</p>
+                ${x.descricao ? `<p class="text-xs text-slate-600 mt-2">${x.descricao}</p>` : ''}
+                ${x.observacoes ? `<p class="text-xs text-slate-400 mt-1">Obs.: ${x.observacoes}</p>` : ''}
+                <p class="text-[11px] font-black text-slate-500 mt-2">${avisoAgendaTexto(dias)}</p>
+                <div class="grid grid-cols-2 gap-2 mt-3">
+                    <button onclick="editarCompromissoAgenda('${x.id}')" class="bg-blue-50 text-blue-700 font-black py-2 rounded-lg text-xs">Editar</button>
+                    ${status === 'CONCLUIDO' || status === 'CANCELADO' ? `<button onclick="reabrirCompromissoAgenda('${x.id}')" class="bg-purple-50 text-purple-700 font-black py-2 rounded-lg text-xs">Reabrir</button>` : `<button onclick="concluirCompromissoAgenda('${x.id}')" class="bg-emerald-50 text-emerald-700 font-black py-2 rounded-lg text-xs">Concluir</button>`}
+                </div>
+            </div>`;
+        }
+
+        function abrirNovoCompromissoAgenda() {
+            limparAgendaForm();
+            const el = document.getElementById('agenda-titulo');
+            if(el) el.focus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function limparAgendaForm() {
-            ['agenda-id','agenda-titulo','agenda-data','agenda-responsavel','agenda-fornecedor','agenda-telefone','agenda-descricao','agenda-observacoes'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('agenda-categoria').value = 'Contrato';
-            document.getElementById('agenda-canal').value = 'WhatsApp Síndico';
-            document.getElementById('agenda-status').value = 'PENDENTE';
-            document.getElementById('btn-salvar-agenda').innerText = 'Salvar Compromisso';
+            ['agenda-id','agenda-titulo','agenda-data','agenda-responsavel','agenda-fornecedor','agenda-telefone','agenda-descricao','agenda-observacoes'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+            const set = (id, value) => { const el = document.getElementById(id); if(el) el.value = value; };
+            set('agenda-categoria','Contrato');
+            set('agenda-canal','WhatsApp Síndico');
+            set('agenda-status','PENDENTE');
+            const btn = document.getElementById('btn-salvar-agenda');
+            if(btn) { btn.innerText = 'Salvar Compromisso'; btn.disabled = false; }
+            const modo = document.getElementById('agenda-modo-form');
+            if(modo) modo.innerText = 'Novo compromisso';
+        }
+
+        function limparFiltrosAgenda() {
+            const set = (id, value) => { const el = document.getElementById(id); if(el) el.value = value; };
+            set('agenda-filtro-status','TODOS');
+            set('agenda-filtro-data-inicial','');
+            set('agenda-filtro-data-final','');
+            set('agenda-filtro-categoria','');
+            set('agenda-filtro-busca','');
+            renderizarAgenda();
         }
 
         async function salvarCompromissoAgenda() {
+            const btn = document.getElementById('btn-salvar-agenda');
             const id = document.getElementById('agenda-id').value;
             const titulo = document.getElementById('agenda-titulo').value.trim();
             const data = document.getElementById('agenda-data').value;
@@ -1299,13 +1452,22 @@
                 observacoes: document.getElementById('agenda-observacoes').value.trim()
             };
 
-            const result = id
-                ? await supabaseDB.from('agenda_preventiva').update(payload).eq('id', id)
-                : await supabaseDB.from('agenda_preventiva').insert([payload]);
+            try {
+                if(btn) { btn.disabled = true; btn.innerText = 'Salvando...'; }
+                const result = id
+                    ? await supabaseDB.from('agenda_preventiva').update(payload).eq('id', id).select()
+                    : await supabaseDB.from('agenda_preventiva').insert([payload]).select();
 
-            if(result.error) return alert('Erro ao salvar agenda: ' + result.error.message);
-            limparAgendaForm();
-            carregarAgendaPreventiva();
+                if(result.error) throw result.error;
+                mostrarToastAgenda(id ? 'Compromisso atualizado com sucesso.' : 'Compromisso salvo com sucesso.');
+                limparAgendaForm();
+                await carregarAgendaPreventiva();
+            } catch(e) {
+                alert('Erro ao salvar agenda: ' + (e.message || e));
+                mostrarToastAgenda('Erro ao salvar compromisso.', 'erro');
+            } finally {
+                if(btn) { btn.disabled = false; btn.innerText = id ? 'Atualizar Compromisso' : 'Salvar Compromisso'; }
+            }
         }
 
         function editarCompromissoAgenda(id) {
@@ -1323,23 +1485,58 @@
             document.getElementById('agenda-descricao').value = x.descricao || '';
             document.getElementById('agenda-observacoes').value = x.observacoes || '';
             document.getElementById('btn-salvar-agenda').innerText = 'Atualizar Compromisso';
+            const modo = document.getElementById('agenda-modo-form');
+            if(modo) modo.innerText = 'Editando compromisso';
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         async function concluirCompromissoAgenda(id) {
             const obs = prompt('Observação de conclusão do compromisso:', 'Concluído conforme verificação do síndico.');
             if(obs === null) return;
-            const payload = { status: 'CONCLUIDO', data_conclusao: new Date().toISOString(), observacao_conclusao: obs };
+            const payload = { status: 'CONCLUIDO', data_conclusao: dataHojeISOAgenda(), observacao_conclusao: obs };
             const { error } = await supabaseDB.from('agenda_preventiva').update(payload).eq('id', id);
             if(error) return alert('Erro ao concluir: ' + error.message);
-            carregarAgendaPreventiva();
+            mostrarToastAgenda('Compromisso concluído.');
+            await carregarAgendaPreventiva();
+        }
+
+        async function cancelarCompromissoAgenda(id) {
+            const obs = prompt('Motivo do cancelamento:', 'Cancelado pelo síndico.');
+            if(obs === null) return;
+            const { error } = await supabaseDB.from('agenda_preventiva').update({ status: 'CANCELADO', observacoes: obs }).eq('id', id);
+            if(error) return alert('Erro ao cancelar: ' + error.message);
+            mostrarToastAgenda('Compromisso cancelado.');
+            await carregarAgendaPreventiva();
+        }
+
+        async function reabrirCompromissoAgenda(id) {
+            if(!confirm('Reabrir este compromisso como PENDENTE?')) return;
+            const { error } = await supabaseDB.from('agenda_preventiva').update({ status: 'PENDENTE', data_conclusao: null, observacao_conclusao: null }).eq('id', id);
+            if(error) return alert('Erro ao reabrir: ' + error.message);
+            mostrarToastAgenda('Compromisso reaberto.');
+            await carregarAgendaPreventiva();
         }
 
         async function excluirCompromissoAgenda(id) {
-            if(!confirm('Excluir este compromisso da agenda preventiva?')) return;
+            if(!confirm('Excluir definitivamente este compromisso? Para rotina normal, prefira Cancelar.')) return;
             const { error } = await supabaseDB.from('agenda_preventiva').delete().eq('id', id);
             if(error) return alert('Erro ao excluir: ' + error.message);
-            carregarAgendaPreventiva();
+            mostrarToastAgenda('Compromisso excluído.');
+            await carregarAgendaPreventiva();
+        }
+
+        function gerarResumoAgenda() {
+            const dados = filtrarDadosAgenda();
+            const ativos = dados.filter(x => !['CONCLUIDO','CANCELADO'].includes(String(x.status || '').toUpperCase()));
+            const vencidos = ativos.filter(x => diasAteVencimento(x.data_vencimento) < 0).length;
+            const hoje = ativos.filter(x => diasAteVencimento(x.data_vencimento) === 0).length;
+            const ate7 = ativos.filter(x => { const d = diasAteVencimento(x.data_vencimento); return d >= 0 && d <= 7; }).length;
+            const proximos = ativos.slice(0,5).map(x => `• ${x.titulo || 'Compromisso'} — ${formatarDataBR(x.data_vencimento)} (${prazoAgendaTexto(diasAteVencimento(x.data_vencimento))})`).join('<br>') || 'Nenhum compromisso ativo nos filtros atuais.';
+            const box = document.getElementById('agenda-resumo-operacional');
+            if(box) {
+                box.classList.remove('hidden');
+                box.innerHTML = `<b>Resumo rápido para o síndico:</b><br>Ativos nos filtros: ${ativos.length} · Vencidos: ${vencidos} · Vencem hoje: ${hoje} · Até 7 dias: ${ate7}<br><br>${proximos}`;
+            }
         }
 
         function recarregarTudo() { mostrarSessao('dash'); carregarEstatisticas(); carregarMoradores(); }
