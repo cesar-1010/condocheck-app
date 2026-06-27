@@ -116,6 +116,26 @@
         .agenda-toast.ok { background:#dcfce7; color:#166534; border:1px solid #86efac; }
         .agenda-toast.erro { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
 
+
+
+        /* HOTFIX ALMOXARIFADO / ESTOQUE ZELÔ — cerca elétrica ativa.
+           Só acrescenta o módulo de estoque. Não altera Bento, CondoCheck,
+           Agenda, Cobrança, Ocorrências ou Fechamentos já existentes. */
+        .estoque-tab { padding:10px 14px; border-radius:12px; font-size:12px; font-weight:900; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; }
+        .estoque-tab.ativo { background:#0f172a; color:white; border-color:#0f172a; }
+        .estoque-label { display:block; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:.04em; color:#64748b; margin-bottom:5px; }
+        .estoque-input { width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; background:white; }
+        .estoque-input:focus { outline:2px solid rgba(15,188,127,.18); border-color:#0FBC7F; }
+        .estoque-chip { display:inline-flex; align-items:center; gap:6px; padding:5px 9px; border-radius:999px; font-size:11px; font-weight:900; white-space:nowrap; }
+        .estoque-card-mobile { display:none; }
+        @media (max-width: 768px) {
+            #sessao-almoxarifado .estoque-grid { grid-template-columns:1fr !important; }
+            #sessao-almoxarifado .estoque-kpis { grid-template-columns:1fr 1fr !important; }
+            #sessao-almoxarifado .estoque-table-desktop { display:none !important; }
+            #sessao-almoxarifado .estoque-card-mobile { display:block !important; }
+            #sessao-almoxarifado button, #sessao-almoxarifado input, #sessao-almoxarifado select, #sessao-almoxarifado textarea { min-height:44px; }
+        }
+
         @media (max-width: 768px) {
             #sessao-agenda .agenda-desktop-table { display:none !important; }
             #sessao-agenda .agenda-card-mobile { display:block !important; }
@@ -145,6 +165,7 @@
             <button onclick="mostrarSessao('moradores'); carregarMoradores()" id="btn-moradores" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left">🏠 Moradores</button>
             <button onclick="mostrarSessao('fornecedores'); carregarFornecedores()" id="btn-fornecedores" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left">🛠️ Fornecedores</button>
             <button onclick="mostrarSessao('agenda'); carregarAgendaPreventiva()" id="btn-agenda" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left">🗓️ Agenda Preventiva</button>
+            <button onclick="mostrarSessao('almoxarifado'); carregarAlmoxarifado()" id="btn-almoxarifado" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left">📦 Almoxarifado</button>
             <button onclick="mostrarSessao('cadastros'); carregarCadastrosBase()" id="btn-cadastros" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left">📝 Cadastros</button>
         </nav>
     </aside>
@@ -368,6 +389,171 @@
             </div>
         </div>
 
+
+        <div id="sessao-almoxarifado" class="hidden space-y-6">
+            <div class="bg-gradient-to-r from-emerald-900 via-slate-900 to-slate-800 text-white p-6 rounded-2xl card-shadow">
+                <div class="flex flex-col lg:flex-row justify-between gap-5">
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-[0.22em] text-emerald-200 mb-2">Estoque Zelô · Almoxarifado do condomínio</p>
+                        <h2 class="text-2xl md:text-3xl font-black mb-2">📦 Controle de Estoque e Ordem de Compra</h2>
+                        <p class="text-sm text-emerald-50 max-w-4xl leading-relaxed">Controle simples e auditável de materiais: entrada por NF, sinalização de baixa pela equipe, confirmação do síndico, saldo, custo médio, estoque mínimo e cotação por WhatsApp para fornecedores selecionados.</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 lg:items-start">
+                        <button onclick="carregarAlmoxarifado()" class="bg-white text-emerald-800 px-5 py-3 rounded-xl shadow text-sm font-black hover:bg-emerald-50 transition">🔄 Atualizar estoque</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid estoque-kpis grid-cols-2 md:grid-cols-6 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-100 card-shadow"><p class="text-[10px] text-slate-400 font-black uppercase">Itens ativos</p><p id="est-kpi-itens" class="text-2xl font-black text-slate-800">--</p></div>
+                <div class="bg-white p-4 rounded-xl border border-slate-100 card-shadow"><p class="text-[10px] text-slate-400 font-black uppercase">Comprar</p><p id="est-kpi-comprar" class="text-2xl font-black text-red-600">--</p></div>
+                <div class="bg-white p-4 rounded-xl border border-slate-100 card-shadow"><p class="text-[10px] text-slate-400 font-black uppercase">Baixas pendentes</p><p id="est-kpi-pendentes" class="text-2xl font-black text-amber-600">--</p></div>
+                <div class="bg-white p-4 rounded-xl border border-slate-100 card-shadow"><p class="text-[10px] text-slate-400 font-black uppercase">Ordens abertas</p><p id="est-kpi-ordens" class="text-2xl font-black text-blue-600">--</p></div>
+                <div class="bg-white p-4 rounded-xl border border-slate-100 card-shadow"><p class="text-[10px] text-slate-400 font-black uppercase">Valor estoque</p><p id="est-kpi-valor" class="text-xl font-black text-emerald-700">--</p></div>
+                <div class="bg-white p-4 rounded-xl border border-slate-100 card-shadow"><p class="text-[10px] text-slate-400 font-black uppercase">Fornecedores</p><p id="est-kpi-fornecedores" class="text-2xl font-black text-slate-800">--</p></div>
+            </div>
+
+            <div class="bg-white p-3 rounded-2xl card-shadow border border-slate-100 flex flex-wrap gap-2">
+                <button id="est-tab-visao" onclick="mostrarAbaEstoque('visao')" class="estoque-tab ativo">Visão Geral</button>
+                <button id="est-tab-categorias" onclick="mostrarAbaEstoque('categorias')" class="estoque-tab">Categorias</button>
+                <button id="est-tab-fornecedores" onclick="mostrarAbaEstoque('fornecedores')" class="estoque-tab">Fornecedores</button>
+                <button id="est-tab-produtos" onclick="mostrarAbaEstoque('produtos')" class="estoque-tab">Produtos</button>
+                <button id="est-tab-entrada" onclick="mostrarAbaEstoque('entrada')" class="estoque-tab">Entrada NF</button>
+                <button id="est-tab-baixa" onclick="mostrarAbaEstoque('baixa')" class="estoque-tab">Sinalizar Baixa</button>
+                <button id="est-tab-pendentes" onclick="mostrarAbaEstoque('pendentes')" class="estoque-tab">Confirmação Síndico</button>
+                <button id="est-tab-ordem" onclick="mostrarAbaEstoque('ordem')" class="estoque-tab">Ordem de Compra</button>
+            </div>
+
+            <div id="est-aba-visao" class="est-aba space-y-4">
+                <div class="bg-white p-5 rounded-2xl card-shadow border border-slate-100">
+                    <div class="flex flex-col md:flex-row justify-between gap-3 mb-4">
+                        <div><h3 class="text-lg font-black text-slate-800">Estoque atual</h3><p class="text-xs text-slate-500">Saldos, mínimos, custo médio e situação do almoxarifado.</p></div>
+                        <div class="flex gap-2"><input id="est-busca-estoque" onkeyup="renderizarEstoqueAtual()" placeholder="Buscar produto, categoria..." class="estoque-input"></div>
+                    </div>
+                    <div class="estoque-table-desktop overflow-x-auto rounded-xl border border-slate-100">
+                        <table class="w-full text-sm text-left bg-white">
+                            <thead class="bg-slate-100 text-slate-500 uppercase text-[10px] font-black"><tr><th class="px-4 py-3">Produto</th><th class="px-4 py-3">Categoria</th><th class="px-4 py-3">Tipo</th><th class="px-4 py-3 text-right">Estoque</th><th class="px-4 py-3 text-right">Pend.</th><th class="px-4 py-3 text-right">Mín.</th><th class="px-4 py-3 text-right">Custo médio</th><th class="px-4 py-3 text-right">Valor</th><th class="px-4 py-3 text-center">Situação</th></tr></thead>
+                            <tbody id="est-tabela-situacao"><tr><td colspan="9" class="p-8 text-center text-slate-400">Clique em Atualizar estoque.</td></tr></tbody>
+                        </table>
+                    </div>
+                    <div id="est-mobile-situacao" class="estoque-card-mobile"></div>
+                </div>
+            </div>
+
+            <div id="est-aba-categorias" class="est-aba hidden space-y-4">
+                <div class="bg-white p-5 rounded-2xl card-shadow border border-slate-100">
+                    <h3 class="text-lg font-black text-slate-800 mb-3">Categorias</h3>
+                    <input type="hidden" id="est-cat-id">
+                    <div class="grid estoque-grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div><label class="estoque-label">Nome da categoria</label><input id="est-cat-nome" class="estoque-input" placeholder="Ex.: Material Elétrico"></div>
+                        <div><label class="estoque-label">Descrição</label><input id="est-cat-desc" class="estoque-input" placeholder="Descrição opcional"></div>
+                        <div class="flex items-end gap-2"><button onclick="salvarCategoriaEstoque()" class="bg-emerald-600 text-white font-black py-3 px-5 rounded-xl">Salvar</button><button onclick="limparCategoriaEstoque()" class="bg-slate-100 text-slate-700 font-black py-3 px-5 rounded-xl">Limpar</button></div>
+                    </div>
+                    <div id="est-lista-categorias" class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                </div>
+            </div>
+
+            <div id="est-aba-fornecedores" class="est-aba hidden space-y-4">
+                <div class="bg-white p-5 rounded-2xl card-shadow border border-slate-100">
+                    <h3 class="text-lg font-black text-slate-800 mb-3">Fornecedores do almoxarifado</h3>
+                    <input type="hidden" id="est-for-id">
+                    <div class="grid estoque-grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div><label class="estoque-label">Nome</label><input id="est-for-nome" class="estoque-input" placeholder="Empresa"></div>
+                        <div><label class="estoque-label">Contato</label><input id="est-for-contato" class="estoque-input" placeholder="Responsável"></div>
+                        <div><label class="estoque-label">WhatsApp obrigatório</label><input id="est-for-whats" class="estoque-input" placeholder="5551999999999"></div>
+                        <div><label class="estoque-label">E-mail obrigatório</label><input id="est-for-email" class="estoque-input" placeholder="email@fornecedor.com"></div>
+                        <div><label class="estoque-label">CNPJ</label><input id="est-for-cnpj" class="estoque-input" placeholder="Opcional"></div>
+                        <div><label class="estoque-label">Categoria preferencial</label><select id="est-for-categoria" class="estoque-input"></select></div>
+                        <div class="md:col-span-2"><label class="estoque-label">Observações</label><input id="est-for-obs" class="estoque-input" placeholder="Observações"></div>
+                    </div>
+                    <div class="mt-4 flex gap-2"><button onclick="salvarFornecedorEstoque()" class="bg-emerald-600 text-white font-black py-3 px-5 rounded-xl">Salvar fornecedor</button><button onclick="limparFornecedorEstoque()" class="bg-slate-100 text-slate-700 font-black py-3 px-5 rounded-xl">Limpar</button></div>
+                    <div id="est-lista-fornecedores" class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                </div>
+            </div>
+
+            <div id="est-aba-produtos" class="est-aba hidden space-y-4">
+                <div class="bg-white p-5 rounded-2xl card-shadow border border-slate-100">
+                    <h3 class="text-lg font-black text-slate-800 mb-3">Produtos e equipamentos</h3>
+                    <input type="hidden" id="est-prod-id">
+                    <div class="grid estoque-grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div><label class="estoque-label">Nome</label><input id="est-prod-nome" class="estoque-input" placeholder="Produto/equipamento"></div>
+                        <div><label class="estoque-label">Categoria</label><select id="est-prod-categoria" class="estoque-input"></select></div>
+                        <div><label class="estoque-label">Tipo</label><select id="est-prod-tipo" class="estoque-input"><option value="CONSUMO">Consumo</option><option value="EQUIPAMENTO">Equipamento</option></select></div>
+                        <div><label class="estoque-label">Unidade</label><input id="est-prod-unidade" class="estoque-input" placeholder="unidade, pacote, galão"></div>
+                        <div><label class="estoque-label">Estoque mínimo</label><input type="number" step="0.001" id="est-prod-min" class="estoque-input" value="0"></div>
+                        <div><label class="estoque-label">Estoque máximo</label><input type="number" step="0.001" id="est-prod-max" class="estoque-input" placeholder="Opcional"></div>
+                        <div><label class="estoque-label">Fornecedor preferencial</label><select id="est-prod-fornecedor" class="estoque-input"></select></div>
+                        <div><label class="estoque-label">Local</label><input id="est-prod-local" class="estoque-input" placeholder="Depósito"></div>
+                        <div><label class="estoque-label">Tipo de uso</label><input id="est-prod-uso" class="estoque-input" placeholder="Limpeza, piscina..."></div>
+                        <div><label class="estoque-label">Dosagem/orientação</label><input id="est-prod-dosagem" class="estoque-input" placeholder="Opcional"></div>
+                        <div><label class="estoque-label">Crítico?</label><select id="est-prod-critico" class="estoque-input"><option value="false">Não</option><option value="true">Sim</option></select></div>
+                        <div><label class="estoque-label">Observações</label><input id="est-prod-obs" class="estoque-input" placeholder="Observações"></div>
+                    </div>
+                    <div class="mt-4 flex gap-2"><button onclick="salvarProdutoEstoque()" class="bg-emerald-600 text-white font-black py-3 px-5 rounded-xl">Salvar produto</button><button onclick="limparProdutoEstoque()" class="bg-slate-100 text-slate-700 font-black py-3 px-5 rounded-xl">Limpar</button></div>
+                    <div id="est-lista-produtos" class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                </div>
+            </div>
+
+            <div id="est-aba-entrada" class="est-aba hidden space-y-4">
+                <div class="bg-white p-5 rounded-2xl card-shadow border border-slate-100">
+                    <h3 class="text-lg font-black text-slate-800 mb-3">Entrada por NF</h3>
+                    <div class="grid estoque-grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div><label class="estoque-label">Número NF</label><input id="est-ent-nf" class="estoque-input" placeholder="NF"></div>
+                        <div><label class="estoque-label">Data NF</label><input type="date" id="est-ent-data" class="estoque-input"></div>
+                        <div><label class="estoque-label">Fornecedor</label><select id="est-ent-fornecedor" class="estoque-input"></select></div>
+                        <div><label class="estoque-label">Produto</label><select id="est-ent-produto" class="estoque-input"></select></div>
+                        <div><label class="estoque-label">Quantidade</label><input type="number" step="0.001" id="est-ent-qtd" class="estoque-input"></div>
+                        <div><label class="estoque-label">Valor total</label><input type="number" step="0.01" id="est-ent-valor" class="estoque-input"></div>
+                        <div class="md:col-span-2"><label class="estoque-label">Observações</label><input id="est-ent-obs" class="estoque-input" placeholder="Observações"></div>
+                    </div>
+                    <div class="mt-4"><button onclick="salvarEntradaEstoque()" class="bg-emerald-600 text-white font-black py-3 px-5 rounded-xl">Registrar entrada</button></div>
+                </div>
+            </div>
+
+            <div id="est-aba-baixa" class="est-aba hidden space-y-4">
+                <div class="bg-white p-5 rounded-2xl card-shadow border border-slate-100">
+                    <h3 class="text-lg font-black text-slate-800 mb-3">Sinalização de baixa pela equipe</h3>
+                    <p class="text-xs text-slate-500 mb-4">A equipe sinaliza o consumo. O estoque definitivo só baixa quando o síndico confirmar.</p>
+                    <div class="grid estoque-grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div><label class="estoque-label">Produto</label><select id="est-baixa-produto" class="estoque-input"></select></div>
+                        <div><label class="estoque-label">Quantidade</label><input type="number" step="0.001" id="est-baixa-qtd" class="estoque-input"></div>
+                        <div><label class="estoque-label">Usuário</label><input id="est-baixa-usuario" class="estoque-input" placeholder="Amauri"></div>
+                        <div><label class="estoque-label">Local de uso</label><input id="est-baixa-local" class="estoque-input" placeholder="Lixeiras, piscina..."></div>
+                        <div class="md:col-span-2"><label class="estoque-label">Motivo</label><input id="est-baixa-motivo" class="estoque-input" placeholder="Uso em rotina de limpeza"></div>
+                        <div><label class="estoque-label">URL evidência</label><input id="est-baixa-url" class="estoque-input" placeholder="Opcional"></div>
+                        <div><label class="estoque-label">Observação</label><input id="est-baixa-obs" class="estoque-input" placeholder="Opcional"></div>
+                    </div>
+                    <div class="mt-4"><button onclick="salvarBaixaPendenteEstoque()" class="bg-amber-600 text-white font-black py-3 px-5 rounded-xl">Sinalizar baixa pendente</button></div>
+                </div>
+            </div>
+
+            <div id="est-aba-pendentes" class="est-aba hidden space-y-4">
+                <div class="bg-white p-5 rounded-2xl card-shadow border border-slate-100">
+                    <h3 class="text-lg font-black text-slate-800 mb-3">Baixas pendentes de confirmação do síndico</h3>
+                    <div id="est-lista-baixas-pendentes" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                </div>
+            </div>
+
+            <div id="est-aba-ordem" class="est-aba hidden space-y-4">
+                <div class="bg-white p-5 rounded-2xl card-shadow border border-slate-100">
+                    <h3 class="text-lg font-black text-slate-800 mb-3">Nova ordem de compra / cotação</h3>
+                    <div class="grid estoque-grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                        <div><label class="estoque-label">Título</label><input id="est-oc-titulo" class="estoque-input" value="Solicitação de cotação"></div>
+                        <div><label class="estoque-label">Observações</label><input id="est-oc-obs" class="estoque-input" placeholder="Prazo, condições..."></div>
+                        <div class="flex items-end"><button onclick="salvarOrdemCompraEstoque()" class="bg-blue-600 text-white font-black py-3 px-5 rounded-xl w-full">Gerar ordem</button></div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div><h4 class="font-black text-sm mb-2">Itens para cotação</h4><div id="est-oc-produtos" class="max-h-72 overflow-y-auto border rounded-xl p-3 space-y-2 bg-slate-50"></div></div>
+                        <div><h4 class="font-black text-sm mb-2">Fornecedores selecionados</h4><div id="est-oc-fornecedores" class="max-h-72 overflow-y-auto border rounded-xl p-3 space-y-2 bg-slate-50"></div></div>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl card-shadow border border-slate-100">
+                    <h3 class="text-lg font-black text-slate-800 mb-3">Ordens geradas</h3>
+                    <div id="est-lista-ordens" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
+
         <div id="sessao-moradores" class="hidden space-y-6">
             <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-arca-blue">
                 <h4 class="font-bold mb-4">🏠 Gerenciar Morador</h4>
@@ -494,7 +680,7 @@
         let tarefaAtualId = null;
 
         function mostrarSessao(id) {
-            ['dash', 'aprovacao', 'atividades', 'pesquisa', 'moradores', 'fornecedores', 'agenda', 'cadastros'].forEach(s => { 
+            ['dash', 'aprovacao', 'atividades', 'pesquisa', 'moradores', 'fornecedores', 'agenda', 'almoxarifado', 'cadastros'].forEach(s => { 
                 document.getElementById('sessao-' + s).style.display = 'none'; 
                 let btn = document.getElementById('btn-' + s); 
                 if(btn) { btn.classList.remove('bg-arca-teal/10', 'text-arca-teal', 'border-arca-teal/20'); btn.classList.add('text-slate-400', 'border-transparent'); } 
@@ -1537,6 +1723,228 @@
                 box.classList.remove('hidden');
                 box.innerHTML = `<b>Resumo rápido para o síndico:</b><br>Ativos nos filtros: ${ativos.length} · Vencidos: ${vencidos} · Vencem hoje: ${hoje} · Até 7 dias: ${ate7}<br><br>${proximos}`;
             }
+        }
+
+
+
+        // ============================================================
+        // MÓDULO ALMOXARIFADO / ESTOQUE ZELÔ — HOTFIX COM CERCA ELÉTRICA
+        // ============================================================
+        let estCategorias = [], estFornecedores = [], estProdutos = [], estSituacao = [];
+        let estMovimentos = [], estOrdens = [], estOrdemItens = [], estOrdemFornecedores = [];
+
+        function moedaBR(v) { return Number(v || 0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' }); }
+        function numEst(v) { const n = Number(v); return isNaN(n) ? 0 : n; }
+        function dataHojeEstoque() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+        function limparFoneEstoque(v) { return String(v || '').replace(/\D/g, ''); }
+        function estNomeCat(id) { return (estCategorias.find(c => String(c.id) === String(id)) || {}).nome || ''; }
+        function estNomeFornecedor(id) { return (estFornecedores.find(f => String(f.id) === String(id)) || {}).nome || ''; }
+        function estNomeProduto(id) { return (estProdutos.find(p => String(p.id) === String(id)) || {}).nome || ''; }
+        function estProdutoObj(id) { return estProdutos.find(p => String(p.id) === String(id)) || {}; }
+        function estFornecedorObj(id) { return estFornecedores.find(f => String(f.id) === String(id)) || {}; }
+
+        function mostrarAbaEstoque(aba) {
+            document.querySelectorAll('#sessao-almoxarifado .est-aba').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('#sessao-almoxarifado .estoque-tab').forEach(el => el.classList.remove('ativo'));
+            const a = document.getElementById('est-aba-' + aba); if(a) a.classList.remove('hidden');
+            const b = document.getElementById('est-tab-' + aba); if(b) b.classList.add('ativo');
+            if(aba === 'ordem') renderizarOrdemCompraForm();
+        }
+
+        async function carregarAlmoxarifado() {
+            try {
+                const [cats, fors, prods, situacao, movs, ords, itens, ordForns] = await Promise.all([
+                    supabaseDB.from('estoque_categorias').select('*').order('nome'),
+                    supabaseDB.from('estoque_fornecedores').select('*').order('nome'),
+                    supabaseDB.from('estoque_produtos').select('*').order('nome'),
+                    supabaseDB.from('vw_estoque_situacao').select('*').order('produto'),
+                    supabaseDB.from('estoque_movimentos').select('*').order('created_at', { ascending:false }).limit(200),
+                    supabaseDB.from('estoque_ordens_compra').select('*').order('created_at', { ascending:false }).limit(100),
+                    supabaseDB.from('estoque_ordem_itens').select('*').order('created_at', { ascending:false }).limit(500),
+                    supabaseDB.from('estoque_ordem_fornecedores').select('*').order('created_at', { ascending:false }).limit(500)
+                ]);
+                for (const r of [cats, fors, prods, situacao, movs, ords, itens, ordForns]) { if(r.error) throw r.error; }
+                estCategorias = cats.data || [];
+                estFornecedores = fors.data || [];
+                estProdutos = prods.data || [];
+                estSituacao = situacao.data || [];
+                estMovimentos = movs.data || [];
+                estOrdens = ords.data || [];
+                estOrdemItens = itens.data || [];
+                estOrdemFornecedores = ordForns.data || [];
+                popularSelectsEstoque();
+                renderizarEstoqueAtual();
+                renderizarCategoriasEstoque();
+                renderizarFornecedoresEstoque();
+                renderizarProdutosEstoque();
+                renderizarBaixasPendentesEstoque();
+                renderizarOrdemCompraForm();
+                renderizarOrdensEstoque();
+                atualizarKpisEstoque();
+                const de = document.getElementById('est-ent-data'); if(de && !de.value) de.value = dataHojeEstoque();
+            } catch(e) {
+                alert('Erro ao carregar almoxarifado: ' + (e.message || e));
+            }
+        }
+
+        function atualizarKpisEstoque() {
+            const ativos = estSituacao.filter(i => i.ativo !== false);
+            const comprar = ativos.filter(i => ['COMPRAR','ZERADO'].includes(String(i.situacao || '').toUpperCase())).length;
+            const pendQtd = estMovimentos.filter(m => m.status === 'PENDENTE_CONFIRMACAO_SINDICO').length;
+            const ordAbertas = estOrdens.filter(o => ['ABERTA','ENVIADA_A_FORNECEDORES'].includes(String(o.status || ''))).length;
+            const valor = ativos.reduce((s,i)=>s+numEst(i.valor_estimado_estoque),0);
+            const set = (id,v) => { const el=document.getElementById(id); if(el) el.innerText = v; };
+            set('est-kpi-itens', ativos.length);
+            set('est-kpi-comprar', comprar);
+            set('est-kpi-pendentes', pendQtd);
+            set('est-kpi-ordens', ordAbertas);
+            set('est-kpi-valor', moedaBR(valor));
+            set('est-kpi-fornecedores', estFornecedores.filter(f=>f.ativo!==false).length);
+        }
+
+        function popularSelectsEstoque() {
+            const optCats = '<option value="">Selecione...</option>' + estCategorias.filter(c=>c.ativo!==false).map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
+            const optFors = '<option value="">Selecione...</option>' + estFornecedores.filter(f=>f.ativo!==false).map(f=>`<option value="${f.id}">${f.nome}</option>`).join('');
+            const optProds = '<option value="">Selecione...</option>' + estProdutos.filter(p=>p.ativo!==false).map(p=>`<option value="${p.id}">${p.nome}</option>`).join('');
+            ['est-for-categoria','est-prod-categoria'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=optCats; });
+            ['est-prod-fornecedor','est-ent-fornecedor'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=optFors; });
+            ['est-ent-produto','est-baixa-produto'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=optProds; });
+        }
+
+        function badgeSituacaoEstoque(s) {
+            s = String(s||'').toUpperCase();
+            if(s==='OK') return 'bg-emerald-100 text-emerald-700';
+            if(s==='ATENCAO') return 'bg-amber-100 text-amber-700';
+            if(s==='COMPRAR') return 'bg-red-100 text-red-700';
+            if(s==='ZERADO') return 'bg-red-200 text-red-900';
+            return 'bg-slate-100 text-slate-600';
+        }
+
+        function renderizarEstoqueAtual() {
+            const busca = normalizarTextoFiltro(document.getElementById('est-busca-estoque')?.value || '');
+            let dados = estSituacao.filter(i => i.ativo !== false);
+            if(busca) dados = dados.filter(i => normalizarTextoFiltro(`${i.produto} ${i.categoria} ${i.tipo_item} ${i.situacao}`).includes(busca));
+            const tb = document.getElementById('est-tabela-situacao');
+            const mob = document.getElementById('est-mobile-situacao');
+            if(!dados.length) {
+                if(tb) tb.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-slate-400 font-bold">Nenhum item encontrado.</td></tr>';
+                if(mob) mob.innerHTML = '<div class="p-4 text-center text-slate-400 font-bold">Nenhum item encontrado.</div>';
+                return;
+            }
+            if(tb) tb.innerHTML = dados.map(i => `<tr class="hover:bg-slate-50"><td class="px-4 py-3 font-black text-slate-800">${i.produto}</td><td class="px-4 py-3">${i.categoria||'--'}</td><td class="px-4 py-3">${i.tipo_item}</td><td class="px-4 py-3 text-right font-bold">${numEst(i.estoque_atual).toLocaleString('pt-BR')} ${i.unidade||''}</td><td class="px-4 py-3 text-right font-bold text-amber-600">${numEst(i.baixas_pendentes).toLocaleString('pt-BR')}</td><td class="px-4 py-3 text-right">${numEst(i.estoque_minimo).toLocaleString('pt-BR')}</td><td class="px-4 py-3 text-right">${moedaBR(i.custo_medio)}</td><td class="px-4 py-3 text-right font-bold">${moedaBR(i.valor_estimado_estoque)}</td><td class="px-4 py-3 text-center"><span class="estoque-chip ${badgeSituacaoEstoque(i.situacao)}">${i.situacao}</span></td></tr>`).join('');
+            if(mob) mob.innerHTML = dados.map(i => `<div class="bg-white border border-slate-100 rounded-xl p-4 mb-3 shadow-sm"><div class="flex justify-between gap-2"><div><p class="font-black text-slate-800">${i.produto}</p><p class="text-xs text-slate-500 font-bold">${i.categoria||'--'} · ${i.tipo_item}</p></div><span class="estoque-chip ${badgeSituacaoEstoque(i.situacao)}">${i.situacao}</span></div><div class="grid grid-cols-2 gap-2 mt-3 text-xs"><p><b>Estoque:</b> ${numEst(i.estoque_atual).toLocaleString('pt-BR')} ${i.unidade||''}</p><p><b>Pend.:</b> ${numEst(i.baixas_pendentes).toLocaleString('pt-BR')}</p><p><b>Mín.:</b> ${numEst(i.estoque_minimo).toLocaleString('pt-BR')}</p><p><b>Valor:</b> ${moedaBR(i.valor_estimado_estoque)}</p></div></div>`).join('');
+        }
+
+        async function salvarCategoriaEstoque() {
+            const id = document.getElementById('est-cat-id').value;
+            const nome = document.getElementById('est-cat-nome').value.trim();
+            if(!nome) return alert('Nome da categoria é obrigatório.');
+            const payload = { nome, descricao: document.getElementById('est-cat-desc').value.trim(), ativo: true };
+            const r = id ? await supabaseDB.from('estoque_categorias').update(payload).eq('id', id) : await supabaseDB.from('estoque_categorias').insert([payload]);
+            if(r.error) return alert(r.error.message);
+            limparCategoriaEstoque(); await carregarAlmoxarifado();
+        }
+        function limparCategoriaEstoque(){ ['est-cat-id','est-cat-nome','est-cat-desc'].forEach(id=>{const e=document.getElementById(id); if(e)e.value='';}); }
+        function editarCategoriaEstoque(id){ const c=estCategorias.find(x=>String(x.id)===String(id)); if(!c)return; document.getElementById('est-cat-id').value=c.id; document.getElementById('est-cat-nome').value=c.nome||''; document.getElementById('est-cat-desc').value=c.descricao||''; }
+        async function alternarCategoriaEstoque(id, ativo){ const {error}=await supabaseDB.from('estoque_categorias').update({ativo}).eq('id',id); if(error)return alert(error.message); await carregarAlmoxarifado(); }
+        function renderizarCategoriasEstoque(){ const div=document.getElementById('est-lista-categorias'); if(!div)return; div.innerHTML=estCategorias.map(c=>`<div class="p-4 border rounded-xl bg-slate-50"><div class="flex justify-between gap-2"><div><p class="font-black">${c.nome}</p><p class="text-xs text-slate-500">${c.descricao||'Sem descrição'}</p></div><span class="estoque-chip ${c.ativo?'bg-emerald-100 text-emerald-700':'bg-slate-200 text-slate-600'}">${c.ativo?'ATIVA':'INATIVA'}</span></div><div class="mt-3 flex gap-3 text-xs font-black"><button onclick="editarCategoriaEstoque('${c.id}')" class="text-blue-600">Editar</button><button onclick="alternarCategoriaEstoque('${c.id}', ${!c.ativo})" class="text-red-600">${c.ativo?'Desativar':'Ativar'}</button></div></div>`).join('') || '<p class="text-slate-400">Nenhuma categoria.</p>'; }
+
+        async function salvarFornecedorEstoque(){
+            const id=document.getElementById('est-for-id').value;
+            const nome=document.getElementById('est-for-nome').value.trim();
+            const whatsapp=limparFoneEstoque(document.getElementById('est-for-whats').value);
+            const email=document.getElementById('est-for-email').value.trim();
+            if(!nome||!whatsapp||!email) return alert('Nome, WhatsApp e e-mail são obrigatórios.');
+            const payload={ nome, contato_responsavel:document.getElementById('est-for-contato').value.trim(), whatsapp, email, cnpj:document.getElementById('est-for-cnpj').value.trim(), categoria_preferencial_id:document.getElementById('est-for-categoria').value||null, observacoes:document.getElementById('est-for-obs').value.trim(), ativo:true };
+            const r=id?await supabaseDB.from('estoque_fornecedores').update(payload).eq('id',id):await supabaseDB.from('estoque_fornecedores').insert([payload]);
+            if(r.error)return alert(r.error.message); limparFornecedorEstoque(); await carregarAlmoxarifado();
+        }
+        function limparFornecedorEstoque(){ ['est-for-id','est-for-nome','est-for-contato','est-for-whats','est-for-email','est-for-cnpj','est-for-obs'].forEach(id=>{const e=document.getElementById(id); if(e)e.value='';}); const c=document.getElementById('est-for-categoria'); if(c)c.value=''; }
+        function editarFornecedorEstoque(id){ const f=estFornecedorObj(id); if(!f.id)return; document.getElementById('est-for-id').value=f.id; document.getElementById('est-for-nome').value=f.nome||''; document.getElementById('est-for-contato').value=f.contato_responsavel||''; document.getElementById('est-for-whats').value=f.whatsapp||''; document.getElementById('est-for-email').value=f.email||''; document.getElementById('est-for-cnpj').value=f.cnpj||''; document.getElementById('est-for-categoria').value=f.categoria_preferencial_id||''; document.getElementById('est-for-obs').value=f.observacoes||''; }
+        async function alternarFornecedorEstoque(id, ativo){ const {error}=await supabaseDB.from('estoque_fornecedores').update({ativo}).eq('id',id); if(error)return alert(error.message); await carregarAlmoxarifado(); }
+        function renderizarFornecedoresEstoque(){ const div=document.getElementById('est-lista-fornecedores'); if(!div)return; div.innerHTML=estFornecedores.map(f=>`<div class="p-4 border rounded-xl bg-slate-50"><div class="flex justify-between gap-2"><div><p class="font-black">${f.nome}</p><p class="text-xs text-slate-500">📱 ${f.whatsapp||'--'} · ✉️ ${f.email||'--'}</p><p class="text-xs text-slate-400">${f.contato_responsavel||''}</p></div><span class="estoque-chip ${f.ativo?'bg-emerald-100 text-emerald-700':'bg-slate-200 text-slate-600'}">${f.ativo?'ATIVO':'INATIVO'}</span></div><div class="mt-3 flex gap-3 text-xs font-black"><button onclick="editarFornecedorEstoque('${f.id}')" class="text-blue-600">Editar</button><button onclick="alternarFornecedorEstoque('${f.id}', ${!f.ativo})" class="text-red-600">${f.ativo?'Desativar':'Ativar'}</button></div></div>`).join('') || '<p class="text-slate-400">Nenhum fornecedor.</p>'; }
+
+        async function salvarProdutoEstoque(){
+            const id=document.getElementById('est-prod-id').value;
+            const nome=document.getElementById('est-prod-nome').value.trim();
+            if(!nome) return alert('Nome do produto/equipamento é obrigatório.');
+            const payload={ nome, categoria_id:document.getElementById('est-prod-categoria').value||null, tipo_item:document.getElementById('est-prod-tipo').value, unidade:document.getElementById('est-prod-unidade').value.trim()||'unidade', estoque_minimo:numEst(document.getElementById('est-prod-min').value), estoque_maximo:document.getElementById('est-prod-max').value?numEst(document.getElementById('est-prod-max').value):null, fornecedor_preferencial_id:document.getElementById('est-prod-fornecedor').value||null, local_armazenamento:document.getElementById('est-prod-local').value.trim(), tipo_uso:document.getElementById('est-prod-uso').value.trim(), dosagem_orientacao:document.getElementById('est-prod-dosagem').value.trim(), produto_critico:document.getElementById('est-prod-critico').value==='true', observacoes:document.getElementById('est-prod-obs').value.trim(), ativo:true };
+            const r=id?await supabaseDB.from('estoque_produtos').update(payload).eq('id',id):await supabaseDB.from('estoque_produtos').insert([payload]);
+            if(r.error)return alert(r.error.message); limparProdutoEstoque(); await carregarAlmoxarifado();
+        }
+        function limparProdutoEstoque(){ ['est-prod-id','est-prod-nome','est-prod-unidade','est-prod-min','est-prod-max','est-prod-local','est-prod-uso','est-prod-dosagem','est-prod-obs'].forEach(id=>{const e=document.getElementById(id); if(e)e.value='';}); const set=(id,v)=>{const e=document.getElementById(id); if(e)e.value=v}; set('est-prod-tipo','CONSUMO'); set('est-prod-critico','false'); set('est-prod-categoria',''); set('est-prod-fornecedor',''); }
+        function editarProdutoEstoque(id){ const p=estProdutoObj(id); if(!p.id)return; document.getElementById('est-prod-id').value=p.id; document.getElementById('est-prod-nome').value=p.nome||''; document.getElementById('est-prod-categoria').value=p.categoria_id||''; document.getElementById('est-prod-tipo').value=p.tipo_item||'CONSUMO'; document.getElementById('est-prod-unidade').value=p.unidade||'unidade'; document.getElementById('est-prod-min').value=p.estoque_minimo||0; document.getElementById('est-prod-max').value=p.estoque_maximo||''; document.getElementById('est-prod-fornecedor').value=p.fornecedor_preferencial_id||''; document.getElementById('est-prod-local').value=p.local_armazenamento||''; document.getElementById('est-prod-uso').value=p.tipo_uso||''; document.getElementById('est-prod-dosagem').value=p.dosagem_orientacao||''; document.getElementById('est-prod-critico').value=String(!!p.produto_critico); document.getElementById('est-prod-obs').value=p.observacoes||''; mostrarAbaEstoque('produtos'); }
+        async function alternarProdutoEstoque(id, ativo){ const {error}=await supabaseDB.from('estoque_produtos').update({ativo}).eq('id',id); if(error)return alert(error.message); await carregarAlmoxarifado(); }
+        function renderizarProdutosEstoque(){ const div=document.getElementById('est-lista-produtos'); if(!div)return; div.innerHTML=estProdutos.map(p=>`<div class="p-4 border rounded-xl bg-slate-50"><div class="flex justify-between gap-2"><div><p class="font-black">${p.nome}</p><p class="text-xs text-slate-500">${estNomeCat(p.categoria_id)||'Sem categoria'} · ${p.tipo_item} · ${p.unidade}</p><p class="text-xs text-slate-400">Mínimo: ${numEst(p.estoque_minimo).toLocaleString('pt-BR')} · Local: ${p.local_armazenamento||'--'}</p></div><span class="estoque-chip ${p.ativo?'bg-emerald-100 text-emerald-700':'bg-slate-200 text-slate-600'}">${p.ativo?'ATIVO':'INATIVO'}</span></div><div class="mt-3 flex gap-3 text-xs font-black"><button onclick="editarProdutoEstoque('${p.id}')" class="text-blue-600">Editar</button><button onclick="alternarProdutoEstoque('${p.id}', ${!p.ativo})" class="text-red-600">${p.ativo?'Desativar':'Ativar'}</button></div></div>`).join('') || '<p class="text-slate-400">Nenhum produto.</p>'; }
+
+        async function salvarEntradaEstoque(){
+            const produto_id=document.getElementById('est-ent-produto').value; const qtd=numEst(document.getElementById('est-ent-qtd').value); const valor=numEst(document.getElementById('est-ent-valor').value); const nf=document.getElementById('est-ent-nf').value.trim();
+            if(!produto_id||!qtd||!nf) return alert('Produto, NF e quantidade são obrigatórios.');
+            const payload={ numero_nf:nf, data_nf:document.getElementById('est-ent-data').value||dataHojeEstoque(), fornecedor_id:document.getElementById('est-ent-fornecedor').value||null, produto_id, quantidade:qtd, valor_total:valor, valor_unitario:qtd>0?valor/qtd:null, created_by:'Torre', observacoes:document.getElementById('est-ent-obs').value.trim(), status:'CONFIRMADA' };
+            const {error}=await supabaseDB.from('estoque_entradas').insert([payload]); if(error)return alert(error.message);
+            alert('Entrada registrada. Estoque e custo médio atualizados.'); ['est-ent-nf','est-ent-qtd','est-ent-valor','est-ent-obs'].forEach(id=>document.getElementById(id).value=''); await carregarAlmoxarifado(); mostrarAbaEstoque('visao');
+        }
+
+        async function salvarBaixaPendenteEstoque(){
+            const produto_id=document.getElementById('est-baixa-produto').value; const qtd=numEst(document.getElementById('est-baixa-qtd').value);
+            if(!produto_id||!qtd) return alert('Produto e quantidade são obrigatórios.');
+            const payload={ produto_id, tipo_movimento:'SAIDA_SINALIZADA', quantidade:qtd, status:'PENDENTE_CONFIRMACAO_SINDICO', usuario_solicitante:document.getElementById('est-baixa-usuario').value.trim()||'Equipe', local_uso:document.getElementById('est-baixa-local').value.trim(), motivo:document.getElementById('est-baixa-motivo').value.trim(), url_evidencia:document.getElementById('est-baixa-url').value.trim(), observacao_usuario:document.getElementById('est-baixa-obs').value.trim() };
+            const {error}=await supabaseDB.from('estoque_movimentos').insert([payload]); if(error)return alert(error.message);
+            alert('Baixa sinalizada. Aguardando confirmação do síndico.'); ['est-baixa-qtd','est-baixa-usuario','est-baixa-local','est-baixa-motivo','est-baixa-url','est-baixa-obs'].forEach(id=>document.getElementById(id).value=''); await carregarAlmoxarifado(); mostrarAbaEstoque('pendentes');
+        }
+        function renderizarBaixasPendentesEstoque(){ const div=document.getElementById('est-lista-baixas-pendentes'); if(!div)return; const dados=estMovimentos.filter(m=>m.status==='PENDENTE_CONFIRMACAO_SINDICO'); div.innerHTML=dados.map(m=>`<div class="p-4 border rounded-xl bg-amber-50 border-amber-100"><div class="flex justify-between gap-2"><div><p class="font-black">${estNomeProduto(m.produto_id)}</p><p class="text-xs text-slate-600">Qtd: <b>${numEst(m.quantidade).toLocaleString('pt-BR')}</b> · Usuário: ${m.usuario_solicitante||'--'}</p><p class="text-xs text-slate-500">Local: ${m.local_uso||'--'} · Motivo: ${m.motivo||'--'}</p>${m.url_evidencia?`<a href="${m.url_evidencia}" target="_blank" class="text-xs font-black text-blue-600">Ver evidência</a>`:''}</div><span class="estoque-chip bg-amber-200 text-amber-800">PENDENTE</span></div><div class="mt-3 grid grid-cols-2 gap-2"><button onclick="confirmarBaixaEstoque('${m.id}')" class="bg-emerald-600 text-white font-black py-2 rounded-lg text-xs">Confirmar baixa</button><button onclick="reverterBaixaEstoque('${m.id}')" class="bg-red-600 text-white font-black py-2 rounded-lg text-xs">Reverter</button></div></div>`).join('') || '<div class="p-6 text-center text-slate-400 font-bold border-2 border-dashed rounded-xl">Nenhuma baixa pendente.</div>'; }
+        async function confirmarBaixaEstoque(id){ const obs=prompt('Observação do síndico:', 'Baixa confirmada pelo síndico.'); if(obs===null)return; const {error}=await supabaseDB.from('estoque_movimentos').update({status:'CONFIRMADO', confirmado_por:'Síndico', observacao_sindico:obs}).eq('id',id); if(error)return alert(error.message); await carregarAlmoxarifado(); }
+        async function reverterBaixaEstoque(id){ const obs=prompt('Motivo da reversão:', 'Baixa revertida pelo síndico.'); if(obs===null)return; const {error}=await supabaseDB.from('estoque_movimentos').update({status:'REVERTIDO', confirmado_por:'Síndico', observacao_sindico:obs}).eq('id',id); if(error)return alert(error.message); await carregarAlmoxarifado(); }
+
+        function renderizarOrdemCompraForm(){
+            const divP=document.getElementById('est-oc-produtos'); const divF=document.getElementById('est-oc-fornecedores');
+            if(divP) divP.innerHTML=estSituacao.filter(p=>p.ativo!==false).map(p=>`<label class="flex items-center gap-2 p-2 rounded-lg bg-white border"><input type="checkbox" class="est-oc-prod-check" value="${p.produto_id}"><span class="flex-1 text-xs font-bold">${p.produto}<br><small class="text-slate-400">Atual: ${numEst(p.estoque_atual).toLocaleString('pt-BR')} · Mín.: ${numEst(p.estoque_minimo).toLocaleString('pt-BR')}</small></span><input type="number" step="0.001" class="est-oc-prod-qtd w-24 p-2 border rounded text-xs" data-prod="${p.produto_id}" placeholder="Qtd"></label>`).join('') || '<p class="text-slate-400 text-sm">Sem produtos.</p>';
+            if(divF) divF.innerHTML=estFornecedores.filter(f=>f.ativo!==false).map(f=>`<label class="flex items-center gap-2 p-2 rounded-lg bg-white border"><input type="checkbox" class="est-oc-for-check" value="${f.id}"><span class="text-xs font-bold">${f.nome}<br><small class="text-slate-400">${f.whatsapp||''} · ${f.email||''}</small></span></label>`).join('') || '<p class="text-slate-400 text-sm">Sem fornecedores.</p>';
+        }
+
+        async function salvarOrdemCompraEstoque(){
+            const produtosSel=Array.from(document.querySelectorAll('.est-oc-prod-check:checked')).map(ch=>{ const qtdEl=document.querySelector(`.est-oc-prod-qtd[data-prod="${ch.value}"]`); return { produto_id: ch.value, qtd: numEst(qtdEl?.value) }; }).filter(x=>x.qtd>0);
+            const fornecedoresSel=Array.from(document.querySelectorAll('.est-oc-for-check:checked')).map(ch=>ch.value);
+            if(!produtosSel.length) return alert('Selecione produtos e informe quantidade.');
+            if(!fornecedoresSel.length) return alert('Selecione ao menos um fornecedor.');
+            const titulo=document.getElementById('est-oc-titulo').value.trim()||'Solicitação de cotação';
+            const obs=document.getElementById('est-oc-obs').value.trim();
+            const {data: ordem, error}=await supabaseDB.from('estoque_ordens_compra').insert([{titulo, observacoes:obs, created_by:'Torre'}]).select().single();
+            if(error)return alert(error.message);
+            const itens=produtosSel.map(x=>{ const p=estProdutoObj(x.produto_id); return { ordem_id:ordem.id, produto_id:x.produto_id, quantidade_solicitada:x.qtd, unidade:p.unidade||'unidade', custo_medio_referencia:numEst(p.custo_medio), valor_estimado:x.qtd*numEst(p.custo_medio) }; });
+            const rItens=await supabaseDB.from('estoque_ordem_itens').insert(itens); if(rItens.error)return alert(rItens.error.message);
+            const fornecedores=fornecedoresSel.map(fid=>{ const f=estFornecedorObj(fid); return { ordem_id:ordem.id, fornecedor_id:fid, whatsapp_destino:f.whatsapp, email_destino:f.email, status_envio:'PENDENTE_ENVIO' }; });
+            const rF=await supabaseDB.from('estoque_ordem_fornecedores').insert(fornecedores); if(rF.error)return alert(rF.error.message);
+            alert('Ordem de compra gerada. Agora você pode enviar por WhatsApp aos fornecedores selecionados.'); await carregarAlmoxarifado(); mostrarAbaEstoque('ordem');
+        }
+
+        function montarMensagemCotacao(ordem){
+            const itens=estOrdemItens.filter(i=>String(i.ordem_id)===String(ordem.id));
+            const lista=itens.map((i,idx)=>`${idx+1}. ${estNomeProduto(i.produto_id)} — ${numEst(i.quantidade_solicitada).toLocaleString('pt-BR')} ${i.unidade||''}`).join('\n');
+            const num=ordem.numero_sequencial ? String(ordem.numero_sequencial).padStart(4,'0') : ordem.id.slice(0,8);
+            return `Olá.\n\nSolicitação de cotação do condomínio.\n\nOrdem: OC-${num}\nTítulo: ${ordem.titulo || 'Solicitação de cotação'}\n\nPor favor, enviar orçamento dos itens abaixo:\n\n${lista}\n\nFavor informar:\n- valor unitário;\n- valor total;\n- prazo de entrega;\n- condição de pagamento.\n\n${ordem.observacoes ? 'Observações: '+ordem.observacoes+'\n\n' : ''}Solicitação gerada pelo sistema Bento/CondoCheck.`;
+        }
+
+        async function enviarCotacaoWhatsAppEstoque(ordemId){
+            const ordem=estOrdens.find(o=>String(o.id)===String(ordemId)); if(!ordem)return;
+            const rels=estOrdemFornecedores.filter(r=>String(r.ordem_id)===String(ordemId));
+            if(!rels.length)return alert('Esta ordem não possui fornecedores vinculados.');
+            if(!confirm(`Enviar cotação por WhatsApp para ${rels.length} fornecedor(es)?`))return;
+            const msg=montarMensagemCotacao(ordem);
+            for(let idx=0; idx<rels.length; idx++){
+                const r=rels[idx]; const f=estFornecedorObj(r.fornecedor_id); const phone=limparFoneEstoque(r.whatsapp_destino || f.whatsapp);
+                if(!phone) continue;
+                window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                await supabaseDB.from('estoque_ordem_fornecedores').update({status_envio:'ENVIADO_WHATSAPP', data_envio:new Date().toISOString(), mensagem_enviada:msg}).eq('id', r.id);
+            }
+            await supabaseDB.from('estoque_ordens_compra').update({status:'ENVIADA_A_FORNECEDORES'}).eq('id', ordemId);
+            alert('Cotação aberta/enviada no WhatsApp para os fornecedores selecionados.');
+            await carregarAlmoxarifado();
+        }
+
+        function renderizarOrdensEstoque(){
+            const div=document.getElementById('est-lista-ordens'); if(!div)return;
+            div.innerHTML=estOrdens.map(o=>{ const itens=estOrdemItens.filter(i=>String(i.ordem_id)===String(o.id)); const rels=estOrdemFornecedores.filter(r=>String(r.ordem_id)===String(o.id)); const num=o.numero_sequencial ? String(o.numero_sequencial).padStart(4,'0') : o.id.slice(0,8); return `<div class="p-4 border rounded-xl bg-slate-50"><div class="flex flex-col md:flex-row justify-between gap-3"><div><p class="font-black">OC-${num} · ${o.titulo}</p><p class="text-xs text-slate-500">Status: ${o.status} · Itens: ${itens.length} · Fornecedores: ${rels.length}</p><p class="text-xs text-slate-400">${o.observacoes||''}</p></div><button onclick="enviarCotacaoWhatsAppEstoque('${o.id}')" class="bg-emerald-600 text-white font-black py-2 px-4 rounded-lg text-xs">Enviar WhatsApp</button></div><div class="mt-3 text-xs text-slate-600"><b>Itens:</b><br>${itens.map(i=>`• ${estNomeProduto(i.produto_id)} — ${numEst(i.quantidade_solicitada).toLocaleString('pt-BR')} ${i.unidade||''}`).join('<br>') || '--'}<br><br><b>Fornecedores:</b><br>${rels.map(r=>`• ${estNomeFornecedor(r.fornecedor_id)} — ${r.status_envio}`).join('<br>') || '--'}</div></div>`; }).join('') || '<div class="p-6 text-center text-slate-400 font-bold border-2 border-dashed rounded-xl">Nenhuma ordem gerada.</div>';
         }
 
         function recarregarTudo() { mostrarSessao('dash'); carregarEstatisticas(); carregarMoradores(); }
