@@ -480,22 +480,36 @@
         function abrirModalOcorrencia() { document.getElementById('modalOcorrencia').style.display = 'flex'; }
         function fecharModalOcorrencia() { document.getElementById('modalOcorrencia').style.display = 'none'; }
 
+        function gerarIdBigintOcorrencia() {
+            // A tabela ocorrencias usa id BIGINT, não UUID.
+            // Usamos timestamp + aleatório pequeno para reduzir risco de duplicidade.
+            return (Date.now() * 1000) + Math.floor(Math.random() * 1000);
+        }
+
         async function salvarOcorrenciaAvulsa() {
             const txt = document.getElementById('ocorrencaTarefaInput').value.trim();
             const desc = document.getElementById('ocorrenciaDescricao').value.trim();
-            
+
             if(!txt || !desc) { alert("Preencha todos os campos da ocorrência."); return; }
 
             try {
+                const agoraIso = new Date().toISOString();
+                const descricaoCompleta = `Atividade Extra: ${txt} | Relato: ${desc}`;
+                const nomeResponsavel = loggedUser?.nome || 'Funcionário não identificado';
+                const codigoCondominio = loggedUser?.codigo_condominio || 'MAUI-001';
+
                 const { error } = await sb.from('ocorrencias').insert([{
-                    id: crypto.randomUUID(),
-                    descricao: `Atividade Extra: ${txt} | Relato: ${desc}`,
-                    funcionario_id: loggedUser.id,
-                    codigo_condominio: loggedUser.codigo_condominio,
+                    id: gerarIdBigintOcorrencia(),
+                    telegram_id: null,
+                    descricao_completa: descricaoCompleta,
                     status: 'ABERTO',
                     categoria: 'CHECKLIST DIÁRIO',
                     local: 'CondoCheck V2',
-                    user_name: loggedUser.nome || 'Funcionário não identificado'
+                    descricao: descricaoCompleta,
+                    responsavel: nomeResponsavel,
+                    user_name: nomeResponsavel,
+                    data_abertura: agoraIso,
+                    codigo_condominio: codigoCondominio
                 }]);
                 if(error) { alert("Erro ao gravar: " + error.message); } else { location.reload(); }
             } catch(e) { alert('Falha de conexão.'); }
