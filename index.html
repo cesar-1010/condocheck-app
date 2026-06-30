@@ -111,6 +111,15 @@
         const hoje = new Date();
         diaAtual = diasSemana[hoje.getDay()];
 
+        // Data local do Brasil/usuário. NÃO usar toISOString() para data operacional,
+        // porque à noite no Brasil ele vira o dia seguinte em UTC.
+        function dataLocalISO(data = new Date()) {
+            const ano = data.getFullYear();
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const dia = String(data.getDate()).padStart(2, '0');
+            return `${ano}-${mes}-${dia}`;
+        }
+
         function init() {
             const savedUserId = localStorage.getItem('condocheck_v2_user_id');
             const savedUserName = localStorage.getItem('condocheck_v2_user_name');
@@ -196,7 +205,7 @@
                 if(!tarefas || tarefas.length === 0) { container.innerHTML = 'Sem tarefas hoje.'; return; }
                 totalTarefas = tarefas.length;
                 tarefasConcluidas = 0;
-                const hojeString = hoje.toISOString().split('T')[0];
+                const hojeString = dataLocalISO();
                 const { data: executadas } = await sb
                     .from('diario_execucoes_v2')
                     .select('tarefa_id, status')
@@ -316,7 +325,7 @@
 
             const blob = dataURLParaBlob(dataUrl);
             const agora = new Date();
-            const dataPasta = hoje.toISOString().split('T')[0];
+            const dataPasta = dataLocalISO();
             const funcionarioSeguro = limparNomeArquivo(loggedUser?.nome || loggedUser?.id || 'funcionario');
             const tarefaSegura = limparNomeArquivo(tarefaId);
             const nomeArquivo = `${dataPasta}/${funcionarioSeguro}/${tarefaSegura}-${crypto.randomUUID()}.jpg`;
@@ -348,7 +357,7 @@
         function abrirJustificativa(id) { document.getElementById(`box-exec-${id}`).style.display = 'none'; document.getElementById(`box-just-${id}`).style.display = 'block'; }
 
          async function enviarExecucao(tarefaId, statusAlvo) {
-            const hojeString = hoje.toISOString().split('T')[0];
+            const hojeString = dataLocalISO();
             let motivo = null;
             let fotoFinal = null;
             let urlDaMidia = null;
@@ -510,7 +519,7 @@
             }
 
             try {
-                const hojeString = hoje.toISOString().split('T')[0];
+                const hojeString = dataLocalISO();
                 const nomeResponsavel = loggedUser?.nome || 'Funcionário não identificado';
                 const codigoCondominio = loggedUser?.codigo_condominio || 'MAUI-001';
                 const descricaoCompleta = `Atividade Extra: ${txt} | Relato: ${desc}`;
