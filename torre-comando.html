@@ -904,7 +904,7 @@
                                 hora: horaFormatada,
                                 tarefa: t.descricao_tarefa + comp,
                                 responsavel: responsavel,
-                                status: exec.status === 'CONCLUIDO' ? 'FECHADO' : exec.status,
+                                status: exec.status || 'CONCLUIDO',
                                 ordem: exec.status === 'JUSTIFICADO' ? 2 : 3,
                                 foto_url: exec.foto_evidencia || ''
                             });
@@ -940,7 +940,7 @@
                                     hora: horaFormatada,
                                     tarefa: textoExtra,
                                     responsavel: responsavelExtra,
-                                    status: execExtra.status === 'CONCLUIDO' ? 'FECHADO' : execExtra.status,
+                                    status: execExtra.status || 'CONCLUIDO',
                                     ordem: 3,
                                     foto_url: execExtra.foto_evidencia || ''
                                 });
@@ -964,7 +964,7 @@
 
             let filtrados = dadosAtividadesGeral.filter(a => {
                 let matchTexto = a.tarefa.toLowerCase().includes(termo) || a.responsavel.toLowerCase().includes(termo);
-                let matchStatus = statusSelecionado === 'TODAS' || a.status === statusSelecionado || (statusSelecionado === 'FECHADO' && a.status === 'CONCLUIDO');
+                let matchStatus = statusSelecionado === 'TODAS' || a.status === statusSelecionado || (statusSelecionado === 'FECHADO' && ['CONCLUIDO','CONCLUÍDO','FECHADO','FECHADO_ADMIN'].includes(a.status));
                 return matchTexto && matchStatus;
             });
 
@@ -989,6 +989,10 @@
                     badge = '<span class="bg-amber-100 text-amber-700 px-3 py-1.5 rounded text-[10px] font-black uppercase tracking-wider shadow-sm">JUSTIFICADA</span>';
                     linhaCor = 'bg-slate-50 hover:bg-amber-50 border-l-4 border-l-amber-500';
                     classeMobile = 'justificada';
+                } else if (c.status === 'FECHADO' || c.status === 'FECHADO_ADMIN') {
+                    badge = '<span class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded text-[10px] font-black uppercase tracking-wider shadow-sm">BAIXADA</span>';
+                    linhaCor = 'bg-slate-50 hover:bg-blue-50 border-l-4 border-l-blue-500';
+                    classeMobile = 'ok';
                 } else {
                     badge = '<span class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded text-[10px] font-black uppercase tracking-wider shadow-sm">CONCLUÍDA</span>';
                     linhaCor = 'bg-slate-50 hover:bg-emerald-50 border-l-4 border-l-emerald-500';
@@ -1040,14 +1044,14 @@
 
             try {
                 if (idExec && idExec !== 'null') {
-                    const { error } = await supabaseDB.from('diario_execucoes_v2').update({ status: 'FECHADO' }).eq('id', idExec);
+                    const { error } = await supabaseDB.from('diario_execucoes_v2').update({ status: 'FECHADO_ADMIN', observacao: 'Baixa administrativa via Torre' }).eq('id', idExec);
                     if (error) throw error;
                 } else {
                     const { error } = await supabaseDB.from('diario_execucoes_v2').insert([{
                         tarefa_id: idTarefa,
                         funcionario_id: idFunc,
                         data_execucao: inputDataStr,
-                        status: 'FECHADO',
+                        status: 'FECHADO_ADMIN',
                         observacao: 'Baixa administrativa via Torre Mobile',
                         codigo_condominio: CODIGO_CONDOMINIO_ATUAL
                     }]);
@@ -1079,13 +1083,13 @@
                         let idFunc = chk.getAttribute('data-idfunc');
 
                         if (idExec !== 'null') {
-                            await supabaseDB.from('diario_execucoes_v2').update({status: 'FECHADO'}).eq('id', idExec);
+                            await supabaseDB.from('diario_execucoes_v2').update({status: 'FECHADO_ADMIN', observacao: 'Baixa administrativa via Painel Torre'}).eq('id', idExec);
                         } else {
                             await supabaseDB.from('diario_execucoes_v2').insert([{
                                 tarefa_id: idTarefa,
                                 funcionario_id: idFunc,
                                 data_execucao: inputDataStr,
-                                status: 'FECHADO',
+                                status: 'FECHADO_ADMIN',
                                 observacao: 'Baixa administrativa via Painel Torre',
                                 codigo_condominio: CODIGO_CONDOMINIO_ATUAL
                             }]);
