@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CondoCheck V5</title>
+    <title>CondoCheck V2</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #1a2c35; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; box-sizing: border-box; }
         .screen { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: none; position: relative; }
@@ -82,9 +82,12 @@
             <h3>Registrar Ocorrência Avulsa</h3>
             <label>Selecione a Tarefa/Atividade:</label>
             <input type="text" id="ocorrencaTarefaInput" list="listaTodasTarefas" placeholder="Digite a atividade...">
-            <label>Descrição Detalhada do Problema:</label>
-            <textarea id="ocorrenciaDescricao" rows="4" placeholder="Relate o problema ou manutenção..."></textarea>
-            <button class="btn-main" id="btnEnviarOcorrenciaAvulsa" onclick="salvarOcorrenciaAvulsa()">REGISTRAR OCORRÊNCIA</button>
+            <label>Descrição Detalhada da Atividade Extra:</label>
+            <textarea id="ocorrenciaDescricao" rows="4" placeholder="Relate o problema, manutenção ou atividade realizada..."></textarea>
+            <label style="color:red;">Capturar Evidência da Atividade Extra (Obrigatória):</label>
+            <input type="file" class="input-file-camera" accept="image/*" capture="environment" id="cam-ocorrencia-avulsa" onchange="processarFoto(this, 'ocorrencia_avulsa')">
+            <img id="prev-ocorrencia_avulsa" class="camera-preview">
+            <button class="btn-main" id="btnEnviarOcorrenciaAvulsa" onclick="salvarOcorrenciaAvulsa()">REGISTRAR ATIVIDADE EXTRA</button>
             <p id="msgOcorrenciaModal" style="text-align:center; font-weight:bold; margin-top:10px;"></p>
         </div>
     </div>
@@ -490,29 +493,89 @@
             const txt = document.getElementById('ocorrencaTarefaInput').value.trim();
             const desc = document.getElementById('ocorrenciaDescricao').value.trim();
 
-            if(!txt || !desc) { alert("Preencha todos os campos da ocorrência."); return; }
+            if(!txt || !desc) {
+                alert("Preencha a atividade e a descrição.");
+                return;
+            }
+
+            if(!fotosBase64['ocorrencia_avulsa']) {
+                alert('FALHA DE AUDITORIA: a foto de evidência é OBRIGATÓRIA para registrar a atividade extra.');
+                return;
+            }
+
+            const btn = document.getElementById('btnEnviarOcorrenciaAvulsa');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'REGISTRANDO...';
+            }
 
             try {
-                const agoraIso = new Date().toISOString();
-                const descricaoCompleta = `Atividade Extra: ${txt} | Relato: ${desc}`;
+                const hojeString = hoje.toISOString().split('T')[0];
                 const nomeResponsavel = loggedUser?.nome || 'Funcionário não identificado';
                 const codigoCondominio = loggedUser?.codigo_condominio || 'MAUI-001';
+                const descricaoCompleta = `Atividade Extra: ${txt} | Relato: ${desc}`;
 
-                const { error } = await sb.from('ocorrencias').insert([{
-                    id: gerarIdBigintOcorrencia(),
-                    telegram_id: null,
-                    descricao_completa: descricaoCompleta,
-                    status: 'ABERTO',
-                    categoria: 'CHECKLIST DIÁRIO',
-                    local: 'CondoCheck V2',
-                    descricao: descricaoCompleta,
-                    responsavel: nomeResponsavel,
-                    user_name: nomeResponsavel,
-                    data_abertura: agoraIso,
+                // 1. Sobe a evidência para o Supabase Storage.
+                const urlDaMidia = await subirFotoEvidencia('atividade-extra', fotosBase64['ocorrencia_avulsa']);
+
+                // 2. Grava a atividade extra como execução operacional do CondoCheck.
+                // tarefa_id fica null porque não pertence à matriz diária.
+                const payloadExecucaoExtra = {
+                    id: crypto.randomUUID(),
+                    tarefa_id: null,
+                    funcionario_id: loggedUser.id,
+                    data_execucao: hojeString,
+                    status: 'CONCLUIDO',
+                    motivo: null,
+                    observacao: descricaoCompleta,
+                    foto_evidencia: urlDaMidia,
                     codigo_condominio: codigoCondominio
-                }]);
-                if(error) { alert("Erro ao gravar: " + error.message); } else { location.reload(); }
-            } catch(e) { alert('Falha de conexão.'); }
+                };
+
+                const { error } = await sb
+                    .from('diario_execucoes_v2')
+                    .insert([payloadExecucaoExtra]);
+
+                if(error) {
+                    alert('Erro ao gravar atividade extra: ' + error.message);
+                    return;
+                }
+
+                // 3. Envia aviso ao Telegram via n8n, sem usar IA.
+                try {
+                    await fetch(WEBHOOK_CONDOCHECK_TELEGRAM, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            origem: 'CondoCheck V2',
+                            tipo_evento: 'ATIVIDADE_EXTRA',
+                            codigo_condominio: codigoCondominio,
+                            funcionario_id: loggedUser.id,
+                            funcionario_nome: nomeResponsavel,
+                            tarefa_id: null,
+                            tarefa_descricao: `Atividade Extra: ${txt}`,
+                            data_execucao: hojeString,
+                            status: 'CONCLUIDO',
+                            motivo: desc,
+                            tem_foto: true,
+                            url_da_midia: urlDaMidia,
+                            criado_em_front: new Date().toISOString()
+                        })
+                    });
+                } catch (webhookError) {
+                    console.warn('Atividade extra gravada, mas falhou o aviso no Telegram:', webhookError);
+                }
+
+                location.reload();
+            } catch(e) {
+                console.error(e);
+                alert('Falha ao registrar atividade extra: ' + (e.message || 'Erro desconhecido.'));
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'REGISTRAR ATIVIDADE EXTRA';
+                }
+            }
         }
     </script>
 </body>
