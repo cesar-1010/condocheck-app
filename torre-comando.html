@@ -839,11 +839,20 @@
             });
         }
 
+        const CODIGO_CONDOMINIO_ATUAL = 'MAUI-001';
+
+        // Data local. Evita bug de UTC: à noite no Brasil, toISOString() vira o dia seguinte.
+        function dataLocalISO(data = new Date()) {
+            const ano = data.getFullYear();
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const dia = String(data.getDate()).padStart(2, '0');
+            return `${ano}-${mes}-${dia}`;
+        }
+
         function initDataFiltro() {
             const inputData = document.getElementById('filtro-data-atividades');
             if (!inputData.value) {
-                const dataLocal = new Date(new Date().getTime() - (3 * 60 * 60 * 1000));
-                inputData.value = dataLocal.toISOString().split('T')[0];
+                inputData.value = dataLocalISO();
             }
         }
 
@@ -861,13 +870,13 @@
                 const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
                 const hojeStr = dias[dataObj.getDay()];
 
-                const resMatriz = await supabaseDB.from('matriz_tarefas_v2').select('id, descricao_tarefa, funcionario_id').eq(hojeStr, true);
+                const resMatriz = await supabaseDB.from('matriz_tarefas_v2').select('id, descricao_tarefa, funcionario_id, codigo_condominio').eq('codigo_condominio', CODIGO_CONDOMINIO_ATUAL).eq(hojeStr, true);
                 if (resMatriz.error) throw new Error("Erro na Matriz: " + resMatriz.error.message);
 
-                const resExec = await supabaseDB.from('diario_execucoes_v2').select('id, tarefa_id, funcionario_id, created_at, status, observacao, motivo, foto_evidencia, codigo_condominio').eq('data_execucao', inputDataStr);
+                const resExec = await supabaseDB.from('diario_execucoes_v2').select('id, tarefa_id, funcionario_id, created_at, status, observacao, motivo, foto_evidencia, codigo_condominio').eq('codigo_condominio', CODIGO_CONDOMINIO_ATUAL).eq('data_execucao', inputDataStr);
                 if (resExec.error) throw new Error("Erro nas Execuções: " + resExec.error.message);
 
-                const resFuncs = await supabaseDB.from('funcionarios_v2').select('id, nome');
+                const resFuncs = await supabaseDB.from('funcionarios_v2').select('id, nome, codigo_condominio').eq('codigo_condominio', CODIGO_CONDOMINIO_ATUAL);
                 if (resFuncs.error) throw new Error("Erro nos Funcionários: " + resFuncs.error.message);
 
                 const mapFuncs = {}; 
@@ -1039,7 +1048,8 @@
                         funcionario_id: idFunc,
                         data_execucao: inputDataStr,
                         status: 'FECHADO',
-                        observacao: 'Baixa administrativa via Torre Mobile'
+                        observacao: 'Baixa administrativa via Torre Mobile',
+                        codigo_condominio: CODIGO_CONDOMINIO_ATUAL
                     }]);
                     if (error) throw error;
                 }
@@ -1076,7 +1086,8 @@
                                 funcionario_id: idFunc,
                                 data_execucao: inputDataStr,
                                 status: 'FECHADO',
-                                observacao: 'Baixa administrativa via Painel Torre'
+                                observacao: 'Baixa administrativa via Painel Torre',
+                                codigo_condominio: CODIGO_CONDOMINIO_ATUAL
                             }]);
                         }
                     }
