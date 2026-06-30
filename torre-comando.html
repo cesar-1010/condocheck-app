@@ -864,7 +864,7 @@
                 const resMatriz = await supabaseDB.from('matriz_tarefas_v2').select('id, descricao_tarefa, funcionario_id').eq(hojeStr, true);
                 if (resMatriz.error) throw new Error("Erro na Matriz: " + resMatriz.error.message);
 
-                const resExec = await supabaseDB.from('diario_execucoes_v2').select('id, tarefa_id, created_at, status, observacao, motivo, foto_evidencia').eq('data_execucao', inputDataStr);
+                const resExec = await supabaseDB.from('diario_execucoes_v2').select('id, tarefa_id, funcionario_id, created_at, status, observacao, motivo, foto_evidencia, codigo_condominio').eq('data_execucao', inputDataStr);
                 if (resExec.error) throw new Error("Erro nas Execuções: " + resExec.error.message);
 
                 const resFuncs = await supabaseDB.from('funcionarios_v2').select('id, nome');
@@ -912,6 +912,31 @@
                             });
                         }
                     });
+
+                    // Atividades extras do CondoCheck gravadas diretamente em diario_execucoes_v2.
+                    // Elas não pertencem à matriz_tarefas_v2, por isso têm tarefa_id null.
+                    if (resExec.data) {
+                        resExec.data
+                            .filter(e => !e.tarefa_id)
+                            .forEach(execExtra => {
+                                let d = new Date(execExtra.created_at);
+                                let horaFormatada = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                                let responsavelExtra = mapFuncs[execExtra.funcionario_id] || 'Equipe';
+                                let textoExtra = execExtra.observacao || execExtra.motivo || 'Atividade Extra registrada pelo CondoCheck';
+
+                                dadosAtividadesGeral.push({
+                                    id_exec: execExtra.id,
+                                    id_tarefa: null,
+                                    id_func: execExtra.funcionario_id,
+                                    hora: horaFormatada,
+                                    tarefa: textoExtra,
+                                    responsavel: responsavelExtra,
+                                    status: execExtra.status === 'CONCLUIDO' ? 'FECHADO' : execExtra.status,
+                                    ordem: 3,
+                                    foto_url: execExtra.foto_evidencia || ''
+                                });
+                            });
+                    }
                 }
 
                 dadosAtividadesGeral.sort((a, b) => a.ordem - b.ordem);
@@ -1926,86 +1951,23 @@
         }
 
         async function enviarCotacaoWhatsAppEstoque(ordemId){
-            // HOTFIX ALMOXARIFADO — ENVIO AUTOMATICO VIA N8N/Z-API
-            // Cerca eletrica ativa:
-            // - altera somente o envio da Ordem de Compra;
-            // - nao abre WhatsApp manual;
-            // - nao mexe em Bento, CondoCheck, Agenda, Ocorrencias ou Cobranca.
-            const ordem = estOrdens.find(o => String(o.id) === String(ordemId));
-            if(!ordem) return alert('Ordem de compra não encontrada.');
-
-            const rels = estOrdemFornecedores.filter(r => String(r.ordem_id) === String(ordemId));
-            if(!rels.length) return alert('Esta ordem não possui fornecedores vinculados.');
-
-            const itensOrdem = estOrdemItens.filter(i => String(i.ordem_id) === String(ordemId));
-            if(!itensOrdem.length) return alert('Esta ordem não possui itens vinculados.');
-
-            const fornecedoresPayload = rels.map(r => {
-                const f = estFornecedorObj(r.fornecedor_id);
-                return {
-                    id: r.fornecedor_id,
-                    nome: f.nome || estNomeFornecedor(r.fornecedor_id) || 'Fornecedor',
-                    whatsapp: limparFoneEstoque(r.whatsapp_destino || f.whatsapp)
-                };
-            }).filter(f => f.whatsapp);
-
-            if(!fornecedoresPayload.length) return alert('Nenhum fornecedor possui WhatsApp válido cadastrado.');
-
-            if(!confirm(`Enviar cotação automaticamente pelo Bento para ${fornecedoresPayload.length} fornecedor(es)?`)) return;
-
-            const itensPayload = itensOrdem.map(i => ({
-                produto: estNomeProduto(i.produto_id) || 'Item sem nome',
-                quantidade: numEst(i.quantidade_solicitada),
-                unidade: i.unidade || estProdutoObj(i.produto_id).unidade || 'unidade'
-            }));
-
-            const num = ordem.numero_sequencial ? String(ordem.numero_sequencial).padStart(4,'0') : String(ordem.id).slice(0,8);
-
-            const payload = {
-                ordem_id: `OC-${num}`,
-                condominio: 'Condominio Maui Hills',
-                usuario: 'Cesar',
-                fornecedores: fornecedoresPayload,
-                itens: itensPayload,
-                observacoes: ordem.observacoes || ''
-            };
-
-            try {
-                const res = await fetch('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/estoque-orcamento-whatsapp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json; charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-
-                let retorno = null;
-                try { retorno = await res.json(); } catch(e) { retorno = null; }
-
-                if(!res.ok) {
-                    throw new Error((retorno && (retorno.mensagem || retorno.message || retorno.error)) || `Erro HTTP ${res.status}`);
-                }
-
-                const mensagemAuditoria = retorno && retorno.mensagem ? retorno.mensagem : 'Cotação enviada automaticamente pelo Bento.';
-
-                for(const r of rels) {
-                    await supabaseDB.from('estoque_ordem_fornecedores').update({
-                        status_envio: 'ENVIADO_WHATSAPP',
-                        data_envio: new Date().toISOString(),
-                        mensagem_enviada: mensagemAuditoria
-                    }).eq('id', r.id);
-                }
-
-                await supabaseDB.from('estoque_ordens_compra').update({status:'ENVIADA_A_FORNECEDORES'}).eq('id', ordemId);
-
-                alert('Cotação enviada automaticamente pelo WhatsApp para os fornecedores selecionados.');
-                await carregarAlmoxarifado();
-            } catch(e) {
-                console.error('Erro ao enviar cotação via n8n:', e);
-                alert('Falha ao enviar cotação pelo n8n/Z-API: ' + (e.message || e));
+            const ordem=estOrdens.find(o=>String(o.id)===String(ordemId)); if(!ordem)return;
+            const rels=estOrdemFornecedores.filter(r=>String(r.ordem_id)===String(ordemId));
+            if(!rels.length)return alert('Esta ordem não possui fornecedores vinculados.');
+            if(!confirm(`Enviar cotação por WhatsApp para ${rels.length} fornecedor(es)?`))return;
+            const msg=montarMensagemCotacao(ordem);
+            for(let idx=0; idx<rels.length; idx++){
+                const r=rels[idx]; const f=estFornecedorObj(r.fornecedor_id); const phone=limparFoneEstoque(r.whatsapp_destino || f.whatsapp);
+                if(!phone) continue;
+                window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+                await supabaseDB.from('estoque_ordem_fornecedores').update({status_envio:'ENVIADO_WHATSAPP', data_envio:new Date().toISOString(), mensagem_enviada:msg}).eq('id', r.id);
             }
+            await supabaseDB.from('estoque_ordens_compra').update({status:'ENVIADA_A_FORNECEDORES'}).eq('id', ordemId);
+            alert('Cotação aberta/enviada no WhatsApp para os fornecedores selecionados.');
+            await carregarAlmoxarifado();
         }
 
-        
-function renderizarOrdensEstoque(){
+        function renderizarOrdensEstoque(){
             const div=document.getElementById('est-lista-ordens'); if(!div)return;
             div.innerHTML=estOrdens.map(o=>{ const itens=estOrdemItens.filter(i=>String(i.ordem_id)===String(o.id)); const rels=estOrdemFornecedores.filter(r=>String(r.ordem_id)===String(o.id)); const num=o.numero_sequencial ? String(o.numero_sequencial).padStart(4,'0') : o.id.slice(0,8); return `<div class="p-4 border rounded-xl bg-slate-50"><div class="flex flex-col md:flex-row justify-between gap-3"><div><p class="font-black">OC-${num} · ${o.titulo}</p><p class="text-xs text-slate-500">Status: ${o.status} · Itens: ${itens.length} · Fornecedores: ${rels.length}</p><p class="text-xs text-slate-400">${o.observacoes||''}</p></div><button onclick="enviarCotacaoWhatsAppEstoque('${o.id}')" class="bg-emerald-600 text-white font-black py-2 px-4 rounded-lg text-xs">Enviar WhatsApp</button></div><div class="mt-3 text-xs text-slate-600"><b>Itens:</b><br>${itens.map(i=>`• ${estNomeProduto(i.produto_id)} — ${numEst(i.quantidade_solicitada).toLocaleString('pt-BR')} ${i.unidade||''}`).join('<br>') || '--'}<br><br><b>Fornecedores:</b><br>${rels.map(r=>`• ${estNomeFornecedor(r.fornecedor_id)} — ${r.status_envio}`).join('<br>') || '--'}</div></div>`; }).join('') || '<div class="p-6 text-center text-slate-400 font-bold border-2 border-dashed rounded-xl">Nenhuma ordem gerada.</div>';
         }
