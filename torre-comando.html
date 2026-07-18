@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arca Gestão - Torre de Comando</title>
+    <title>ARCA | Torre Operacional Bento — V37</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -143,57 +143,283 @@
             #sessao-agenda .agenda-form-grid { grid-template-columns:1fr !important; }
             #sessao-agenda button, #sessao-agenda input, #sessao-agenda select, #sessao-agenda textarea { min-height:44px; }
         }
+
+
+        /* =========================================================
+           TORRE ARCA/BENTO V37 — APRESENTAÇÃO E OPERAÇÃO
+           Camada visual nova. Preserva as rotinas operacionais V34.
+           ========================================================= */
+        :root {
+            --v35-ink: #08111f;
+            --v35-panel: #0f1d32;
+            --v35-teal: #10b981;
+            --v35-cyan: #38bdf8;
+            --v35-indigo: #6366f1;
+            --v35-muted: #64748b;
+            --v35-line: #dbe5ef;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            background:
+                radial-gradient(circle at 88% 8%, rgba(56,189,248,.12), transparent 24rem),
+                radial-gradient(circle at 10% 90%, rgba(16,185,129,.09), transparent 30rem),
+                #eef3f8;
+            color: #172033;
+        }
+        .v35-sidebar {
+            background:
+                linear-gradient(180deg, rgba(15,29,50,.98), rgba(5,13,25,.99)),
+                #08111f;
+        }
+        .v35-brand-mark {
+            width: 44px; height: 44px; border-radius: 14px;
+            display: grid; place-items: center;
+            background: linear-gradient(135deg, #10b981, #0ea5e9);
+            box-shadow: 0 12px 28px rgba(14,165,233,.24);
+            color: white; font-weight: 950; letter-spacing: -.04em;
+        }
+        .v35-condo-card {
+            background: linear-gradient(145deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+            border: 1px solid rgba(148,163,184,.18);
+            border-radius: 16px;
+            padding: 14px;
+        }
+        .v35-nav-label {
+            font-size: 9px; font-weight: 900; text-transform: uppercase;
+            letter-spacing: .18em; color: #64748b; padding: 12px 12px 4px;
+        }
+        .v35-nav-btn {
+            width: 100%; display: flex; align-items: center; gap: 12px;
+            padding: 11px 12px; border-radius: 12px; text-align: left;
+            font-size: 13px; font-weight: 750; color: #9fb0c5;
+            border: 1px solid transparent; transition: .18s ease;
+        }
+        .v35-nav-btn:hover { background: rgba(148,163,184,.09); color: white; transform: translateX(2px); }
+        .v35-nav-btn.bg-arca-teal\/10 {
+            background: linear-gradient(90deg, rgba(16,185,129,.18), rgba(14,165,233,.08)) !important;
+            color: #6ee7b7 !important; border-color: rgba(16,185,129,.24) !important;
+        }
+        .v35-topbar {
+            background: rgba(255,255,255,.88);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(203,213,225,.72);
+        }
+        .v35-chip {
+            display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px;
+            border-radius: 999px; font-size: 11px; font-weight: 900; white-space: nowrap;
+        }
+        .v35-dot { width: 8px; height: 8px; border-radius: 999px; background: currentColor; box-shadow: 0 0 0 4px rgba(16,185,129,.12); }
+        .v35-hero {
+            position: relative; overflow: hidden;
+            background:
+                linear-gradient(120deg, rgba(7,18,33,.98), rgba(15,45,68,.96) 56%, rgba(9,68,72,.94));
+            color: white; border-radius: 24px; padding: 28px;
+            box-shadow: 0 24px 60px rgba(15,23,42,.18);
+        }
+        .v35-hero::after {
+            content: ''; position: absolute; inset: auto -8% -60% auto; width: 420px; height: 420px;
+            border-radius: 50%; background: radial-gradient(circle, rgba(56,189,248,.28), transparent 68%);
+            pointer-events: none;
+        }
+        .v35-eyebrow { font-size: 10px; font-weight: 950; letter-spacing: .22em; text-transform: uppercase; color: #a7f3d0; }
+        .v35-module-card {
+            background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.11);
+            border-radius: 16px; padding: 14px; transition: .18s ease; position: relative; z-index: 1;
+        }
+        .v35-module-card:hover { background: rgba(255,255,255,.14); transform: translateY(-2px); }
+        .v35-module-value { font-size: 24px; font-weight: 950; line-height: 1; }
+        .v35-kpi {
+            background: rgba(255,255,255,.94); border: 1px solid rgba(219,229,239,.9);
+            border-radius: 18px; padding: 18px; box-shadow: 0 8px 24px rgba(15,23,42,.06);
+        }
+        .v35-kpi-icon { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; font-size: 18px; }
+        .v35-section-title { font-size: 18px; font-weight: 950; letter-spacing: -.02em; color: #152238; }
+        .v35-soft-card {
+            background: rgba(255,255,255,.94); border: 1px solid rgba(219,229,239,.92);
+            border-radius: 20px; box-shadow: 0 10px 30px rgba(15,23,42,.06);
+        }
+        .v35-architecture-step { position: relative; min-width: 140px; }
+        .v35-architecture-step:not(:last-child)::after {
+            content: '→'; position: absolute; right: -18px; top: 50%; transform: translateY(-50%);
+            color: #94a3b8; font-weight: 900;
+        }
+        .v35-table th { letter-spacing: .06em; }
+        .v35-rule-row:hover { background: #f8fbfd; }
+        .v35-doc-card { border: 1px solid #dbe5ef; border-radius: 14px; padding: 14px; background: #fff; }
+        .v35-present-btn { background: #0f172a; color: #fff; }
+        .v35-present-btn:hover { background: #020617; }
+        body.modo-apresentacao aside { display: none !important; }
+        body.modo-apresentacao main { width: 100vw !important; }
+        body.modo-apresentacao .v35-topbar { position: sticky; top: 0; }
+        body.modo-apresentacao #sessao-dash { max-width: 1500px; margin: 0 auto; }
+        .v35-loading { animation: v35pulse 1.5s ease-in-out infinite; }
+        @keyframes v35pulse { 0%,100% { opacity:.45 } 50% { opacity:1 } }
+
+        @media (max-width: 768px) {
+            .v35-sidebar { position: static !important; }
+            .v35-sidebar .v35-brand-wrap { flex-direction: row !important; justify-content: space-between; align-items: center; }
+            .v35-sidebar .v35-condo-card { display: none; }
+            .v35-sidebar nav { padding: 8px 10px 12px !important; }
+            .v35-nav-label { display: none; }
+            .v35-nav-btn { min-width: max-content !important; font-size: 12px !important; padding: 9px 11px !important; }
+            .v35-topbar { position: sticky !important; top: 0; }
+            .v35-topbar-actions .v35-chip { display: none; }
+            .v35-hero { border-radius: 18px; padding: 20px; }
+            .v35-hero h2 { font-size: 25px !important; }
+            .v35-architecture-step:not(:last-child)::after { display: none; }
+        }
+
     </style>
 </head>
-<body class="text-slate-800 flex flex-col md:flex-row min-h-screen relative">
+<body data-torre-versao="V37_APRESENTACAO" class="text-slate-800 flex flex-col md:flex-row min-h-screen relative">
 
-    <aside class="w-full md:w-72 bg-arca-dark text-slate-300 flex flex-col shadow-2xl z-50 border-r border-slate-800 relative">
-        <div class="p-6 border-b border-slate-800 bg-slate-900/50 flex flex-col items-center">
-            <div class="flex flex-col items-center gap-3">
-                <img src="logo-arca.png" alt="Arca Gestão" class="w-52 max-h-28 object-contain" onerror="this.style.display='none'">
-                <img src="Logo-Condocheck.png" alt="CondoCheck" class="w-52 max-h-24 object-contain rounded-lg border border-slate-700/50 shadow-sm" onerror="this.style.display='none'">
+
+    <aside class="v35-sidebar w-full md:w-72 text-slate-300 flex flex-col shadow-2xl z-50 border-r border-slate-800/70 relative">
+        <div class="v35-brand-wrap p-5 border-b border-white/5 flex flex-col gap-4">
+            <div class="flex items-center gap-3">
+                <div class="v35-brand-mark">A</div>
+                <div>
+                    <p class="text-white text-lg font-black leading-none">ARCA</p>
+                    <p class="text-[10px] uppercase tracking-[.19em] text-slate-500 font-black mt-1">Torre Operacional</p>
+                </div>
+                <span class="ml-auto text-[9px] bg-emerald-400/10 text-emerald-300 border border-emerald-400/20 px-2 py-1 rounded-full font-black">V37</span>
             </div>
-            <div class="mt-4 px-3 py-1 bg-arca-blue/20 text-arca-blue text-[10px] font-bold uppercase rounded-full tracking-widest shadow-sm border border-arca-blue/30">
-                COMANDO NÍOBIO — Auditoria & Agenda Preventiva
+            <div class="v35-condo-card">
+                <div class="flex items-center justify-between gap-2">
+                    <div>
+                        <p class="text-[9px] text-slate-500 uppercase tracking-widest font-black">Condomínio em operação</p>
+                        <p id="sidebar-condominio-nome" class="text-sm text-white font-black mt-1">Condomínio Maui Hills</p>
+                        <p id="sidebar-condominio-codigo" class="text-[10px] text-cyan-300 font-bold mt-1">MAUI-001</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-emerald-400/10 text-emerald-300 grid place-items-center text-lg">🔐</div>
+                </div>
+                <div class="mt-3 flex items-center gap-2 text-[10px] text-emerald-300 font-black"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Acesso segregado por condomínio</div>
             </div>
         </div>
-        <nav class="p-4 space-y-2 overflow-y-auto no-scrollbar flex-1">
-            <button onclick="recarregarTudo()" id="btn-dash" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-arca-teal/10 text-arca-teal font-bold border border-arca-teal/20 text-left">📊 Inteligência</button>
-            <button onclick="mostrarSessao('aprovacao'); carregarPendencias()" id="btn-aprovacao" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left relative">⚖️ Ocorrências Bento</button>
-            <button onclick="mostrarSessao('atividades'); carregarAtrasos()" id="btn-atividades" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left relative">📋 Atividades CondoCheck</button>
-            <button onclick="mostrarSessao('pesquisa'); carregarBasePesquisa()" id="btn-pesquisa" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left">🔍 Relatórios & Auditoria</button>
-            <button onclick="mostrarSessao('moradores'); carregarMoradores()" id="btn-moradores" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left">🏠 Moradores</button>
-            <button onclick="mostrarSessao('fornecedores'); carregarFornecedores()" id="btn-fornecedores" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left">🛠️ Fornecedores</button>
-            <button onclick="mostrarSessao('agenda'); carregarAgendaPreventiva()" id="btn-agenda" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left">🗓️ Agenda Preventiva</button>
-            <button onclick="mostrarSessao('almoxarifado'); carregarAlmoxarifado()" id="btn-almoxarifado" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left">📦 Almoxarifado</button>
-            <button onclick="mostrarSessao('cadastros'); carregarCadastrosBase()" id="btn-cadastros" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 transition text-left">📝 Cadastros</button>
+        <nav class="p-3 overflow-y-auto no-scrollbar flex-1">
+            <div class="v35-nav-label">Visão Geral</div>
+            <button onclick="recarregarTudo()" id="btn-dash" class="v35-nav-btn bg-arca-teal/10 text-arca-teal border border-arca-teal/20">◉ <span>Inteligência</span></button>
+
+            <div class="v35-nav-label">Operação</div>
+            <button onclick="mostrarSessao('aprovacao'); carregarPendencias()" id="btn-aprovacao" class="v35-nav-btn text-slate-400">⚖️ <span>Ocorrências Bento</span></button>
+            <button onclick="mostrarSessao('atividades'); carregarAtrasos()" id="btn-atividades" class="v35-nav-btn text-slate-400">📋 <span>Atividades CondoCheck</span></button>
+            <button onclick="mostrarSessao('agenda'); carregarAgendaPreventiva()" id="btn-agenda" class="v35-nav-btn text-slate-400">🗓️ <span>Agenda Preventiva</span></button>
+            <button onclick="mostrarSessao('almoxarifado'); carregarAlmoxarifado()" id="btn-almoxarifado" class="v35-nav-btn text-slate-400">📦 <span>Almoxarifado</span></button>
+
+            <div class="v35-nav-label">Conhecimento do Bento</div>
+            <button onclick="mostrarSessao('regras'); carregarRegrasCondominio()" id="btn-regras" class="v35-nav-btn text-slate-400">📚 <span>Regras & Documentos</span></button>
+
+            <div class="v35-nav-label">Gestão</div>
+            <button onclick="mostrarSessao('pesquisa'); carregarBasePesquisa()" id="btn-pesquisa" class="v35-nav-btn text-slate-400">🔍 <span>Relatórios & Auditoria</span></button>
+            <button onclick="mostrarSessao('moradores'); carregarMoradores()" id="btn-moradores" class="v35-nav-btn text-slate-400">🏠 <span>Moradores</span></button>
+            <button onclick="mostrarSessao('fornecedores'); carregarFornecedores()" id="btn-fornecedores" class="v35-nav-btn text-slate-400">🛠️ <span>Fornecedores</span></button>
+            <button onclick="mostrarSessao('cadastros'); carregarCadastrosBase()" id="btn-cadastros" class="v35-nav-btn text-slate-400">📝 <span>Cadastros</span></button>
         </nav>
+        <div class="p-4 border-t border-white/5">
+            <div class="flex items-center justify-between text-[10px] font-bold text-slate-500">
+                <span>Bento + CondoCheck</span><span class="text-emerald-400">● OPERACIONAL</span>
+            </div>
+        </div>
     </aside>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between z-40 shadow-sm relative">
-            <h1 id="titulo-pagina" class="text-2xl font-black text-slate-800">Inteligência</h1>
-            <button onclick="recarregarTudo()" class="border px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-50 text-arca-blue border-arca-blue transition shadow-sm">🔄 Atualizar Base</button>
+
+        <header class="v35-topbar px-5 md:px-8 py-4 flex items-center justify-between gap-4 z-40 shadow-sm relative">
+            <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                    <h1 id="titulo-pagina" class="text-xl md:text-2xl font-black text-slate-900 truncate">Inteligência</h1>
+                    <span class="hidden md:inline-flex v35-chip bg-emerald-50 text-emerald-700 border border-emerald-100"><span class="v35-dot"></span>Base conectada</span>
+                </div>
+                <p id="subtitulo-pagina" class="text-xs text-slate-500 font-semibold mt-1 truncate">Visão consolidada da operação condominial</p>
+            </div>
+            <div class="v35-topbar-actions flex items-center gap-2 md:gap-3">
+                <div class="v35-chip bg-slate-100 text-slate-600"><span>🕒</span><span id="torre-relogio">--:--</span></div>
+                <button onclick="alternarModoApresentacao()" class="v35-present-btn border px-3 md:px-4 py-2.5 rounded-xl text-xs font-black transition shadow-sm">🎤 <span class="hidden sm:inline">Apresentação</span></button>
+                <button onclick="recarregarTudo()" class="border px-3 md:px-4 py-2.5 rounded-xl text-xs font-black hover:bg-slate-50 text-sky-600 border-sky-200 transition shadow-sm">🔄 <span class="hidden sm:inline">Atualizar</span></button>
+            </div>
         </header>
 
         <div class="flex-1 overflow-y-auto p-8 no-scrollbar relative">
             
+
             <div id="sessao-dash" class="block space-y-6">
-                <div class="bg-white p-4 rounded-xl card-shadow border border-slate-100 flex flex-col md:flex-row gap-4 items-end">
-                    <div class="w-full md:w-1/3"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Data Inicial:</label><input type="date" id="filtro-bi-inicio" class="w-full p-2 text-sm bg-slate-50 border border-slate-200 rounded"></div>
-                    <div class="w-full md:w-1/3"><label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Data Final:</label><input type="date" id="filtro-bi-fim" class="w-full p-2 text-sm bg-slate-50 border border-slate-200 rounded"></div>
-                    <div class="w-full md:w-1/3"><button onclick="aplicarFiltroDashboard()" class="w-full bg-arca-blue text-white font-bold py-2 rounded shadow hover:bg-blue-600 transition">📊 Filtrar Operação</button></div>
-                </div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Total de Tarefas</p><p id="kpi-total" class="text-3xl font-black">--</p></div>
-                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Executadas</p><p id="kpi-executadas" class="text-3xl font-black text-arca-blue">--</p></div>
-                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Justificadas</p><p id="kpi-justificadas" class="text-3xl font-black text-orange-500">--</p></div>
-                    <div class="bg-white p-6 rounded-xl card-shadow"><p class="text-[10px] text-slate-400 font-bold uppercase">Eficiência</p><p id="kpi-eficiencia" class="text-3xl font-black text-arca-teal">--</p></div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-arca-blue"><h3 class="font-bold mb-4">Balanço de Operação</h3><div class="h-64 flex justify-center"><canvas id="graficoStatus"></canvas></div></div>
-                    <div class="bg-white p-6 rounded-xl card-shadow border-t-4 border-orange-500"><h3 class="font-bold mb-4">Principais Ofensores (Motivos)</h3><div class="h-64"><canvas id="graficoMotivos"></canvas></div></div>
-                </div>
+                <section class="v35-hero">
+                    <div class="relative z-10 grid grid-cols-1 xl:grid-cols-[1.2fr_.8fr] gap-6 items-center">
+                        <div>
+                            <p class="v35-eyebrow">ARCA · Central de Gestão Condominial</p>
+                            <h2 class="text-3xl md:text-4xl font-black tracking-tight mt-3 leading-tight">Uma torre. Quatro módulos.<br><span class="text-cyan-300">Uma operação sob controle.</span></h2>
+                            <p class="text-sm md:text-base text-slate-300 mt-4 max-w-3xl leading-relaxed">Bento atende pelo WhatsApp, consulta somente dados do condomínio autorizado e entrega as informações operacionais na Torre. Regras, ocorrências, rotinas, agenda e estoque permanecem separados por condomínio.</p>
+                            <div class="flex flex-wrap gap-2 mt-5">
+                                <span class="v35-chip bg-emerald-400/10 text-emerald-200 border border-emerald-300/20">🔐 Segregação ativa</span>
+                                <span class="v35-chip bg-sky-400/10 text-sky-200 border border-sky-300/20">🧠 Respostas fundamentadas</span>
+                                <span class="v35-chip bg-indigo-400/10 text-indigo-200 border border-indigo-300/20">📱 WhatsApp integrado</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="mostrarSessao('aprovacao'); carregarPendencias()" class="v35-module-card text-left">
+                                <p class="text-[10px] uppercase tracking-widest text-rose-200 font-black">Ocorrências</p>
+                                <p id="resumo-ocorrencias" class="v35-module-value mt-2">--</p>
+                                <p class="text-xs text-slate-300 mt-2">pendências reais no Bento</p>
+                            </button>
+                            <button onclick="mostrarSessao('atividades'); carregarAtrasos()" class="v35-module-card text-left">
+                                <p class="text-[10px] uppercase tracking-widest text-cyan-200 font-black">CondoCheck</p>
+                                <p id="resumo-tarefas" class="v35-module-value mt-2">--</p>
+                                <p class="text-xs text-slate-300 mt-2">tarefas sem baixa hoje</p>
+                            </button>
+                            <button onclick="mostrarSessao('agenda'); carregarAgendaPreventiva()" class="v35-module-card text-left">
+                                <p class="text-[10px] uppercase tracking-widest text-purple-200 font-black">Agenda</p>
+                                <p id="resumo-agenda" class="v35-module-value mt-2">--</p>
+                                <p class="text-xs text-slate-300 mt-2">vencimentos em 30 dias</p>
+                            </button>
+                            <button onclick="mostrarSessao('almoxarifado'); carregarAlmoxarifado()" class="v35-module-card text-left">
+                                <p class="text-[10px] uppercase tracking-widest text-amber-200 font-black">Estoque</p>
+                                <p id="resumo-estoque" class="v35-module-value mt-2">--</p>
+                                <p class="text-xs text-slate-300 mt-2">itens para comprar</p>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                    <div class="v35-kpi"><div class="flex items-center justify-between"><div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Rotinas no período</p><p id="kpi-total" class="text-3xl font-black mt-2 text-slate-900">--</p></div><div class="v35-kpi-icon bg-slate-100">📋</div></div></div>
+                    <div class="v35-kpi"><div class="flex items-center justify-between"><div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Executadas</p><p id="kpi-executadas" class="text-3xl font-black mt-2 text-sky-600">--</p></div><div class="v35-kpi-icon bg-sky-50">✓</div></div></div>
+                    <div class="v35-kpi"><div class="flex items-center justify-between"><div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Justificadas</p><p id="kpi-justificadas" class="text-3xl font-black mt-2 text-orange-500">--</p></div><div class="v35-kpi-icon bg-orange-50">!</div></div></div>
+                    <div class="v35-kpi"><div class="flex items-center justify-between"><div><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Eficiência</p><p id="kpi-eficiencia" class="text-3xl font-black mt-2 text-emerald-600">--</p></div><div class="v35-kpi-icon bg-emerald-50">↗</div></div></div>
+                </section>
+
+                <section class="v35-soft-card p-5">
+                    <div class="flex flex-col lg:flex-row justify-between lg:items-end gap-4">
+                        <div>
+                            <p class="text-[10px] text-sky-600 uppercase tracking-[.18em] font-black">Indicadores da operação</p>
+                            <h3 class="v35-section-title mt-1">Período de análise CondoCheck</h3>
+                            <p class="text-xs text-slate-500 mt-1">Selecione o período para recalcular execução, justificativas e eficiência.</p>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto">
+                            <div><label class="text-[9px] font-black text-slate-400 uppercase mb-1 block">Data inicial</label><input type="date" id="filtro-bi-inicio" class="w-full p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl"></div>
+                            <div><label class="text-[9px] font-black text-slate-400 uppercase mb-1 block">Data final</label><input type="date" id="filtro-bi-fim" class="w-full p-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl"></div>
+                            <button onclick="aplicarFiltroDashboard()" class="self-end bg-sky-600 text-white font-black px-5 py-2.5 rounded-xl shadow hover:bg-sky-700 transition">Aplicar período</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                    <div class="v35-soft-card p-6"><div class="flex items-center justify-between mb-4"><div><p class="text-[10px] text-sky-600 font-black uppercase tracking-widest">Status</p><h3 class="v35-section-title">Balanço de Operação</h3></div><span class="v35-chip bg-sky-50 text-sky-700">CondoCheck</span></div><div class="h-64 flex justify-center"><canvas id="graficoStatus"></canvas></div></div>
+                    <div class="v35-soft-card p-6"><div class="flex items-center justify-between mb-4"><div><p class="text-[10px] text-orange-500 font-black uppercase tracking-widest">Atenção</p><h3 class="v35-section-title">Principais Ofensores</h3></div><span class="v35-chip bg-orange-50 text-orange-700">Justificativas</span></div><div class="h-64"><canvas id="graficoMotivos"></canvas></div></div>
+                </section>
+
+                <section class="v35-soft-card p-5 md:p-6">
+                    <div class="flex flex-col md:flex-row justify-between gap-3 mb-5">
+                        <div><p class="text-[10px] text-emerald-600 font-black uppercase tracking-widest">Arquitetura do atendimento</p><h3 class="v35-section-title mt-1">Do WhatsApp à decisão do síndico</h3></div>
+                        <button onclick="mostrarSessao('regras'); carregarRegrasCondominio()" class="text-xs font-black text-sky-700 bg-sky-50 border border-sky-100 px-4 py-2 rounded-xl">Abrir base de regras →</button>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-5 text-center">
+                        <div class="v35-architecture-step"><div class="w-12 h-12 rounded-2xl bg-emerald-50 grid place-items-center mx-auto text-xl">📱</div><p class="font-black text-sm mt-2">WhatsApp</p><p class="text-[10px] text-slate-500">texto, áudio e imagem</p></div>
+                        <div class="v35-architecture-step"><div class="w-12 h-12 rounded-2xl bg-sky-50 grid place-items-center mx-auto text-xl">🧭</div><p class="font-black text-sm mt-2">Roteador seguro</p><p class="text-[10px] text-slate-500">perfil e condomínio</p></div>
+                        <div class="v35-architecture-step"><div class="w-12 h-12 rounded-2xl bg-indigo-50 grid place-items-center mx-auto text-xl">🧠</div><p class="font-black text-sm mt-2">Bento</p><p class="text-[10px] text-slate-500">interpreta a intenção</p></div>
+                        <div class="v35-architecture-step"><div class="w-12 h-12 rounded-2xl bg-amber-50 grid place-items-center mx-auto text-xl">🧩</div><p class="font-black text-sm mt-2">Módulos</p><p class="text-[10px] text-slate-500">regras, tarefas, estoque</p></div>
+                        <div class="v35-architecture-step"><div class="w-12 h-12 rounded-2xl bg-rose-50 grid place-items-center mx-auto text-xl">🏢</div><p class="font-black text-sm mt-2">Torre</p><p class="text-[10px] text-slate-500">gestão e auditoria</p></div>
+                    </div>
+                </section>
             </div>
 
             <div id="sessao-aprovacao" class="hidden space-y-6">
@@ -292,6 +518,49 @@
                 </div>
 
         
+
+
+        <div id="sessao-regras" class="hidden space-y-6">
+            <div class="bg-gradient-to-r from-sky-950 via-slate-900 to-emerald-950 text-white p-6 rounded-2xl card-shadow">
+                <div class="flex flex-col lg:flex-row justify-between gap-5">
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-[0.22em] text-cyan-200 mb-2">Base oficial de conhecimento</p>
+                        <h2 class="text-2xl md:text-3xl font-black mb-2">📚 Regras e Documentos do Condomínio</h2>
+                        <p class="text-sm text-slate-200 max-w-4xl leading-relaxed">O Bento não guarda regras no corpo do agente. Ele identifica a pergunta e busca a resposta oficial no repositório do condomínio. Assim, cada condomínio possui sua própria base, seus documentos e seu link de regulamento.</p>
+                    </div>
+                    <button onclick="carregarRegrasCondominio()" class="bg-white text-slate-900 px-5 py-3 rounded-xl shadow text-sm font-black hover:bg-slate-50 transition self-start">🔄 Atualizar base</button>
+                </div>
+                <div class="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="bg-white/10 border border-white/10 rounded-xl p-4"><p class="text-[10px] font-black uppercase tracking-widest text-cyan-200">Fonte da resposta</p><p class="text-sm font-bold mt-1">Sempre o Supabase do condomínio autorizado.</p></div>
+                    <div class="bg-white/10 border border-white/10 rounded-xl p-4"><p class="text-[10px] font-black uppercase tracking-widest text-cyan-200">Papel da IA</p><p class="text-sm font-bold mt-1">Selecionar a chave correta. Nunca inventar a regra.</p></div>
+                    <div class="bg-white/10 border border-white/10 rounded-xl p-4"><p class="text-[10px] font-black uppercase tracking-widest text-cyan-200">Documentos</p><p class="text-sm font-bold mt-1">Regulamentos e links ficam vinculados à regra oficial.</p></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="v35-kpi"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Regras ativas</p><p id="regras-kpi-total" class="text-3xl font-black mt-2 text-sky-700">--</p></div>
+                <div class="v35-kpi"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Documentos</p><p id="regras-kpi-docs" class="text-3xl font-black mt-2 text-indigo-700">--</p></div>
+                <div class="v35-kpi"><p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Regras com ação</p><p id="regras-kpi-acionaveis" class="text-3xl font-black mt-2 text-emerald-700">--</p></div>
+            </div>
+
+            <div class="v35-soft-card p-5">
+                <div class="flex flex-col md:flex-row justify-between md:items-end gap-4 mb-4">
+                    <div><h3 class="v35-section-title">Regras oficiais disponíveis ao Bento</h3><p class="text-xs text-slate-500 mt-1">Pesquisa por assunto, chave, resposta ou palavra-chave.</p></div>
+                    <input id="filtro-regras-condominio" onkeyup="renderizarRegrasCondominio()" placeholder="Buscar: silêncio, elevador, regulamento..." class="w-full md:w-96 p-3 border border-slate-200 rounded-xl text-sm bg-slate-50">
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-100">
+                    <table class="v35-table w-full text-sm text-left bg-white">
+                        <thead class="bg-slate-100 text-slate-500 uppercase text-[10px] font-black"><tr><th class="px-4 py-3">Assunto</th><th class="px-4 py-3">Resposta oficial</th><th class="px-4 py-3">Ação</th><th class="px-4 py-3">Documento</th></tr></thead>
+                        <tbody id="tabela-regras-condominio"><tr><td colspan="4" class="p-8 text-center text-slate-400">Clique em Atualizar base.</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="v35-soft-card p-5">
+                <div class="flex items-center justify-between gap-3 mb-4"><div><h3 class="v35-section-title">Documentos vinculados</h3><p class="text-xs text-slate-500 mt-1">Links oficiais que podem ser enviados diretamente pelo Bento.</p></div><span class="v35-chip bg-indigo-50 text-indigo-700">Google Drive / URL pública</span></div>
+                <div id="lista-documentos-condominio" class="grid grid-cols-1 md:grid-cols-2 gap-3"><div class="p-5 text-center text-slate-400 border-2 border-dashed rounded-xl">Carregue a base para visualizar.</div></div>
+            </div>
+        </div>
 
         <div id="sessao-agenda" class="hidden space-y-6">
             <div class="bg-gradient-to-r from-purple-900 via-purple-800 to-slate-900 text-white p-6 rounded-2xl card-shadow">
@@ -680,7 +949,7 @@
         let tarefaAtualId = null;
 
         function mostrarSessao(id) {
-            ['dash', 'aprovacao', 'atividades', 'pesquisa', 'moradores', 'fornecedores', 'agenda', 'almoxarifado', 'cadastros'].forEach(s => { 
+            ['dash', 'aprovacao', 'atividades', 'pesquisa', 'moradores', 'fornecedores', 'agenda', 'almoxarifado', 'regras', 'cadastros'].forEach(s => { 
                 document.getElementById('sessao-' + s).style.display = 'none'; 
                 let btn = document.getElementById('btn-' + s); 
                 if(btn) { btn.classList.remove('bg-arca-teal/10', 'text-arca-teal', 'border-arca-teal/20'); btn.classList.add('text-slate-400', 'border-transparent'); } 
@@ -688,7 +957,22 @@
             document.getElementById('sessao-' + id).style.display = 'block'; 
             let btnAtivo = document.getElementById('btn-' + id); 
             if(btnAtivo) { btnAtivo.classList.remove('text-slate-400', 'border-transparent'); btnAtivo.classList.add('bg-arca-teal/10', 'text-arca-teal', 'border-arca-teal/20'); }
-            document.getElementById('titulo-pagina').innerText = btnAtivo.innerText.split(' ').slice(1).join(' '); cancelarEdicao();
+            document.getElementById('titulo-pagina').innerText = btnAtivo.innerText.trim().replace(/^[^A-Za-zÀ-ÿ]+/, '');
+            const subtitulos = {
+                dash: 'Visão consolidada da operação condominial',
+                aprovacao: 'Ocorrências abertas pelo Bento e decisões do síndico',
+                atividades: 'Auditoria das rotinas executadas pela equipe',
+                pesquisa: 'Pesquisa histórica e rastreabilidade operacional',
+                moradores: 'Base de moradores vinculada ao condomínio',
+                fornecedores: 'Prestadores e contatos de apoio',
+                agenda: 'Vencimentos e compromissos preventivos',
+                almoxarifado: 'Estoque, baixas e ordens de compra',
+                regras: 'Base oficial de respostas e documentos do Bento',
+                cadastros: 'Equipe, áreas e tarefas fixas'
+            };
+            const sub = document.getElementById('subtitulo-pagina');
+            if(sub) sub.innerText = subtitulos[id] || 'Torre Operacional ARCA';
+            cancelarEdicao();
         }
 
         function toggleAllCheckboxes(masterId, childClass) {
@@ -1571,6 +1855,7 @@
                 const { data, error } = await supabaseDB
                     .from('agenda_preventiva')
                     .select('*')
+                    .eq('codigo_condominio', CODIGO_CONDOMINIO_ATUAL)
                     .order('data_vencimento', { ascending: true });
 
                 if(error) throw error;
@@ -1727,13 +2012,14 @@
                 telefone_fornecedor: document.getElementById('agenda-telefone').value.replace(/\D/g, ''),
                 canal_aviso: document.getElementById('agenda-canal').value,
                 status: document.getElementById('agenda-status').value,
-                observacoes: document.getElementById('agenda-observacoes').value.trim()
+                observacoes: document.getElementById('agenda-observacoes').value.trim(),
+                codigo_condominio: CODIGO_CONDOMINIO_ATUAL
             };
 
             try {
                 if(btn) { btn.disabled = true; btn.innerText = 'Salvando...'; }
                 const result = id
-                    ? await supabaseDB.from('agenda_preventiva').update(payload).eq('id', id).select()
+                    ? await supabaseDB.from('agenda_preventiva').update(payload).eq('id', id).eq('codigo_condominio', CODIGO_CONDOMINIO_ATUAL).select()
                     : await supabaseDB.from('agenda_preventiva').insert([payload]).select();
 
                 if(result.error) throw result.error;
@@ -1772,7 +2058,7 @@
             const obs = prompt('Observação de conclusão do compromisso:', 'Concluído conforme verificação do síndico.');
             if(obs === null) return;
             const payload = { status: 'CONCLUIDO', data_conclusao: dataHojeISOAgenda(), observacao_conclusao: obs };
-            const { error } = await supabaseDB.from('agenda_preventiva').update(payload).eq('id', id);
+            const { error } = await supabaseDB.from('agenda_preventiva').update(payload).eq('id', id).eq('codigo_condominio', CODIGO_CONDOMINIO_ATUAL);
             if(error) return alert('Erro ao concluir: ' + error.message);
             mostrarToastAgenda('Compromisso concluído.');
             await carregarAgendaPreventiva();
@@ -1781,7 +2067,7 @@
         async function cancelarCompromissoAgenda(id) {
             const obs = prompt('Motivo do cancelamento:', 'Cancelado pelo síndico.');
             if(obs === null) return;
-            const { error } = await supabaseDB.from('agenda_preventiva').update({ status: 'CANCELADO', observacoes: obs }).eq('id', id);
+            const { error } = await supabaseDB.from('agenda_preventiva').update({ status: 'CANCELADO', observacoes: obs }).eq('id', id).eq('codigo_condominio', CODIGO_CONDOMINIO_ATUAL);
             if(error) return alert('Erro ao cancelar: ' + error.message);
             mostrarToastAgenda('Compromisso cancelado.');
             await carregarAgendaPreventiva();
@@ -1789,7 +2075,7 @@
 
         async function reabrirCompromissoAgenda(id) {
             if(!confirm('Reabrir este compromisso como PENDENTE?')) return;
-            const { error } = await supabaseDB.from('agenda_preventiva').update({ status: 'PENDENTE', data_conclusao: null, observacao_conclusao: null }).eq('id', id);
+            const { error } = await supabaseDB.from('agenda_preventiva').update({ status: 'PENDENTE', data_conclusao: null, observacao_conclusao: null }).eq('id', id).eq('codigo_condominio', CODIGO_CONDOMINIO_ATUAL);
             if(error) return alert('Erro ao reabrir: ' + error.message);
             mostrarToastAgenda('Compromisso reaberto.');
             await carregarAgendaPreventiva();
@@ -1797,7 +2083,7 @@
 
         async function excluirCompromissoAgenda(id) {
             if(!confirm('Excluir definitivamente este compromisso? Para rotina normal, prefira Cancelar.')) return;
-            const { error } = await supabaseDB.from('agenda_preventiva').delete().eq('id', id);
+            const { error } = await supabaseDB.from('agenda_preventiva').delete().eq('id', id).eq('codigo_condominio', CODIGO_CONDOMINIO_ATUAL);
             if(error) return alert('Erro ao excluir: ' + error.message);
             mostrarToastAgenda('Compromisso excluído.');
             await carregarAgendaPreventiva();
@@ -2039,7 +2325,184 @@
             div.innerHTML=estOrdens.map(o=>{ const itens=estOrdemItens.filter(i=>String(i.ordem_id)===String(o.id)); const rels=estOrdemFornecedores.filter(r=>String(r.ordem_id)===String(o.id)); const num=o.numero_sequencial ? String(o.numero_sequencial).padStart(4,'0') : o.id.slice(0,8); return `<div class="p-4 border rounded-xl bg-slate-50"><div class="flex flex-col md:flex-row justify-between gap-3"><div><p class="font-black">OC-${num} · ${o.titulo}</p><p class="text-xs text-slate-500">Status: ${o.status} · Itens: ${itens.length} · Fornecedores: ${rels.length}</p><p class="text-xs text-slate-400">${o.observacoes||''}</p></div><button onclick="enviarCotacaoWhatsAppEstoque('${o.id}')" class="bg-emerald-600 text-white font-black py-2 px-4 rounded-lg text-xs">Enviar WhatsApp</button></div><div class="mt-3 text-xs text-slate-600"><b>Itens:</b><br>${itens.map(i=>`• ${estNomeProduto(i.produto_id)} — ${numEst(i.quantidade_solicitada).toLocaleString('pt-BR')} ${i.unidade||''}`).join('<br>') || '--'}<br><br><b>Fornecedores:</b><br>${rels.map(r=>`• ${estNomeFornecedor(r.fornecedor_id)} — ${r.status_envio}`).join('<br>') || '--'}</div></div>`; }).join('') || '<div class="p-6 text-center text-slate-400 font-bold border-2 border-dashed rounded-xl">Nenhuma ordem gerada.</div>';
         }
 
-        function recarregarTudo() { mostrarSessao('dash'); carregarEstatisticas(); carregarMoradores(); }
+
+
+        // =========================================================
+        // TORRE V37 — IDENTIDADE, APRESENTAÇÃO E RESUMO OPERACIONAL
+        // =========================================================
+        const NOME_CONDOMINIO_ATUAL = 'Condomínio Maui Hills';
+        let dadosRegrasCondominio = [];
+        let dadosDocumentosCondominio = [];
+
+        function escaparHTML(v) {
+            return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+        }
+
+        function atualizarIdentidadeTorre() {
+            const nome = document.getElementById('sidebar-condominio-nome');
+            const codigo = document.getElementById('sidebar-condominio-codigo');
+            if(nome) nome.innerText = NOME_CONDOMINIO_ATUAL;
+            if(codigo) codigo.innerText = CODIGO_CONDOMINIO_ATUAL;
+        }
+
+        function atualizarRelogioTorre() {
+            const el = document.getElementById('torre-relogio');
+            if(!el) return;
+            const agora = new Date();
+            el.innerText = agora.toLocaleString('pt-BR', { weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }).replace(',', ' ·');
+        }
+
+        function alternarModoApresentacao() {
+            document.body.classList.toggle('modo-apresentacao');
+            const ativo = document.body.classList.contains('modo-apresentacao');
+            if(ativo && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+            if(!ativo && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+        }
+
+        function fimEmDiasISO(qtdDias) {
+            const d = new Date(); d.setDate(d.getDate() + qtdDias); return dataLocalISO(d);
+        }
+
+        async function carregarResumoOperacionalTorre() {
+            const set = (id, valor) => { const el = document.getElementById(id); if(el) el.innerText = valor; };
+            ['resumo-ocorrencias','resumo-tarefas','resumo-agenda','resumo-estoque'].forEach(id => set(id, '…'));
+            try {
+                const hoje = dataLocalISO();
+                const dias = ['domingo','segunda','terca','quarta','quinta','sexta','sabado'];
+                const diaCampo = dias[new Date().getDay()];
+
+                const [ocorrResposta, matriz, execs, estoque] = await Promise.all([
+                    fetch('https://condocheck-n8n.wsoxvx.easypanel.host/webhook/listar_tarefas', { cache: 'no-store' })
+                        .then(async res => ({ ok: res.ok, dados: res.ok ? await res.json() : [] }))
+                        .catch(() => ({ ok: false, dados: [] })),
+                    supabaseDB.from('matriz_tarefas_v2').select('id').eq('codigo_condominio', CODIGO_CONDOMINIO_ATUAL).eq(diaCampo, true),
+                    supabaseDB.from('diario_execucoes_v2').select('tarefa_id,status').eq('codigo_condominio', CODIGO_CONDOMINIO_ATUAL).eq('data_execucao', hoje),
+                    supabaseDB.from('vw_estoque_situacao').select('produto_id,situacao').eq('codigo_condominio', CODIGO_CONDOMINIO_ATUAL)
+                ]);
+
+                if(ocorrResposta.ok) {
+                    let dados = Array.isArray(ocorrResposta.dados) ? ocorrResposta.dados : [ocorrResposta.dados];
+                    const pendenciasReais = dados
+                        .map(limparDadosBento)
+                        .filter(t => {
+                            const st = String(t.status || '').toUpperCase();
+                            if(['FECHADO','CONCLUÍDO','CONCLUIDO'].includes(st)) return false;
+
+                            const descLow = String(t.desc || '').toLowerCase();
+                            const catLow = String(t.bruto_categoria || '').toLowerCase();
+                            const origLow = String(t.bruto_origem || '').toLowerCase();
+                            const locLow = String(t.local || '').toLowerCase();
+
+                            if(catLow.includes('checklist') || catLow.includes('condocheck') || catLow.includes('rotina')) return false;
+                            if(origLow.includes('condocheck') || locLow.includes('condocheck')) return false;
+                            if(descLow.startsWith('vistoria') || descLow.includes('tarefa extra')) return false;
+                            return true;
+                        }).length;
+                    set('resumo-ocorrencias', pendenciasReais);
+                } else set('resumo-ocorrencias', '--');
+
+                if(!matriz.error && !execs.error) {
+                    const feitos = new Set((execs.data || []).filter(x => ['CONCLUIDO','FECHADO','FECHADO_ADMIN','JUSTIFICADO'].includes(String(x.status||'').toUpperCase())).map(x => String(x.tarefa_id)));
+                    const pendentes = (matriz.data || []).filter(x => !feitos.has(String(x.id))).length;
+                    set('resumo-tarefas', pendentes);
+                } else set('resumo-tarefas', '--');
+
+                if(!estoque.error) {
+                    const comprar = (estoque.data || []).filter(x => ['COMPRAR','ZERADO'].includes(String(x.situacao||'').toUpperCase())).length;
+                    set('resumo-estoque', comprar);
+                } else set('resumo-estoque', '--');
+
+                // Agenda segregada pelo condomínio autorizado.
+                let agenda = await supabaseDB
+                    .from('agenda_preventiva')
+                    .select('id,data_vencimento,status,codigo_condominio')
+                    .eq('codigo_condominio', CODIGO_CONDOMINIO_ATUAL)
+                    .gte('data_vencimento', hoje)
+                    .lte('data_vencimento', fimEmDiasISO(30));
+                if(!agenda.error) {
+                    const ativos = (agenda.data || []).filter(x => !['CONCLUIDO','CANCELADO'].includes(String(x.status||'').toUpperCase())).length;
+                    set('resumo-agenda', ativos);
+                } else set('resumo-agenda', '--');
+            } catch(e) {
+                console.warn('Resumo operacional V37 indisponível:', e);
+                ['resumo-ocorrencias','resumo-tarefas','resumo-agenda','resumo-estoque'].forEach(id => set(id, '--'));
+            }
+        }
+
+        async function carregarRegrasCondominio() {
+            const tb = document.getElementById('tabela-regras-condominio');
+            const docs = document.getElementById('lista-documentos-condominio');
+            if(tb) tb.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400 font-bold v35-loading">Consultando a base oficial do Bento...</td></tr>';
+            if(docs) docs.innerHTML = '<div class="p-5 text-center text-slate-400 border-2 border-dashed rounded-xl v35-loading">Consultando documentos...</div>';
+            try {
+                const [rRegras, rDocs] = await Promise.all([
+                    supabaseDB.from('vw_bento_regras_ativas').select('*').eq('codigo_condominio', CODIGO_CONDOMINIO_ATUAL).order('prioridade', { ascending:true }),
+                    supabaseDB.from('condominio_documentos').select('*').eq('codigo_condominio', CODIGO_CONDOMINIO_ATUAL)
+                ]);
+                if(rRegras.error) throw rRegras.error;
+                dadosRegrasCondominio = rRegras.data || [];
+                dadosDocumentosCondominio = rDocs.error ? [] : (rDocs.data || []);
+                renderizarRegrasCondominio();
+                renderizarDocumentosCondominio();
+            } catch(e) {
+                console.error('Erro ao carregar regras:', e);
+                if(tb) tb.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500 font-bold">Não foi possível carregar a base de regras.<br><span class="font-normal text-xs text-slate-500">${escaparHTML(e.message || e)}</span></td></tr>`;
+                if(docs) docs.innerHTML = '<div class="p-5 text-center text-red-500 border border-red-100 bg-red-50 rounded-xl">Documentos indisponíveis.</div>';
+            }
+        }
+
+        function renderizarRegrasCondominio() {
+            const tb = document.getElementById('tabela-regras-condominio');
+            if(!tb) return;
+            const termo = normalizarTextoFiltro(document.getElementById('filtro-regras-condominio')?.value || '');
+            let dados = [...dadosRegrasCondominio];
+            if(termo) dados = dados.filter(r => normalizarTextoFiltro([r.chave_regra,r.assunto,r.resposta_curta,r.palavras_chave,r.categoria].join(' ')).includes(termo));
+
+            const total = document.getElementById('regras-kpi-total'); if(total) total.innerText = dadosRegrasCondominio.length;
+            const docs = document.getElementById('regras-kpi-docs'); if(docs) docs.innerText = dadosDocumentosCondominio.length;
+            const ac = document.getElementById('regras-kpi-acionaveis'); if(ac) ac.innerText = dadosRegrasCondominio.filter(r => r.exige_registro_ocorrencia === true || r.exige_contato_administracao === true || r.enviar_documento === true).length;
+
+            if(!dados.length) {
+                tb.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400">Nenhuma regra encontrada.</td></tr>';
+                return;
+            }
+            tb.innerHTML = dados.map(r => {
+                const acoes = [];
+                if(r.exige_registro_ocorrencia === true) acoes.push('<span class="v35-chip bg-rose-50 text-rose-700">Registrar ocorrência</span>');
+                if(r.exige_contato_administracao === true) acoes.push('<span class="v35-chip bg-amber-50 text-amber-700">Acionar administração</span>');
+                if(!acoes.length) acoes.push('<span class="v35-chip bg-emerald-50 text-emerald-700">Orientar</span>');
+                const url = String(r.url_documento || '').trim();
+                const doc = url ? `<a href="${escaparHTML(url)}" target="_blank" rel="noopener" class="text-sky-700 font-black text-xs">Abrir documento ↗</a>` : '<span class="text-xs text-slate-400">Sem documento</span>';
+                return `<tr class="v35-rule-row border-b border-slate-100 align-top"><td class="px-4 py-4"><p class="font-black text-slate-800">${escaparHTML(r.assunto || r.chave_regra || '--')}</p><p class="text-[10px] font-black text-sky-600 mt-1">${escaparHTML(r.chave_regra || '')}</p></td><td class="px-4 py-4 text-sm text-slate-600 leading-relaxed">${escaparHTML(r.resposta_curta || '--')}</td><td class="px-4 py-4"><div class="flex flex-wrap gap-1">${acoes.join('')}</div></td><td class="px-4 py-4">${doc}</td></tr>`;
+            }).join('');
+        }
+
+        function renderizarDocumentosCondominio() {
+            const div = document.getElementById('lista-documentos-condominio');
+            if(!div) return;
+            const ativos = dadosDocumentosCondominio.filter(d => d.ativo !== false);
+            if(!ativos.length) {
+                div.innerHTML = '<div class="p-5 text-center text-slate-400 border-2 border-dashed rounded-xl">Nenhum documento ativo encontrado.</div>';
+                return;
+            }
+            div.innerHTML = ativos.map(d => {
+                const titulo = d.titulo_documento || d.titulo || d.nome || 'Documento do condomínio';
+                const tipo = d.tipo_documento || d.tipo || 'DOCUMENTO';
+                const url = d.url_documento || d.url || '';
+                return `<div class="v35-doc-card"><div class="flex justify-between gap-3"><div><p class="text-[10px] text-indigo-600 font-black uppercase tracking-widest">${escaparHTML(tipo)}</p><h4 class="font-black text-slate-800 mt-1">${escaparHTML(titulo)}</h4><p class="text-xs text-slate-500 mt-1">${d.documento_publico === false ? 'Acesso restrito' : 'Disponível para envio pelo Bento'}</p></div><div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 grid place-items-center">📄</div></div>${url ? `<a href="${escaparHTML(url)}" target="_blank" rel="noopener" class="inline-block mt-3 bg-indigo-600 text-white text-xs font-black px-4 py-2 rounded-lg">Abrir documento</a>` : ''}</div>`;
+            }).join('');
+        }
+
+
+        function recarregarTudo() {
+            mostrarSessao('dash');
+            atualizarIdentidadeTorre();
+            atualizarRelogioTorre();
+            carregarEstatisticas();
+            carregarMoradores();
+            carregarResumoOperacionalTorre();
+        }
+        setInterval(atualizarRelogioTorre, 30000);
         window.onload = recarregarTudo;
     </script>
 </body>
