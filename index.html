@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>CondoCheck INDEX V3</title>
+  <title>CondoCheck INDEX V3.1</title>
   <style>
     :root {
       --navy: #1a2c35;
@@ -138,7 +138,7 @@
   <section id="screenLogin" class="screen active">
     <div style="text-align:center;margin-bottom:22px">
       <img src="Logo-Condocheck.png" class="logo-condocheck" alt="CondoCheck">
-      <p style="color:#555;font-size:14px;font-weight:800">Acesso Operacional Seguro — V3 Shadow</p>
+      <p style="color:#555;font-size:14px;font-weight:800">Acesso Operacional Seguro — V3.1 Shadow</p>
     </div>
 
     <label for="codigoCondominio">Código do condomínio</label>
@@ -355,7 +355,7 @@
       container.innerHTML = tarefasAtuais.map(t => {
         const codigo = escaparHtml(t.codigo_tarefa);
         const status = t.status ? String(t.status).toUpperCase() : "";
-        const feita = Boolean(status);
+        const feita = ["CONCLUIDO", "JUSTIFICADO"].includes(status);
         const foto = typeof t.foto_evidencia === "string" && /^https?:\/\//i.test(t.foto_evidencia)
           ? `<a class="evidence-link" href="${escaparHtml(t.foto_evidencia)}" target="_blank" rel="noopener">Abrir evidência</a>`
           : "";
