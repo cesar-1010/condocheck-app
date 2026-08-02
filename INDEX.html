@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CondoCheck INDEX V3</title>
+  <style>
+    :root {
+      --navy: #1a2c35;
+      --mint: #00d2b4;
+      --orange: #ff9800;
+      --green: #4caf50;
+      --red: #c62828;
+      --light: #f0f8f7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: var(--navy);
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .screen {
+      background: #fff;
+      padding: 24px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 430px;
+      box-shadow: 0 4px 15px rgba(0,0,0,.45);
+      display: none;
+      position: relative;
+    }
+    .screen.active { display: block; }
+    h2, h3 { text-align: center; color: var(--navy); margin-top: 0; }
+    label { display: block; margin-top: 14px; font-weight: 700; color: #555; }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+      background: #f9f9f9;
+    }
+    button { font-family: inherit; }
+    .btn-main {
+      width: 100%;
+      padding: 14px;
+      background: var(--navy);
+      color: var(--mint);
+      border: 0;
+      font-weight: 800;
+      font-size: 16px;
+      margin-top: 20px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn-main:disabled, .btn-send:disabled { opacity: .55; cursor: not-allowed; }
+    .msg { text-align: center; margin-top: 12px; font-weight: 700; white-space: pre-line; }
+    .msg.error { color: var(--red); }
+    .msg.ok { color: var(--green); }
+    .logo-condocheck {
+      width: 160px;
+      border-radius: 8px;
+      display: block;
+      margin: 0 auto 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+    .header-row { display: flex; align-items: center; gap: 10px; }
+    .header-row h3 { flex: 1; margin: 0; }
+    .logout { color: var(--red); cursor: pointer; font-weight: 800; font-size: 13px; }
+    .identity {
+      background: #e9ecef;
+      padding: 11px;
+      border-radius: 7px;
+      text-align: center;
+      margin: 14px 0;
+      line-height: 1.4;
+    }
+    .identity small { color: #666; }
+    .progress-container {
+      width: 100%;
+      background: #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      height: 10px;
+      margin-top: 10px;
+    }
+    .progress-bar { height: 10px; background: var(--mint); width: 0; transition: width .25s; }
+    #progressText { text-align: center; font-size: 14px; color: #555; font-weight: 700; }
+    .task-card {
+      background: var(--light);
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 8px;
+      border-left: 5px solid var(--mint);
+      box-shadow: 0 2px 5px rgba(0,0,0,.1);
+    }
+    .task-card.done { background: #e8f5e9; border-left-color: var(--green); }
+    .task-meta { font-size: 12px; color: #666; margin-bottom: 7px; }
+    .task-title { font-size: 16px; color: #333; font-weight: 800; line-height: 1.35; }
+    .task-status { color: var(--green); font-weight: 800; margin-top: 10px; }
+    .task-observation {
+      font-size: 13px; color: #555; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #bbb;
+    }
+    .btn-group { display: flex; gap: 10px; margin-top: 14px; }
+    .btn-exec, .btn-just {
+      flex: 1; padding: 11px; color: #fff; border: 0; border-radius: 6px;
+      font-weight: 800; cursor: pointer;
+    }
+    .btn-exec { background: var(--mint); color: var(--navy); }
+    .btn-just { background: var(--orange); }
+    .action-box { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px dashed #bbb; }
+    .action-box.open { display: block; }
+    .camera-preview {
+      width: 100%; border-radius: 7px; display: none; margin-top: 10px; border: 2px solid var(--mint);
+    }
+    .input-camera {
+      background: var(--mint); color: var(--navy); font-weight: 800; padding: 10px;
+    }
+    .btn-send {
+      width: 100%; padding: 12px; color: white; border: 0; border-radius: 6px;
+      font-weight: 800; margin-top: 10px; cursor: pointer; background: var(--navy);
+    }
+    .evidence-link { display: inline-block; margin-top: 9px; font-weight: 700; color: #1565c0; }
+    .empty { text-align: center; padding: 24px 8px; color: #666; }
+    .secure-note {
+      margin-top: 14px; font-size: 12px; line-height: 1.4; color: #666; text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <section id="screenLogin" class="screen active">
+    <div style="text-align:center;margin-bottom:22px">
+      <img src="Logo-Condocheck.png" class="logo-condocheck" alt="CondoCheck">
+      <p style="color:#555;font-size:14px;font-weight:800">Acesso Operacional Seguro — V3 Shadow</p>
+    </div>
+
+    <label for="codigoCondominio">Código do condomínio</label>
+    <input id="codigoCondominio" autocomplete="organization" placeholder="Ex.: JURE-003">
+
+    <label for="loginUser">Usuário</label>
+    <input id="loginUser" autocomplete="username" placeholder="Ex.: luana.jure003">
+
+    <label for="loginPin">PIN de 4 números</label>
+    <input id="loginPin" type="password" inputmode="numeric" maxlength="4" autocomplete="current-password" placeholder="••••">
+
+    <button class="btn-main" id="btnEntrar" onclick="fazerLogin()">ENTRAR</button>
+    <p id="msgLogin" class="msg"></p>
+
+    <div class="secure-note">
+      O APP não consulta senhas nem grava diretamente nas tabelas. Todas as ações são revalidadas pelo gateway seguro.
+    </div>
+  </section>
+
+  <section id="screenChecklist" class="screen">
+    <div class="header-row">
+      <img src="logo-arca.png" style="height:25px;width:auto" alt="Arca">
+      <h3>CONDOCHECK INDEX</h3>
+      <span class="logout" onclick="sair()">Sair</span>
+    </div>
+    <hr style="border:0;border-top:1px solid #eee;margin:10px 0">
+
+    <div class="identity">
+      <strong id="userNameDisplay"></strong><br>
+      <small id="condominioDisplay"></small><br>
+      <small id="dateDisplay"></small>
+    </div>
+
+    <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+    <p id="progressText"></p>
+
+    <div id="tasksContainer"></div>
+    <p id="msgChecklist" class="msg"></p>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    "use strict";
+
+    // Endpoint exclusivo da versão Shadow. Publicar somente o workflow INDEX_APP_GATEWAY_SHADOW_V1.
+    const GATEWAY_URL = "https://condocheck-n8n.wsoxvx.easypanel.host/webhook/index-app-shadow-v1";
+
+    // Uso restrito ao Storage de evidências. O APP não consulta nem grava tabelas diretamente.
+    const SUPABASE_URL = "https://arca-bento-condocheck-supabase.wsoxvx.easypanel.host";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOjE3OTk1MzU2MDB9.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE";
+    const STORAGE_BUCKET = "condocheck-evidencias";
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let sessao = null; // mantida apenas em memória
+    let tarefasAtuais = [];
+    const fotosBase64 = {};
+
+    function dataLocalISO(data = new Date()) {
+      const ano = data.getFullYear();
+      const mes = String(data.getMonth() + 1).padStart(2, "0");
+      const dia = String(data.getDate()).padStart(2, "0");
+      return `${ano}-${mes}-${dia}`;
+    }
+
+    function escaparHtml(valor) {
+      return String(valor ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function limparNomeArquivo(valor) {
+      return String(valor || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9-_]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "")
+        .toLowerCase();
+    }
+
+    async function chamarGateway(payload) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
+
+      try {
+        const response = await fetch(GATEWAY_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+
+        const texto = await response.text();
+        let dados = {};
+        try { dados = texto ? JSON.parse(texto) : {}; }
+        catch { throw new Error("Resposta inválida do gateway."); }
+
+        if (!response.ok) {
+          throw new Error(dados.codigo || dados.message || `Falha HTTP ${response.status}`);
+        }
+        return dados;
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+
+    async function fazerLogin() {
+      const codigo = document.getElementById("codigoCondominio").value.trim().toUpperCase();
+      const login = document.getElementById("loginUser").value.trim().toLowerCase();
+      const pin = document.getElementById("loginPin").value.trim();
+      const btn = document.getElementById("btnEntrar");
+      const msg = document.getElementById("msgLogin");
+
+      msg.className = "msg";
+      if (!codigo || !login || !/^\d{4}$/.test(pin)) {
+        msg.className = "msg error";
+        msg.textContent = "Informe condomínio, usuário e PIN com 4 números.";
+        return;
+      }
+
+      btn.disabled = true;
+      msg.textContent = "Validando acesso...";
+
+      try {
+        const resposta = await chamarGateway({
+          acao: "LOGIN",
+          codigo_condominio: codigo,
+          login,
+          pin
+        });
+
+        if (!resposta.sucesso || !resposta.autorizado || !resposta.funcionaria) {
+          throw new Error("Acesso não autorizado.");
+        }
+
+        sessao = {
+          login,
+          pin,
+          codigo_condominio: resposta.funcionaria.codigo_condominio,
+          funcionaria: resposta.funcionaria
+        };
+
+        document.getElementById("screenLogin").classList.remove("active");
+        document.getElementById("screenChecklist").classList.add("active");
+        document.getElementById("userNameDisplay").textContent = `Olá, ${sessao.funcionaria.nome}`;
+        document.getElementById("condominioDisplay").textContent = sessao.codigo_condominio;
+        document.getElementById("dateDisplay").textContent = `Tarefas de hoje — ${dataLocalISO()}`;
+
+        await carregarTarefas();
+      } catch (erro) {
+        msg.className = "msg error";
+        msg.textContent = erro.name === "AbortError" ? "Tempo de resposta esgotado." : (erro.message || "Falha no acesso.");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function sair() {
+      sessao = null;
+      tarefasAtuais = [];
+      Object.keys(fotosBase64).forEach(k => delete fotosBase64[k]);
+      location.reload();
+    }
+
+    async function carregarTarefas() {
+      if (!sessao) return;
+
+      const container = document.getElementById("tasksContainer");
+      const msg = document.getElementById("msgChecklist");
+      container.innerHTML = '<div class="empty">Carregando atividades...</div>';
+      msg.textContent = "";
+      msg.className = "msg";
+
+      try {
+        const resposta = await chamarGateway({
+          acao: "CONSULTAR",
+          codigo_condominio: sessao.codigo_condominio,
+          login: sessao.login,
+          pin: sessao.pin,
+          data_execucao: dataLocalISO()
+        });
+
+        if (!resposta.sucesso || resposta.status_consulta !== "OK") {
+          throw new Error(resposta.status_consulta || "Falha ao consultar tarefas.");
+        }
+
+        tarefasAtuais = Array.isArray(resposta.tarefas) ? resposta.tarefas : [];
+        renderizarTarefas(resposta.resumo || {});
+      } catch (erro) {
+        container.innerHTML = "";
+        msg.className = "msg error";
+        msg.textContent = erro.name === "AbortError" ? "Tempo de resposta esgotado." : (erro.message || "Falha na consulta.");
+      }
+    }
+
+    function renderizarTarefas(resumo) {
+      const container = document.getElementById("tasksContainer");
+      const total = Number(resumo.total_previstas || tarefasAtuais.length || 0);
+      const executadas = Number(resumo.executadas || 0);
+      const percentual = total ? Math.round((executadas / total) * 100) : 0;
+
+      document.getElementById("progressBar").style.width = `${percentual}%`;
+      document.getElementById("progressText").textContent =
+        total ? `${executadas} de ${total} tarefas concluídas/justificadas` : "Sem tarefas previstas";
+
+      if (!tarefasAtuais.length) {
+        container.innerHTML = '<div class="empty">Sem tarefas previstas para hoje.</div>';
+        return;
+      }
+
+      container.innerHTML = tarefasAtuais.map(t => {
+        const codigo = escaparHtml(t.codigo_tarefa);
+        const status = t.status ? String(t.status).toUpperCase() : "";
+        const feita = Boolean(status);
+        const foto = typeof t.foto_evidencia === "string" && /^https?:\/\//i.test(t.foto_evidencia)
+          ? `<a class="evidence-link" href="${escaparHtml(t.foto_evidencia)}" target="_blank" rel="noopener">Abrir evidência</a>`
+          : "";
+        const observacao = t.observacao
+          ? `<div class="task-observation">${escaparHtml(t.observacao)}</div>`
+          : "";
+
+        return `
+          <article class="task-card ${feita ? "done" : ""}" id="card-${codigo}">
+            <div class="task-meta">
+              ${codigo} · ${escaparHtml(t.area || t.codigo_area || "Área não informada")}
+              ${t.horario ? ` · ${escaparHtml(t.horario)}` : ""}
+            </div>
+            <div class="task-title">${escaparHtml(t.descricao)}</div>
+            ${feita ? `
+              <div class="task-status">✓ ${escaparHtml(status)}</div>
+              ${observacao}
+              ${foto}
+            ` : `
+              <div class="btn-group">
+                <button class="btn-exec" onclick="abrirAcao('${codigo}','exec')">Concluir</button>
+                <button class="btn-just" onclick="abrirAcao('${codigo}','just')">Justificar</button>
+              </div>
+
+              <div class="action-box" id="exec-${codigo}">
+                <label>Capturar evidência obrigatória</label>
+                <input type="file" class="input-camera" accept="image/*" capture="environment"
+                  onchange="processarFoto(this,'${codigo}')">
+                <img id="prev-${codigo}" class="camera-preview" alt="Prévia da evidência">
+                <button class="btn-send" id="send-exec-${codigo}"
+                  onclick="registrarExecucao('${codigo}','CONCLUIDO')">CONFIRMAR CONCLUSÃO</button>
+              </div>
+
+              <div class="action-box" id="just-${codigo}">
+                <label>Motivo da não execução</label>
+                <select id="motivo-${codigo}">
+                  <option value="Chuva">Chuva / tempo ruim</option>
+                  <option value="Material">Falta de material</option>
+                  <option value="Acesso">Área sem acesso</option>
+                  <option value="Outros">Outros</option>
+                </select>
+                <textarea id="detalhe-${codigo}" rows="3" placeholder="Detalhes"></textarea>
+                <button class="btn-send" id="send-just-${codigo}"
+                  onclick="registrarExecucao('${codigo}','JUSTIFICADO')">GRAVAR JUSTIFICATIVA</button>
+              </div>
+            `}
+          </article>`;
+      }).join("");
+    }
+
+    function abrirAcao(codigo, tipo) {
+      const exec = document.getElementById(`exec-${codigo}`);
+      const just = document.getElementById(`just-${codigo}`);
+      exec?.classList.toggle("open", tipo === "exec" && !exec.classList.contains("open"));
+      just?.classList.toggle("open", tipo === "just" && !just.classList.contains("open"));
+      if (tipo === "exec") just?.classList.remove("open");
+      if (tipo === "just") exec?.classList.remove("open");
+    }
+
+    function processarFoto(input, codigo) {
+      const file = input.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const limite = 1000;
+          let w = img.width;
+          let h = img.height;
+
+          if (w > h && w > limite) { h = Math.round(h * limite / w); w = limite; }
+          if (h >= w && h > limite) { w = Math.round(w * limite / h); h = limite; }
+
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          fotosBase64[codigo] = canvas.toDataURL("image/jpeg", .72);
+
+          const preview = document.getElementById(`prev-${codigo}`);
+          preview.src = fotosBase64[codigo];
+          preview.style.display = "block";
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function dataURLParaBlob(dataUrl) {
+      const [cabecalho, dados] = dataUrl.split(",");
+      const mime = cabecalho.match(/:(.*?);/)?.[1] || "image/jpeg";
+      const binario = atob(dados);
+      const bytes = new Uint8Array(binario.length);
+      for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+      return new Blob([bytes], { type: mime });
+    }
+
+    async function subirEvidencia(codigoTarefa, dataUrl) {
+      const blob = dataURLParaBlob(dataUrl);
+      const pasta = [
+        limparNomeArquivo(sessao.codigo_condominio),
+        dataLocalISO(),
+        limparNomeArquivo(sessao.login),
+        `${limparNomeArquivo(codigoTarefa)}-${crypto.randomUUID()}.jpg`
+      ].join("/");
+
+      const { error } = await sb.storage.from(STORAGE_BUCKET).upload(pasta, blob, {
+        contentType: "image/jpeg",
+        cacheControl: "3600",
+        upsert: false
+      });
+      if (error) throw new Error(`Falha no envio da evidência: ${error.message}`);
+
+      const { data } = sb.storage.from(STORAGE_BUCKET).getPublicUrl(pasta);
+      if (!data?.publicUrl) throw new Error("A evidência foi enviada, mas o link não foi gerado.");
+      return data.publicUrl;
+    }
+
+    async function registrarExecucao(codigoTarefa, status) {
+      if (!sessao) return;
+
+      const btn = document.getElementById(
+        status === "CONCLUIDO" ? `send-exec-${codigoTarefa}` : `send-just-${codigoTarefa}`
+      );
+      const msg = document.getElementById("msgChecklist");
+      btn.disabled = true;
+      msg.className = "msg";
+      msg.textContent = "Registrando...";
+
+      try {
+        let fotoUrl = null;
+        let motivo = null;
+
+        if (status === "CONCLUIDO") {
+          if (!fotosBase64[codigoTarefa]) {
+            throw new Error("A fotografia é obrigatória para concluir a tarefa.");
+          }
+          fotoUrl = await subirEvidencia(codigoTarefa, fotosBase64[codigoTarefa]);
+        } else {
+          const categoria = document.getElementById(`motivo-${codigoTarefa}`).value;
+          const detalhe = document.getElementById(`detalhe-${codigoTarefa}`).value.trim();
+          motivo = detalhe ? `${categoria} - ${detalhe}` : categoria;
+        }
+
+        const resposta = await chamarGateway({
+          acao: "REGISTRAR",
+          codigo_condominio: sessao.codigo_condominio,
+          login: sessao.login,
+          pin: sessao.pin,
+          codigo_tarefa: codigoTarefa,
+          data_execucao: dataLocalISO(),
+          status,
+          motivo,
+          observacao: status === "CONCLUIDO" ? "Evidência enviada pelo APP INDEX V3 Shadow" : null,
+          foto_url: fotoUrl,
+          foto_evidencia: fotoUrl
+        });
+
+        const registrado = resposta.status_operacao === "REGISTRADO";
+        const jaRegistrado = resposta.status_operacao === "JA_REGISTRADA";
+
+        if (!registrado && !jaRegistrado) {
+          throw new Error(resposta.codigo || resposta.status_operacao || "Registro recusado.");
+        }
+
+        delete fotosBase64[codigoTarefa];
+        msg.className = "msg ok";
+        msg.textContent = registrado ? "Registro concluído com sucesso." : "A tarefa já estava registrada.";
+        await carregarTarefas();
+      } catch (erro) {
+        msg.className = "msg error";
+        msg.textContent = erro.name === "AbortError" ? "Tempo de resposta esgotado." : (erro.message || "Falha no registro.");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
