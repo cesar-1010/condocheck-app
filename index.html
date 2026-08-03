@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>CondoCheck INDEX V3.1</title>
+  <title>CondoCheck INDEX JURE-003 V3.2</title>
   <style>
     :root {
       --navy: #1a2c35;
@@ -131,6 +131,20 @@
     .secure-note {
       margin-top: 14px; font-size: 12px; line-height: 1.4; color: #666; text-align: center;
     }
+    .action-status {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.35;
+      text-align: center;
+    }
+    .action-status.visible { display: block; }
+    .action-status.processing { background: #fff3cd; color: #7a5b00; }
+    .action-status.ok { background: #e8f5e9; color: #2e7d32; }
+    .action-status.error { background: #ffebee; color: var(--red); }
   </style>
 </head>
 <body>
@@ -138,7 +152,7 @@
   <section id="screenLogin" class="screen active">
     <div style="text-align:center;margin-bottom:22px">
       <img src="Logo-Condocheck.png" class="logo-condocheck" alt="CondoCheck">
-      <p style="color:#555;font-size:14px;font-weight:800">Acesso Operacional Seguro — V3.1 Shadow</p>
+      <p style="color:#555;font-size:14px;font-weight:800">Acesso Operacional Seguro — JURE-003 V3.2</p>
     </div>
 
     <label for="codigoCondominio">Código do condomínio</label>
@@ -188,7 +202,7 @@
 
     // Uso restrito ao Storage de evidências. O APP não consulta nem grava tabelas diretamente.
     const SUPABASE_URL = "https://arca-bento-condocheck-supabase.wsoxvx.easypanel.host";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOjE3OTk1MzU2MDB9.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE";
     const STORAGE_BUCKET = "condocheck-evidencias";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -387,6 +401,7 @@
                 <img id="prev-${codigo}" class="camera-preview" alt="Prévia da evidência">
                 <button class="btn-send" id="send-exec-${codigo}"
                   onclick="registrarExecucao('${codigo}','CONCLUIDO')">CONFIRMAR CONCLUSÃO</button>
+                <div class="action-status" id="status-exec-${codigo}"></div>
               </div>
 
               <div class="action-box" id="just-${codigo}">
@@ -400,6 +415,7 @@
                 <textarea id="detalhe-${codigo}" rows="3" placeholder="Detalhes"></textarea>
                 <button class="btn-send" id="send-just-${codigo}"
                   onclick="registrarExecucao('${codigo}','JUSTIFICADO')">GRAVAR JUSTIFICATIVA</button>
+                <div class="action-status" id="status-just-${codigo}"></div>
               </div>
             `}
           </article>`;
@@ -415,10 +431,34 @@
       if (tipo === "just") exec?.classList.remove("open");
     }
 
+
+    function mostrarStatusAcao(codigo, tipo, classe, texto) {
+      const elemento = document.getElementById(`status-${tipo}-${codigo}`);
+      if (!elemento) return;
+      elemento.className = `action-status visible ${classe}`;
+      elemento.textContent = texto;
+      elemento.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function comTimeout(promessa, milissegundos, mensagem) {
+      let timer;
+      const limite = new Promise((_, rejeitar) => {
+        timer = setTimeout(() => rejeitar(new Error(mensagem)), milissegundos);
+      });
+      return Promise.race([promessa, limite]).finally(() => clearTimeout(timer));
+    }
+
     function processarFoto(input, codigo) {
       const file = input.files?.[0];
       if (!file) return;
 
+      if (!file.type.startsWith("image/")) {
+        mostrarStatusAcao(codigo, "exec", "error", "Selecione uma imagem válida.");
+        input.value = "";
+        return;
+      }
+
+      mostrarStatusAcao(codigo, "exec", "processing", "Preparando a fotografia...");
       const reader = new FileReader();
       reader.onload = e => {
         const img = new Image();
@@ -439,8 +479,15 @@
           const preview = document.getElementById(`prev-${codigo}`);
           preview.src = fotosBase64[codigo];
           preview.style.display = "block";
+          mostrarStatusAcao(codigo, "exec", "ok", "Fotografia pronta. Confirme a conclusão.");
+        };
+        img.onerror = () => {
+          mostrarStatusAcao(codigo, "exec", "error", "Não foi possível processar esta imagem.");
         };
         img.src = e.target.result;
+      };
+      reader.onerror = () => {
+        mostrarStatusAcao(codigo, "exec", "error", "Não foi possível ler o arquivo selecionado.");
       };
       reader.readAsDataURL(file);
     }
@@ -463,28 +510,43 @@
         `${limparNomeArquivo(codigoTarefa)}-${crypto.randomUUID()}.jpg`
       ].join("/");
 
-      const { error } = await sb.storage.from(STORAGE_BUCKET).upload(pasta, blob, {
+      const operacaoUpload = sb.storage.from(STORAGE_BUCKET).upload(pasta, blob, {
         contentType: "image/jpeg",
         cacheControl: "3600",
         upsert: false
       });
-      if (error) throw new Error(`Falha no envio da evidência: ${error.message}`);
+
+      const { error } = await comTimeout(
+        operacaoUpload,
+        30000,
+        "O envio da fotografia excedeu 30 segundos."
+      );
+
+      if (error) {
+        throw new Error(`Falha no envio da evidência: ${error.message}`);
+      }
 
       const { data } = sb.storage.from(STORAGE_BUCKET).getPublicUrl(pasta);
-      if (!data?.publicUrl) throw new Error("A evidência foi enviada, mas o link não foi gerado.");
+      if (!data?.publicUrl) {
+        throw new Error("A evidência foi enviada, mas o link não foi gerado.");
+      }
+
       return data.publicUrl;
     }
 
     async function registrarExecucao(codigoTarefa, status) {
       if (!sessao) return;
 
+      const tipoAcao = status === "CONCLUIDO" ? "exec" : "just";
       const btn = document.getElementById(
         status === "CONCLUIDO" ? `send-exec-${codigoTarefa}` : `send-just-${codigoTarefa}`
       );
       const msg = document.getElementById("msgChecklist");
+      const textoOriginalBotao = btn.textContent;
+
       btn.disabled = true;
       msg.className = "msg";
-      msg.textContent = "Registrando...";
+      msg.textContent = "";
 
       try {
         let fotoUrl = null;
@@ -494,11 +556,20 @@
           if (!fotosBase64[codigoTarefa]) {
             throw new Error("A fotografia é obrigatória para concluir a tarefa.");
           }
+
+          btn.textContent = "ENVIANDO FOTOGRAFIA...";
+          mostrarStatusAcao(codigoTarefa, tipoAcao, "processing", "Enviando a evidência fotográfica...");
           fotoUrl = await subirEvidencia(codigoTarefa, fotosBase64[codigoTarefa]);
+
+          btn.textContent = "GRAVANDO CONCLUSÃO...";
+          mostrarStatusAcao(codigoTarefa, tipoAcao, "processing", "Fotografia enviada. Gravando a conclusão...");
         } else {
           const categoria = document.getElementById(`motivo-${codigoTarefa}`).value;
           const detalhe = document.getElementById(`detalhe-${codigoTarefa}`).value.trim();
           motivo = detalhe ? `${categoria} - ${detalhe}` : categoria;
+
+          btn.textContent = "GRAVANDO JUSTIFICATIVA...";
+          mostrarStatusAcao(codigoTarefa, tipoAcao, "processing", "Gravando a justificativa...");
         }
 
         const resposta = await chamarGateway({
@@ -510,7 +581,9 @@
           data_execucao: dataLocalISO(),
           status,
           motivo,
-          observacao: status === "CONCLUIDO" ? "Evidência enviada pelo APP INDEX V3 Shadow" : null,
+          observacao: status === "CONCLUIDO"
+            ? "Evidência enviada pelo APP INDEX JURE-003 V3.2"
+            : null,
           foto_url: fotoUrl,
           foto_evidencia: fotoUrl
         });
@@ -523,14 +596,24 @@
         }
 
         delete fotosBase64[codigoTarefa];
-        msg.className = "msg ok";
-        msg.textContent = registrado ? "Registro concluído com sucesso." : "A tarefa já estava registrada.";
+        mostrarStatusAcao(
+          codigoTarefa,
+          tipoAcao,
+          "ok",
+          registrado ? "Registro concluído com sucesso." : "A tarefa já estava registrada."
+        );
+
         await carregarTarefas();
       } catch (erro) {
-        msg.className = "msg error";
-        msg.textContent = erro.name === "AbortError" ? "Tempo de resposta esgotado." : (erro.message || "Falha no registro.");
+        const mensagem = erro.name === "AbortError"
+          ? "Tempo de resposta esgotado."
+          : (erro.message || "Falha no registro.");
+
+        mostrarStatusAcao(codigoTarefa, tipoAcao, "error", mensagem);
+        console.error("INDEX JURE-003 — falha no registro:", erro);
       } finally {
         btn.disabled = false;
+        btn.textContent = textoOriginalBotao;
       }
     }
   </script>
