@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>CondoCheck INDEX JURE-003 V3.2</title>
+  <title>CondoCheck INDEX JURE-003 V3.2.1</title>
   <style>
     :root {
       --navy: #1a2c35;
@@ -368,8 +368,13 @@
 
       container.innerHTML = tarefasAtuais.map(t => {
         const codigo = escaparHtml(t.codigo_tarefa);
-        const status = t.status ? String(t.status).toUpperCase() : "";
-        const feita = ["CONCLUIDO", "JUSTIFICADO"].includes(status);
+        const statusRecebido = t.status ? String(t.status).trim().toUpperCase() : "";
+        const status = statusRecebido.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        // Somente estes dois estados representam execução concluída.
+        // PENDENTE, ABERTO, NÃO INICIADO ou qualquer outro valor continuam operacionais
+        // e devem manter os botões Concluir e Justificar visíveis.
+        const feita = status === "CONCLUIDO" || status === "JUSTIFICADO";
         const foto = typeof t.foto_evidencia === "string" && /^https?:\/\//i.test(t.foto_evidencia)
           ? `<a class="evidence-link" href="${escaparHtml(t.foto_evidencia)}" target="_blank" rel="noopener">Abrir evidência</a>`
           : "";
