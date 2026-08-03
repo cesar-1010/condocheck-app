@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#071c24">
+<meta name="description" content="ARCA Bento/CondoCheck — Torre de Comando Prime — Demonstração segura">
+<title>ARCA · Torre de Comando Prime · Demonstração</title>
+<style>
+:root{
+  --bg:#eef3f5;--panel:#fff;--panel-2:#f7fafb;--ink:#12232c;--muted:#667985;
+  --line:#dce6ea;--navy:#071c24;--navy-2:#0d2b36;--teal:#16c9ad;--teal-2:#d9f8f2;
+  --blue:#2f80ed;--amber:#f2a93b;--red:#dc4a4a;--green:#1c9b6c;--violet:#7658d8;
+  --shadow:0 12px 34px rgba(7,28,36,.09);--radius:16px;--sidebar:264px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.app{min-height:100vh}
+.sidebar{
+  position:fixed;inset:0 auto 0 0;width:var(--sidebar);background:linear-gradient(180deg,var(--navy),#0a2530 60%,#0e3540);
+  color:#dce9ec;padding:20px 14px;display:flex;flex-direction:column;z-index:30;box-shadow:10px 0 35px rgba(7,28,36,.15)
+}
+.brand{display:flex;align-items:center;gap:12px;padding:4px 8px 18px}
+.logo{width:42px;height:42px;border-radius:13px;background:var(--teal);display:grid;place-items:center;color:var(--navy);font-weight:1000;font-size:20px;box-shadow:0 8px 24px rgba(22,201,173,.22)}
+.brand strong{display:block;color:#fff;font-size:15px;letter-spacing:.3px}.brand span{font-size:11px;color:#9bb3ba}
+.context-card{border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.055);border-radius:14px;padding:12px;margin:0 3px 16px}
+.context-card .eyebrow{color:#8fa8af}.context-title{font-size:13px;font-weight:900;color:#fff;margin:6px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.context-code{font-size:11px;color:var(--teal);font-weight:800}.context-actions{display:flex;gap:7px;margin-top:10px}
+.small-btn{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#dbe9ec;border-radius:8px;padding:7px 9px;font-size:11px;font-weight:800}
+.small-btn:hover{background:rgba(255,255,255,.11)}
+.nav-group{font-size:10px;letter-spacing:1.1px;text-transform:uppercase;color:#708e97;font-weight:900;padding:12px 12px 7px}
+.nav{display:flex;flex-direction:column;gap:4px;overflow:auto;padding-right:2px}
+.nav button{
+  border:0;background:transparent;color:#bfd1d6;padding:10px 11px;border-radius:10px;text-align:left;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700
+}
+.nav button:hover{background:rgba(255,255,255,.06);color:#fff}.nav button.active{background:rgba(22,201,173,.14);color:#fff;box-shadow:inset 3px 0 var(--teal)}
+.nav .ico{width:23px;text-align:center;font-size:16px}
+.sidebar-bottom{margin-top:auto;padding:12px 5px 0}.security-mini{padding:11px;border-radius:11px;background:rgba(22,201,173,.09);border:1px solid rgba(22,201,173,.15);font-size:10px;line-height:1.45;color:#a8c7c6}
+.main{margin-left:var(--sidebar);min-height:100vh}
+.topbar{
+  position:sticky;top:0;z-index:20;height:70px;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 26px;gap:15px
+}
+.top-left{display:flex;align-items:center;gap:13px}.mobile-menu{display:none}
+.page-title h1{font-size:19px;margin:0}.page-title p{margin:3px 0 0;color:var(--muted);font-size:11px}
+.top-actions{display:flex;align-items:center;gap:9px}
+.icon-btn,.primary-btn,.ghost-btn,.danger-btn{
+  border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:800;padding:10px 12px
+}
+.icon-btn{width:40px;height:40px;padding:0;display:grid;place-items:center;position:relative}
+.icon-btn .count{position:absolute;right:-4px;top:-5px;background:var(--red);color:#fff;border-radius:999px;font-size:9px;padding:2px 5px;border:2px solid #fff}
+.primary-btn{background:var(--navy);color:var(--teal);border-color:var(--navy)}
+.ghost-btn:hover,.icon-btn:hover{background:#f4f8f9}.danger-btn{color:var(--red);border-color:#f2c8c8}
+.user-chip{display:flex;align-items:center;gap:9px;border-left:1px solid var(--line);padding-left:12px}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--teal-2);color:#087966;display:grid;place-items:center;font-weight:1000}
+.user-chip strong{font-size:12px}.user-chip span{display:block;font-size:10px;color:var(--muted)}
+.content{padding:24px;max-width:1600px;margin:0 auto}
+.banner{
+  display:flex;justify-content:space-between;gap:18px;align-items:center;background:linear-gradient(120deg,var(--navy),#155062);
+  color:#fff;border-radius:18px;padding:21px 22px;box-shadow:var(--shadow)
+}
+.banner h2{margin:0;font-size:22px}.banner p{margin:7px 0 0;color:#c9dfe4;font-size:13px;line-height:1.5;max-width:780px}
+.banner-right{display:flex;align-items:center;gap:12px}.mode-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.13);border-radius:13px;padding:10px 13px;text-align:center;min-width:125px}
+.mode-badge strong{display:block;color:var(--teal);font-size:17px}.mode-badge span{font-size:9px;letter-spacing:.8px}
+.grid{display:grid;gap:15px}.kpis{grid-template-columns:repeat(5,minmax(0,1fr));margin-top:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 3px 12px rgba(18,35,44,.035)}
+.kpi{padding:16px;position:relative;overflow:hidden}.kpi:after{content:"";position:absolute;width:80px;height:80px;border-radius:50%;right:-28px;top:-30px;background:var(--teal-2)}
+.kpi .label{font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:900}.kpi strong{display:block;font-size:28px;margin:8px 0 3px;position:relative;z-index:1}.kpi small{color:var(--muted);font-size:10px}.kpi.red strong{color:var(--red)}.kpi.amber strong{color:#c77811}.kpi.green strong{color:var(--green)}
+.two-col{grid-template-columns:minmax(0,1.6fr) minmax(300px,.8fr);margin-top:16px}
+.three-col{grid-template-columns:1.05fr 1.05fr .9fr;margin-top:16px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 17px;border-bottom:1px solid var(--line)}
+.card-head h3{font-size:14px;margin:0}.card-head p{font-size:10px;color:var(--muted);margin:3px 0 0}.card-body{padding:16px}
+.tag{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 8px;font-size:9px;font-weight:900;letter-spacing:.3px}
+.tag.red{background:#fff0f0;color:#b52b2b}.tag.amber{background:#fff7e8;color:#a2630d}.tag.green{background:#e9f8f1;color:#147953}.tag.blue{background:#edf5ff;color:#2868b7}.tag.violet{background:#f2efff;color:#6242bd}.tag.neutral{background:#f0f4f6;color:#586b75}.tag.teal{background:var(--teal-2);color:#087966}
+.table-wrap{overflow:auto}.data-table{width:100%;border-collapse:collapse}.data-table th{text-align:left;font-size:9px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);padding:10px;border-bottom:1px solid var(--line);white-space:nowrap}.data-table td{padding:11px 10px;border-bottom:1px solid #edf2f4;font-size:11px;vertical-align:middle}.data-table tr:hover td{background:#f8fbfc}.clickable-row{cursor:pointer}.strong{font-weight:900}.muted{color:var(--muted)}
+.progress{height:7px;background:#edf2f4;border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;background:var(--teal);border-radius:999px}
+.feed{display:flex;flex-direction:column}.feed-item{display:grid;grid-template-columns:10px 1fr;gap:11px;padding:10px 0;border-bottom:1px solid #edf2f4}.feed-dot{width:9px;height:9px;border-radius:50%;background:var(--teal);margin-top:4px;box-shadow:0 0 0 4px var(--teal-2)}.feed-item strong{font-size:11px}.feed-item p{font-size:10px;color:var(--muted);margin:3px 0}.feed-item time{font-size:9px;color:#8ca0aa}
+.toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.toolbar input,.toolbar select{
+  border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 11px;font-size:11px;outline:none
+}
+.toolbar input{min-width:250px}.toolbar input:focus,.toolbar select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(22,201,173,.12)}
+.module-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px}.module-header h2{margin:0;font-size:21px}.module-header p{margin:6px 0 0;color:var(--muted);font-size:12px}
+.empty{padding:35px;text-align:center;color:var(--muted);font-size:12px}
+.alert-list{display:flex;flex-direction:column;gap:9px}.alert-item{display:flex;gap:11px;padding:12px;border-radius:12px;background:#f8fbfc;border:1px solid var(--line)}.alert-icon{width:31px;height:31px;border-radius:9px;display:grid;place-items:center;background:#fff0f0;color:var(--red);font-weight:900}.alert-item strong{font-size:11px}.alert-item p{font-size:10px;color:var(--muted);margin:3px 0 0}
+.task-board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.lane{background:#f6f9fa;border:1px solid var(--line);border-radius:14px;padding:10px;min-height:350px}.lane-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:900;padding:4px 3px 10px}.lane-count{background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 7px;font-size:9px}.task-card{background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:9px;box-shadow:0 2px 8px rgba(18,35,44,.04)}.task-card strong{font-size:11px}.task-card p{font-size:10px;color:var(--muted);margin:5px 0 9px}.task-foot{display:flex;justify-content:space-between;align-items:center;font-size:9px;color:var(--muted)}
+.doc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}.doc-card{padding:15px}.doc-icon{width:38px;height:38px;border-radius:10px;background:#eef6ff;color:var(--blue);display:grid;place-items:center;font-weight:900;margin-bottom:12px}.doc-card strong{font-size:12px}.doc-card p{font-size:10px;color:var(--muted);line-height:1.45}.doc-actions{display:flex;gap:7px;margin-top:11px}
+.health-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.health-card{padding:15px}.health-top{display:flex;justify-content:space-between;align-items:center}.health-card h4{margin:0;font-size:12px}.health-card p{font-size:10px;color:var(--muted);line-height:1.5}.health-ok{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px #e5f7ef}.health-warn{background:var(--amber);box-shadow:0 0 0 4px #fff4df}.health-block{background:var(--red);box-shadow:0 0 0 4px #ffe9e9}
+.audit-row{display:grid;grid-template-columns:140px 95px 1fr 150px;gap:10px;padding:11px;border-bottom:1px solid #edf2f4;font-size:10px}.audit-row strong{font-size:10px}
+.page{display:none}.page.active{display:block}
+.drawer-backdrop,.modal-backdrop{position:fixed;inset:0;background:rgba(5,20,26,.55);z-index:80;display:none}.drawer-backdrop.open,.modal-backdrop.open{display:block}
+.drawer{position:absolute;right:0;top:0;bottom:0;width:min(620px,94vw);background:#fff;box-shadow:-20px 0 50px rgba(0,0,0,.22);display:flex;flex-direction:column}
+.drawer-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start}.drawer-head h3{margin:0;font-size:18px}.drawer-body{padding:20px;overflow:auto}.drawer-section{padding:14px 0;border-bottom:1px solid var(--line)}.drawer-section h4{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin:0 0 10px}.meta-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.meta{background:#f7fafb;border:1px solid var(--line);border-radius:9px;padding:10px}.meta span{display:block;font-size:9px;color:var(--muted);text-transform:uppercase}.meta strong{font-size:11px}.conversation{display:flex;flex-direction:column;gap:8px}.bubble{max-width:86%;padding:10px 12px;border-radius:12px;font-size:10px;line-height:1.5}.bubble.in{background:#f0f4f6;align-self:flex-start}.bubble.out{background:var(--teal-2);color:#075f52;align-self:flex-end}.drawer-actions{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.modal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(660px,92vw);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 25px 70px rgba(0,0,0,.28)}
+.modal-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.modal-head h3{margin:0}.modal-body{padding:20px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field label{display:block;font-size:10px;font-weight:900;color:#40545e;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:11px;outline:none;background:#fff}.field textarea{min-height:95px}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(22,201,173,.12)}.form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy),#124452);z-index:100;display:grid;place-items:center;padding:18px}.login-card{width:min(570px,96vw);background:#fff;border-radius:20px;padding:25px;box-shadow:0 28px 80px rgba(0,0,0,.34)}.login-card h1{font-size:23px;margin:0}.login-card .intro{font-size:12px;color:var(--muted);line-height:1.55}.guard-box{margin:15px 0;padding:12px;border:1px solid #bceae2;background:#edfbf8;border-radius:11px;font-size:10px;color:#37645f;line-height:1.5}.notice{padding:11px;border-radius:10px;border-left:4px solid var(--amber);background:#fff8e9;color:#76521a;font-size:10px;line-height:1.5}
+.palette{position:absolute;left:50%;top:14%;transform:translateX(-50%);width:min(660px,92vw);background:#fff;border-radius:16px;box-shadow:0 28px 80px rgba(0,0,0,.3);overflow:hidden}.palette input{width:100%;border:0;border-bottom:1px solid var(--line);padding:17px;font-size:14px;outline:none}.palette-list{max-height:430px;overflow:auto;padding:8px}.palette-item{width:100%;border:0;background:#fff;padding:11px 12px;border-radius:9px;text-align:left;display:flex;justify-content:space-between}.palette-item:hover{background:#f3f8f9}.palette-item strong{font-size:11px}.palette-item span{font-size:9px;color:var(--muted)}
+.toast{position:fixed;right:20px;bottom:20px;background:var(--navy);color:#fff;border-radius:11px;padding:12px 15px;box-shadow:var(--shadow);z-index:120;font-size:11px;display:none;max-width:360px}.toast.show{display:block}.toast strong{color:var(--teal)}
+.search-box{display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff;min-width:260px}.search-box input{border:0;outline:none;width:100%;font-size:11px}
+.security-strip{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:13px}.security-strip span{font-size:9px}
+@media(max-width:1180px){.kpis{grid-template-columns:repeat(3,1fr)}.three-col{grid-template-columns:1fr 1fr}.three-col>div:last-child{grid-column:1/-1}.task-board{grid-template-columns:repeat(2,1fr)}.doc-grid,.health-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:860px){
+  .sidebar{transform:translateX(-100%);transition:.2s}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.mobile-menu{display:grid}
+  .topbar{padding:0 14px}.content{padding:14px}.top-actions .search-box{display:none}.user-chip div:last-child{display:none}
+  .two-col,.three-col{grid-template-columns:1fr}.three-col>div:last-child{grid-column:auto}.kpis{grid-template-columns:repeat(2,1fr)}
+  .banner{align-items:flex-start;flex-direction:column}.doc-grid,.health-grid{grid-template-columns:1fr}.audit-row{grid-template-columns:1fr 1fr}.audit-row div:nth-child(3),.audit-row div:nth-child(4){grid-column:1/-1}
+}
+@media(max-width:560px){.kpis{grid-template-columns:1fr}.task-board{grid-template-columns:1fr}.form-grid,.meta-grid{grid-template-columns:1fr}.banner-right{width:100%}.mode-badge{flex:1}.module-header{flex-direction:column}.toolbar input{min-width:100%;width:100%}}
+</style>
+</head>
+<body>
+<div id="loginOverlay" class="login-overlay">
+  <div class="login-card">
+    <div class="brand" style="padding:0 0 12px">
+      <div class="logo">A</div><div><h1>ARCA · Torre de Comando Prime</h1><span style="color:#667985">Bento/CondoCheck · Demonstração segura</span></div>
+    </div>
+    <p class="intro">Esta versão não contém credenciais, não acessa o Supabase diretamente e não assume nenhum condomínio como padrão. O contexto é informado explicitamente e mantido somente nesta aba.</p>
+    <div class="guard-box"><strong>Trava multicondomínio:</strong> sem código e nome confirmados, a Torre não abre. Uma troca de contexto reinicializa todos os dados da sessão e nunca herda informações de outro condomínio.</div>
+    <div class="form-grid">
+      <div class="field"><label>Código do condomínio</label><input id="loginCondoCode" value="JURE-003" autocomplete="off" placeholder="Ex.: código oficial"></div>
+      <div class="field"><label>Nome do condomínio</label><input id="loginCondoName" value="Condomínio Residencial Sunset Jurerê" autocomplete="off" placeholder="Nome completo"></div>
+      <div class="field"><label>Usuário da demonstração</label><input id="loginUser" value="César Camargo" autocomplete="off"></div>
+      <div class="field"><label>Perfil</label><select id="loginProfile"><option>SINDICO</option><option>ADMIN_ARCA</option><option>CONSELHEIRO_LEITURA</option><option>ZELADOR_AUTORIZADO</option></select></div>
+    </div>
+    <div class="notice" style="margin-top:14px"><strong>Modo demonstração.</strong> As ações simulam o comportamento da Torre e ficam apenas na memória da aba. Integração real deve ocorrer pelo Gateway ARCA com autorização no servidor.</div>
+    <button id="enterBtn" class="primary-btn" style="width:100%;margin-top:16px;padding:13px">ABRIR TORRE NO CONTEXTO INFORMADO</button>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <aside id="sidebar" class="sidebar">
+    <div class="brand"><div class="logo">A</div><div><strong>ARCA Prime</strong><span>Torre demonstrativa</span></div></div>
+    <div class="context-card">
+      <div class="eyebrow">CONTEXTO BLOQUEADO</div>
+      <div id="sideCondoName" class="context-title">—</div>
+      <div id="sideCondoCode" class="context-code">—</div>
+      <div class="context-actions"><button id="switchContextBtn" class="small-btn">Trocar contexto</button><button id="diagnosticsBtn" class="small-btn">Diagnóstico</button></div>
+    </div>
+    <nav class="nav">
+      <div class="nav-group">Comando</div>
+      <button data-page="dashboard" class="active"><span class="ico">⌂</span>Visão executiva</button>
+      <button data-page="today"><span class="ico">◷</span>Hoje</button>
+      <button data-page="inbox"><span class="ico">▣</span>Caixa operacional</button>
+      <div class="nav-group">Operação</div>
+      <button data-page="occurrences"><span class="ico">!</span>Ocorrências Bento</button>
+      <button data-page="tasks"><span class="ico">✓</span>CondoCheck</button>
+      <button data-page="agenda"><span class="ico">▦</span>Agenda preventiva</button>
+      <button data-page="inventory"><span class="ico">□</span>Almoxarifado</button>
+      <div class="nav-group">Conhecimento</div>
+      <button data-page="documents"><span class="ico">≡</span>Regras e documentos</button>
+      <div class="nav-group">Gestão</div>
+      <button data-page="people"><span class="ico">◎</span>Pessoas e fornecedores</button>
+      <button data-page="reports"><span class="ico">▤</span>Relatórios e auditoria</button>
+      <button data-page="health"><span class="ico">◆</span>Saúde do sistema</button>
+    </nav>
+    <div class="sidebar-bottom"><div class="security-mini">Sem fallback de condomínio · contexto explícito · operações simuladas · nenhuma chave no navegador</div></div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="top-left">
+        <button id="mobileMenuBtn" class="icon-btn mobile-menu">☰</button>
+        <div class="page-title"><h1 id="pageTitle">Visão executiva</h1><p id="pageSubtitle">Operação consolidada e decisões por exceção</p></div>
+      </div>
+      <div class="top-actions">
+        <div class="search-box"><span>⌕</span><input id="globalSearch" placeholder="Buscar em toda a Torre · Ctrl+K"></div>
+        <button id="commandBtn" class="icon-btn" title="Central de comandos">⌘</button>
+        <button id="notifyBtn" class="icon-btn" title="Notificações">♢<span class="count">4</span></button>
+        <button id="printBtn" class="icon-btn" title="Imprimir visão">⎙</button>
+        <div class="user-chip"><div id="topAvatar" class="avatar">CC</div><div><strong id="topUser">—</strong><span id="topProfile">—</span></div></div>
+      </div>
+    </header>
+
+    <div class="content">
+      <section id="page-dashboard" class="page active">
+        <div class="banner">
+          <div><h2 id="welcomeTitle">Boa noite.</h2><p>O que exige atenção está concentrado aqui. A Torre prioriza exceções, preserva histórico e mantém cada ação vinculada ao condomínio selecionado.</p>
+            <div class="security-strip"><span class="tag teal">CONTEXTO EXPLÍCITO</span><span class="tag neutral">SEM FALLBACK</span><span class="tag neutral">SHADOW</span><span class="tag neutral">DADOS ILUSTRATIVOS</span></div>
+          </div>
+          <div class="banner-right"><div class="mode-badge"><span>CONFIANÇA OPERACIONAL</span><strong>9/10</strong></div><div class="mode-badge"><span>AMBIENTE</span><strong style="color:#ffd17a">DEMONSTRAÇÃO</strong></div></div>
+        </div>
+        <div class="grid kpis" id="dashboardKpis"></div>
+        <div class="grid two-col">
+          <div class="card"><div class="card-head"><div><h3>Fila crítica</h3><p>Ocorrências, tarefas e agenda que exigem decisão</p></div><button class="ghost-btn" data-page-link="inbox">Abrir caixa</button></div><div class="card-body table-wrap"><table class="data-table"><thead><tr><th>Origem</th><th>Item</th><th>Responsável</th><th>Prazo</th><th>Situação</th></tr></thead><tbody id="criticalQueue"></tbody></table></div></div>
+          <div class="card"><div class="card-head"><div><h3>Últimos movimentos</h3><p>Linha do tempo operacional</p></div><span class="tag green">AO VIVO · DEMO</span></div><div class="card-body feed" id="activityFeed"></div></div>
+        </div>
+        <div class="grid three-col">
+          <div class="card"><div class="card-head"><div><h3>CondoCheck hoje</h3><p>Execução da rotina da equipe</p></div><span class="tag blue">18 tarefas</span></div><div class="card-body" id="teamPerformance"></div></div>
+          <div class="card"><div class="card-head"><div><h3>Alertas inteligentes</h3><p>Aprovação por exceção</p></div><span class="tag amber">4 alertas</span></div><div class="card-body alert-list" id="smartAlerts"></div></div>
+          <div class="card"><div class="card-head"><div><h3>Saúde das integrações</h3><p>Visão executiva, sem segredos</p></div><button class="ghost-btn" data-page-link="health">Detalhar</button></div><div class="card-body" id="healthSummary"></div></div>
+        </div>
+      </section>
+
+      <section id="page-today" class="page"></section>
+      <section id="page-inbox" class="page"></section>
+      <section id="page-occurrences" class="page"></section>
+      <section id="page-tasks" class="page"></section>
+      <section id="page-agenda" class="page"></section>
+      <section id="page-inventory" class="page"></section>
+      <section id="page-documents" class="page"></section>
+      <section id="page-people" class="page"></section>
+      <section id="page-reports" class="page"></section>
+      <section id="page-health" class="page"></section>
+    </div>
+  </main>
+</div>
+
+<div id="drawerBackdrop" class="drawer-backdrop"><aside class="drawer"><div class="drawer-head"><div><span id="drawerTag" class="tag red">OCORRÊNCIA</span><h3 id="drawerTitle">Detalhes</h3><p id="drawerSubtitle" class="muted" style="font-size:10px;margin:5px 0 0"></p></div><button class="icon-btn" data-close="drawer">×</button></div><div id="drawerBody" class="drawer-body"></div><div id="drawerActions" class="drawer-actions"></div></aside></div>
+<div id="contextModal" class="modal-backdrop"><div class="modal"><div class="modal-head"><h3>Trocar contexto operacional</h3><button class="icon-btn" data-close="context">×</button></div><div class="modal-body"><div class="notice">A troca limpa os dados da sessão e exige confirmação explícita. Nenhum contexto anterior será reutilizado.</div><div class="form-grid" style="margin-top:14px"><div class="field"><label>Novo código</label><input id="newCondoCode"></div><div class="field"><label>Novo nome</label><input id="newCondoName"></div></div><div class="form-actions"><button class="ghost-btn" data-close="context">Cancelar</button><button id="confirmContextBtn" class="primary-btn">Confirmar e reiniciar</button></div></div></div></div>
+<div id="diagnosticsModal" class="modal-backdrop"><div class="modal"><div class="modal-head"><h3>Diagnóstico de segurança</h3><button class="icon-btn" data-close="diagnostics">×</button></div><div id="diagnosticsBody" class="modal-body"></div></div></div>
+<div id="commandModal" class="modal-backdrop"><div class="palette"><input id="commandInput" placeholder="Digite uma ação ou módulo..."><div id="commandList" class="palette-list"></div></div></div>
+<div id="notifyModal" class="modal-backdrop"><div class="modal"><div class="modal-head"><h3>Central de notificações</h3><button class="icon-btn" data-close="notify">×</button></div><div id="notifyBody" class="modal-body"></div></div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const escapeHtml=v=>String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+const nowISO=()=>new Date().toISOString();
+const state={context:null,user:null,page:"dashboard",data:null,search:"",audit:[]};
+
+function initials(name){return String(name||"?").split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join("").toUpperCase()}
+function fingerprint(ctx){let s=`${ctx.code}|${ctx.name}|${state.user?.profile||""}`;let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h.toString(16).toUpperCase().padStart(8,"0")}
+function uid(prefix){return `${prefix}-${Math.random().toString(36).slice(2,7).toUpperCase()}`}
+function fmtDate(d){return new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}).format(new Date(d))}
+function fmtTime(d){return new Intl.DateTimeFormat("pt-BR",{hour:"2-digit",minute:"2-digit"}).format(new Date(d))}
+function toast(title,msg=""){const t=$("#toast");t.innerHTML=`<strong>${escapeHtml(title)}</strong>${msg?`<br>${escapeHtml(msg)}`:""}`;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),3200)}
+function logAudit(action,detail,module="SISTEMA"){state.audit.unshift({at:nowISO(),action,detail,module,user:state.user.name,condo:state.context.code})}
+
+function buildData(){
+  const c=state.context.code;
+  return {
+    occurrences:[
+      {id:uid("OCO"),title:"Lâmpada apagada no hall do térreo",category:"MANUTENÇÃO",location:"Hall do térreo · Bloco A",unit:"Área comum",priority:"ALTA",status:"ABERTA",owner:"Equipe técnica",created:"2026-08-02T20:14:00-03:00",source:"Bento WhatsApp",resident:"Morador autorizado",phone:"••••••••6161",messages:[
+        {who:"Morador",dir:"in",text:"A lâmpada do hall do térreo está apagada."},
+        {who:"Bento",dir:"out",text:"Recebi. A ocorrência foi registrada e encaminhada para a administração."}
+      ]},
+      {id:uid("OCO"),title:"Ruído recorrente após o horário",category:"CONVIVÊNCIA",location:"Torre 1 · 3º andar",unit:"Apto. 304",priority:"MÉDIA",status:"EM ANÁLISE",owner:"Síndico",created:"2026-08-02T18:22:00-03:00",source:"Bento WhatsApp",resident:"Morador",phone:"••••••••8100",messages:[
+        {who:"Morador",dir:"in",text:"Há ruído recorrente depois do horário de silêncio."},
+        {who:"Bento",dir:"out",text:"Registrei o relato para análise da administração."}
+      ]},
+      {id:uid("OCO"),title:"Vazamento próximo à casa de bombas",category:"INFRAESTRUTURA",location:"Subsolo",unit:"Área técnica",priority:"CRÍTICA",status:"AGUARDANDO TERCEIRO",owner:"Prestador hidráulico",created:"2026-08-02T16:03:00-03:00",source:"Torre",resident:"Equipe",phone:"—",messages:[]},
+      {id:uid("OCO"),title:"Porta corta-fogo com fechamento lento",category:"SEGURANÇA",location:"Torre 2 · 5º andar",unit:"Área comum",priority:"ALTA",status:"RESOLVIDA",owner:"Zeladoria",created:"2026-08-01T10:40:00-03:00",source:"CondoCheck",resident:"Equipe",phone:"—",messages:[]}
+    ],
+    tasks:[
+      {id:uid("TAR"),title:"Verificar iluminação dos halls",person:"Luana",place:"Bloco A",status:"PENDENTE",priority:"ALTA",due:"10:00",evidence:true},
+      {id:uid("TAR"),title:"Limpeza dos elevadores",person:"Luana",place:"Torres 1 e 2",status:"EM EXECUÇÃO",priority:"NORMAL",due:"11:30",evidence:true},
+      {id:uid("TAR"),title:"Inspeção visual da casa de bombas",person:"Equipe técnica",place:"Subsolo",status:"BLOQUEADA",priority:"CRÍTICA",due:"12:00",evidence:true},
+      {id:uid("TAR"),title:"Recolhimento de resíduos",person:"Luana",place:"Áreas comuns",status:"CONCLUÍDA",priority:"NORMAL",due:"09:00",evidence:false},
+      {id:uid("TAR"),title:"Conferir correspondências",person:"Portaria",place:"Recepção",status:"CONCLUÍDA",priority:"NORMAL",due:"10:30",evidence:false},
+      {id:uid("TAR"),title:"Vistoria do playground",person:"Zeladoria",place:"Área externa",status:"PENDENTE",priority:"ALTA",due:"15:00",evidence:true}
+    ],
+    agenda:[
+      {id:uid("AGE"),title:"Manutenção preventiva dos elevadores",date:"2026-08-03",owner:"Empresa Elevadores",status:"CONFIRMADO",critical:true},
+      {id:uid("AGE"),title:"Limpeza da caixa d'água",date:"2026-08-07",owner:"Prestador homologado",status:"AGUARDANDO CONFIRMAÇÃO",critical:false},
+      {id:uid("AGE"),title:"Teste de iluminação de emergência",date:"2026-08-05",owner:"Zeladoria",status:"PROGRAMADO",critical:true},
+      {id:uid("AGE"),title:"Vencimento do laudo do para-raios",date:"2026-08-14",owner:"Síndico",status:"PENDENTE DOCUMENTO",critical:true}
+    ],
+    inventory:[
+      {id:uid("EST"),item:"Lâmpada LED 12W",qty:2,min:8,unit:"un",status:"CRÍTICO"},
+      {id:uid("EST"),item:"Saco de lixo 100L",qty:34,min:20,unit:"un",status:"OK"},
+      {id:uid("EST"),item:"Detergente neutro 5L",qty:1,min:3,unit:"galão",status:"REPOR"},
+      {id:uid("EST"),item:"Luva nitrílica",qty:4,min:4,unit:"cx",status:"ATENÇÃO"},
+      {id:uid("EST"),item:"Fita zebrada",qty:0,min:2,unit:"rolo",status:"ZERADO"}
+    ],
+    documents:[
+      {id:uid("DOC"),title:"Convenção do condomínio",type:"CONVENÇÃO",level:"MORADOR",status:"INDEXADO",source:"Storage privado",year:2026},
+      {id:uid("DOC"),title:"Regulamento interno",type:"REGULAMENTO",level:"MORADOR",status:"OCR PENDENTE",source:"Storage privado",year:2026},
+      {id:uid("DOC"),title:"Manual operacional da equipe",type:"GESTÃO",level:"GESTAO",status:"RASCUNHO",source:"Torre",year:2026}
+    ],
+    people:[
+      {name:"Luana",type:"FUNCIONÁRIA",role:"Serviços gerais",status:"ATIVA",contact:"Cadastrado"},
+      {name:"Equipe técnica",type:"PRESTADOR",role:"Manutenção predial",status:"HOMOLOGADO",contact:"Cadastrado"},
+      {name:"Morador demonstrativo",type:"MORADOR",role:"Unidade vinculada",status:"ATIVO",contact:"Protegido"},
+      {name:"Empresa Elevadores",type:"FORNECEDOR",role:"Manutenção preventiva",status:"HOMOLOGADO",contact:"Cadastrado"}
+    ],
+    feed:[
+      {title:"Ocorrência criada pelo Bento",desc:"Lâmpada apagada no hall do térreo",time:"há 12 min",color:"red"},
+      {title:"Evidência recebida",desc:"Limpeza dos elevadores · Luana",time:"há 28 min",color:"teal"},
+      {title:"Agenda confirmada",desc:"Manutenção preventiva dos elevadores",time:"há 1h",color:"blue"},
+      {title:"Estoque atingiu nível crítico",desc:"Lâmpada LED 12W",time:"há 2h",color:"amber"}
+    ],
+    notifications:[
+      {title:"Ambiente demonstrativo",desc:"A Torre apresenta a mecânica operacional com dados ilustrativos e sem gravações reais.",type:"green"},
+      {title:"Regulamento exige OCR completo",desc:"O PDF é escaneado e a extração textual atual está incompleta.",type:"red"},
+      {title:"Contexto por código homologado",desc:"O código informado define o condomínio ativo até uma troca explícita e autorizada.",type:"green"},
+      {title:"Matriz documental configurada",desc:"Perfis MORADOR e SINDICO possuem regras de acesso.",type:"green"}
+    ],
+    health:[
+      {name:"Torre Shadow",status:"OK",detail:"Frontend local, sem credenciais e sem gravação real."},
+      {name:"Gateway ARCA",status:"BLOQUEADO",detail:"Integração real não habilitada nesta versão."},
+      {name:"WhatsApp Bento",status:"OK",detail:"Uso multicondomínio orientado por código explícito e vínculo autorizado."},
+      {name:"Supabase",status:"OK",detail:"Storage e catálogo documental preservados."},
+      {name:"OpenAI Vector Store",status:"OK",detail:"Documentos indexados; Regulamento requer OCR melhor."},
+      {name:"INDEX",status:"OK",detail:"Piloto operacional separado do atendimento Bento."}
+    ],
+    condo:c
+  };
+}
+
+function enterApp(){
+  const code=$("#loginCondoCode").value.trim().toUpperCase(), name=$("#loginCondoName").value.trim(), user=$("#loginUser").value.trim(), profile=$("#loginProfile").value;
+  if(!code||!name||!user){toast("Contexto incompleto","Informe código, nome e usuário.");return}
+  state.context={code,name,lockedAt:nowISO(),source:"EXPLICIT_USER_INPUT"};state.user={name,profile};state.data=buildData();state.audit=[];
+  logAudit("SESSION_OPENED","Contexto criado por entrada explícita","SEGURANÇA");
+  sessionStorage.setItem("arcaPrimeSession",JSON.stringify({context:state.context,user:state.user}));
+  $("#loginOverlay").classList.add("hidden");$("#app").classList.remove("hidden");
+  updateContextUI();renderAll();showPage("dashboard");
+}
+function restoreSession(){
+  try{const x=JSON.parse(sessionStorage.getItem("arcaPrimeSession")||"null");if(x?.context?.code&&x?.context?.name&&x?.user?.name){state.context=x.context;state.user=x.user;state.data=buildData();logAudit("SESSION_RESTORED","Sessão restaurada somente nesta aba","SEGURANÇA");$("#loginOverlay").classList.add("hidden");$("#app").classList.remove("hidden");updateContextUI();renderAll();showPage("dashboard")}}catch(e){}
+}
+function updateContextUI(){
+  const hora=new Date().getHours();
+  const saudacao=hora<12?"Bom dia":hora<18?"Boa tarde":"Boa noite";
+  $("#sideCondoName").textContent=state.context.name;$("#sideCondoCode").textContent=state.context.code;
+  $("#topUser").textContent=state.user.name;$("#topProfile").textContent=state.user.profile;$("#topAvatar").textContent=initials(state.user.name);
+  $("#welcomeTitle").textContent=`${saudacao}, ${state.user.name.split(" ")[0]}.`;
+}
+function showPage(page){
+  state.page=page;$$(".page").forEach(x=>x.classList.remove("active"));$(`#page-${page}`).classList.add("active");
+  $$(".nav button[data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===page));
+  const titles={
+    dashboard:["Visão executiva","Operação consolidada e decisões por exceção"],today:["Hoje","Tudo que precisa acontecer no dia"],
+    inbox:["Caixa operacional","Entradas unificadas, responsáveis e próximos passos"],occurrences:["Ocorrências Bento","Histórico, resposta, resolução e auditoria"],
+    tasks:["CondoCheck","Rotinas, evidências, justificativas e exceções"],agenda:["Agenda preventiva","Compromissos, vencimentos e manutenção"],
+    inventory:["Almoxarifado","Estoque, reposição e ordens de compra"],documents:["Regras e documentos","Base oficial e consulta fundamentada"],
+    people:["Pessoas e fornecedores","Moradores, equipe e prestadores homologados"],reports:["Relatórios e auditoria","Histórico institucional e rastreabilidade"],
+    health:["Saúde do sistema","Integrações, segurança e disponibilidade"]
+  };
+  $("#pageTitle").textContent=titles[page][0];$("#pageSubtitle").textContent=titles[page][1];
+  $("#sidebar").classList.remove("open");window.scrollTo({top:0,behavior:"smooth"});
+}
+function renderAll(){renderDashboard();renderToday();renderInbox();renderOccurrences();renderTasks();renderAgenda();renderInventory();renderDocuments();renderPeople();renderReports();renderHealth();renderCommands();}
+
+function renderDashboard(){
+  const d=state.data, open=d.occurrences.filter(x=>x.status!=="RESOLVIDA").length, pending=d.tasks.filter(x=>x.status==="PENDENTE").length, blocked=d.tasks.filter(x=>x.status==="BLOQUEADA").length, low=d.inventory.filter(x=>["CRÍTICO","REPOR","ZERADO"].includes(x.status)).length;
+  $("#dashboardKpis").innerHTML=[
+    ["Ocorrências abertas",open,"1 crítica","red"],["Tarefas pendentes",pending,"2 exigem evidência","amber"],["Exceções bloqueadas",blocked,"aguardando decisão","red"],["Agenda em 7 dias",d.agenda.length,"2 itens críticos",""],["Estoque para repor",low,"1 item zerado","amber"]
+  ].map(x=>`<div class="card kpi ${x[3]}"><div class="label">${x[0]}</div><strong>${x[1]}</strong><small>${x[2]}</small></div>`).join("");
+  const queue=[
+    ["Ocorrência","Vazamento próximo à casa de bombas","Prestador hidráulico","Imediato","Aguardando terceiro","red"],
+    ["Tarefa","Inspeção visual da casa de bombas","Equipe técnica","12:00","Bloqueada","red"],
+    ["Agenda","Teste de iluminação de emergência","Zeladoria","05/08","Programado","blue"],
+    ["Estoque","Lâmpada LED 12W","Compras","Hoje","Crítico","amber"]
+  ];
+  $("#criticalQueue").innerHTML=queue.map(x=>`<tr><td><span class="tag neutral">${x[0]}</span></td><td class="strong">${x[1]}</td><td>${x[2]}</td><td>${x[3]}</td><td><span class="tag ${x[5]}">${x[4]}</span></td></tr>`).join("");
+  $("#activityFeed").innerHTML=d.feed.map(x=>`<div class="feed-item"><div class="feed-dot"></div><div><strong>${x.title}</strong><p>${x.desc}</p><time>${x.time}</time></div></div>`).join("");
+  const people=[["Luana",14,18],["Zeladoria",5,7],["Portaria",6,6]];
+  $("#teamPerformance").innerHTML=people.map(x=>`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:6px"><strong>${x[0]}</strong><span>${x[1]}/${x[2]}</span></div><div class="progress"><span style="width:${Math.round(x[1]/x[2]*100)}%"></span></div></div>`).join("")+`<button class="ghost-btn" data-page-link="tasks" style="width:100%">Abrir CondoCheck</button>`;
+  $("#smartAlerts").innerHTML=[
+    ["✓","Contexto multicondomínio por código","O atendimento permanece no condomínio informado até a troca explícita por outro código autorizado."],
+    ["⌁","OCR do Regulamento incompleto","Documento escaneado precisa ser reprocessado."],
+    ["□","Estoque abaixo do mínimo","Lâmpadas e fita zebrada exigem reposição."],
+    ["◷","Laudo vence em breve","Para-raios vence dentro da janela de atenção."]
+  ].map(x=>`<div class="alert-item"><div class="alert-icon">${x[0]}</div><div><strong>${x[1]}</strong><p>${x[2]}</p></div></div>`).join("");
+  $("#healthSummary").innerHTML=d.health.slice(0,4).map(h=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #edf2f4"><div><strong style="font-size:10px">${h.name}</strong><div class="muted" style="font-size:9px">${h.detail}</div></div><span class="tag ${h.status==="OK"?"green":h.status==="REVISÃO"?"amber":"red"}">${h.status}</span></div>`).join("");
+}
+
+function shell(title,subtitle,actions="",body=""){return `<div class="module-header"><div><h2>${title}</h2><p>${subtitle}</p></div><div>${actions}</div></div>${body}`}
+
+function renderToday(){
+  const actions=`<button class="primary-btn" data-page-link="inbox">Abrir caixa operacional</button>`;
+  const body=`<div class="grid two-col">
+    <div class="card"><div class="card-head"><div><h3>Sequência do dia</h3><p>Prioridade por risco, prazo e dependência</p></div></div><div class="card-body">${[
+      ["08:00","Conferência de abertura","Portaria","CONCLUÍDO","green"],["10:00","Verificar iluminação dos halls","Luana","PENDENTE","amber"],["12:00","Inspeção da casa de bombas","Equipe técnica","BLOQUEADO","red"],["15:00","Vistoria do playground","Zeladoria","PENDENTE","blue"],["16:00","Status executivo do dia","Síndico","PROGRAMADO","neutral"]
+    ].map(x=>`<div style="display:grid;grid-template-columns:60px 1fr 120px 100px;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #edf2f4"><strong>${x[0]}</strong><span>${x[1]}</span><span class="muted">${x[2]}</span><span class="tag ${x[4]}">${x[3]}</span></div>`).join("")}</div></div>
+    <div class="card"><div class="card-head"><div><h3>Decisões do síndico</h3><p>Somente exceções e riscos</p></div></div><div class="card-body alert-list">${[
+      ["Aprovar chamado hidráulico","Vazamento na casa de bombas"],["Autorizar reposição urgente","Fita zebrada e lâmpadas"],["Revisar ocorrência de convivência","Ruído recorrente após horário"],["Confirmar laudo","Para-raios vence em breve"]
+    ].map((x,i)=>`<div class="alert-item"><div class="alert-icon">${i+1}</div><div><strong>${x[0]}</strong><p>${x[1]}</p></div></div>`).join("")}</div></div></div>`;
+  $("#page-today").innerHTML=shell("Hoje","Visão cronológica da operação e decisões por exceção",actions,body);
+}
+function renderInbox(){
+  const items=[
+    ...state.data.occurrences.filter(x=>x.status!=="RESOLVIDA").map(x=>({origin:"BENTO",title:x.title,owner:x.owner,next:"Analisar ocorrência",priority:x.priority,status:x.status,id:x.id,type:"occ"})),
+    ...state.data.tasks.filter(x=>x.status!=="CONCLUÍDA").map(x=>({origin:"CONDOCHECK",title:x.title,owner:x.person,next:x.status==="BLOQUEADA"?"Desbloquear":"Acompanhar",priority:x.priority,status:x.status,id:x.id,type:"task"})),
+    ...state.data.agenda.filter(x=>x.critical).map(x=>({origin:"AGENDA",title:x.title,owner:x.owner,next:"Confirmar execução",priority:"ALTA",status:x.status,id:x.id,type:"agenda"}))
+  ];
+  const rows=items.map(i=>`<tr class="${i.type==="occ"?"clickable-row":""}" ${i.type==="occ"?`data-occ="${i.id}"`:""}><td><span class="tag neutral">${i.origin}</span></td><td class="strong">${i.title}</td><td>${i.owner}</td><td>${i.next}</td><td><span class="tag ${i.priority==="CRÍTICA"?"red":i.priority==="ALTA"?"amber":"blue"}">${i.priority}</span></td><td><span class="tag neutral">${i.status}</span></td></tr>`).join("");
+  $("#page-inbox").innerHTML=shell("Caixa operacional","Uma única fila para tudo que precisa de dono e próximo passo",`<button class="ghost-btn" id="exportInbox">Exportar visão</button>`,`<div class="card"><div class="card-body"><div class="toolbar"><input id="inboxSearch" placeholder="Filtrar caixa operacional"><select><option>Todas as origens</option><option>Bento</option><option>CondoCheck</option><option>Agenda</option></select><select><option>Todas as prioridades</option><option>Crítica</option><option>Alta</option></select></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Origem</th><th>Item</th><th>Dono</th><th>Próximo passo</th><th>Prioridade</th><th>Situação</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`);
+}
+function renderOccurrences(){
+  const rows=state.data.occurrences.map(o=>`<tr class="clickable-row" data-occ="${o.id}"><td class="strong">${o.id}</td><td>${o.title}<div class="muted" style="font-size:9px;margin-top:3px">${o.location}</div></td><td><span class="tag neutral">${o.category}</span></td><td><span class="tag ${o.priority==="CRÍTICA"?"red":o.priority==="ALTA"?"amber":"blue"}">${o.priority}</span></td><td>${o.owner}</td><td><span class="tag ${o.status==="RESOLVIDA"?"green":o.status==="ABERTA"?"red":"amber"}">${o.status}</span></td><td>${fmtDate(o.created)} ${fmtTime(o.created)}</td></tr>`).join("");
+  $("#page-occurrences").innerHTML=shell("Ocorrências Bento","Cada caso preserva contexto, conversa, responsável, evidência e trilha de auditoria",`<button class="primary-btn" id="newOccurrenceBtn">Nova ocorrência assistida</button>`,`<div class="card"><div class="card-body"><div class="toolbar"><input id="occSearch" placeholder="Buscar protocolo, local ou descrição"><select id="occStatus"><option value="">Todos os status</option><option>ABERTA</option><option>EM ANÁLISE</option><option>AGUARDANDO TERCEIRO</option><option>RESOLVIDA</option></select><select><option>Todas as prioridades</option><option>Crítica</option><option>Alta</option><option>Média</option></select></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Protocolo</th><th>Ocorrência</th><th>Categoria</th><th>Prioridade</th><th>Responsável</th><th>Status</th><th>Criada em</th></tr></thead><tbody id="occRows">${rows}</tbody></table></div></div></div>`);
+}
+function renderTasks(){
+  const statuses=["PENDENTE","EM EXECUÇÃO","BLOQUEADA","CONCLUÍDA"];
+  const lanes=statuses.map(s=>`<div class="lane"><div class="lane-head"><span>${s}</span><span class="lane-count">${state.data.tasks.filter(t=>t.status===s).length}</span></div>${state.data.tasks.filter(t=>t.status===s).map(t=>`<div class="task-card"><strong>${t.title}</strong><p>${t.place}</p><div class="task-foot"><span>${t.person}</span><span>${t.due}</span></div><div style="margin-top:8px"><span class="tag ${t.priority==="CRÍTICA"?"red":t.priority==="ALTA"?"amber":"neutral"}">${t.priority}</span>${t.evidence?` <span class="tag blue">EVIDÊNCIA</span>`:""}</div></div>`).join("")}</div>`).join("");
+  $("#page-tasks").innerHTML=shell("CondoCheck","Execução da rotina com evidências, justificativas e aprovação por exceção",`<button class="primary-btn" id="newTaskBtn">Criar tarefa</button>`,`<div class="task-board">${lanes}</div>`);
+}
+function renderAgenda(){
+  const rows=state.data.agenda.map(a=>`<tr><td class="strong">${fmtDate(a.date+"T12:00:00")}</td><td>${a.title}</td><td>${a.owner}</td><td>${a.critical?'<span class="tag red">CRÍTICO</span>':'<span class="tag neutral">NORMAL</span>'}</td><td><span class="tag ${a.status==="CONFIRMADO"?"green":"amber"}">${a.status}</span></td><td><button class="ghost-btn" data-demo-action="agenda">Abrir</button></td></tr>`).join("");
+  $("#page-agenda").innerHTML=shell("Agenda preventiva","Manutenções, vencimentos, fornecedores, avisos e comprovações",`<button class="primary-btn" id="newAgendaBtn">Novo compromisso</button>`,`<div class="card"><div class="card-body"><div class="toolbar"><input placeholder="Buscar compromisso"><select><option>Próximos 30 dias</option><option>Próximos 7 dias</option><option>Vencidos</option></select></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Data</th><th>Compromisso</th><th>Responsável</th><th>Risco</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`);
+}
+function renderInventory(){
+  const rows=state.data.inventory.map(i=>`<tr><td class="strong">${i.item}</td><td>${i.qty} ${i.unit}</td><td>${i.min} ${i.unit}</td><td><div class="progress" style="width:120px"><span style="width:${Math.min(100,Math.round(i.qty/Math.max(i.min,1)*100))}%"></span></div></td><td><span class="tag ${i.status==="OK"?"green":i.status==="ATENÇÃO"?"amber":"red"}">${i.status}</span></td><td><button class="ghost-btn" data-demo-action="stock">Movimentar</button></td></tr>`).join("");
+  $("#page-inventory").innerHTML=shell("Almoxarifado","Estoque mínimo, consumo, reposição, fornecedores e ordens de compra",`<button class="primary-btn" id="purchaseBtn">Gerar ordem de compra</button>`,`<div class="grid kpis" style="grid-template-columns:repeat(4,1fr);margin-top:0;margin-bottom:15px"><div class="card kpi"><div class="label">Produtos ativos</div><strong>${state.data.inventory.length}</strong><small>catálogo operacional</small></div><div class="card kpi red"><div class="label">Críticos/zerados</div><strong>${state.data.inventory.filter(x=>["CRÍTICO","ZERADO"].includes(x.status)).length}</strong><small>ação imediata</small></div><div class="card kpi amber"><div class="label">Para reposição</div><strong>${state.data.inventory.filter(x=>x.status!=="OK").length}</strong><small>abaixo ou no mínimo</small></div><div class="card kpi green"><div class="label">Cobertura OK</div><strong>${state.data.inventory.filter(x=>x.status==="OK").length}</strong><small>estoque suficiente</small></div></div><div class="card"><div class="card-body table-wrap"><table class="data-table"><thead><tr><th>Produto</th><th>Quantidade</th><th>Mínimo</th><th>Cobertura</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`);
+}
+function renderDocuments(){
+  const cards=state.data.documents.map(d=>`<div class="card doc-card"><div class="doc-icon">DOC</div><strong>${d.title}</strong><p>${d.type} · nível ${d.level}<br>${d.source} · ${d.year}</p><span class="tag ${d.status==="INDEXADO"?"green":d.status.includes("OCR")?"amber":"neutral"}">${d.status}</span><div class="doc-actions"><button class="ghost-btn" data-demo-action="document">Detalhes</button><button class="ghost-btn" data-demo-action="query">Consultar</button></div></div>`).join("");
+  $("#page-documents").innerHTML=shell("Regras e documentos","Catálogo oficial, níveis de acesso, versão, arquivo original e busca fundamentada",`<button class="primary-btn" id="docIngestBtn">Ingestão pelo gateway</button>`,`<div class="notice" style="margin-bottom:14px"><strong>Integridade documental:</strong> o Regulamento escaneado requer OCR integral antes de ser considerado homologado para respostas do Bento.</div><div class="doc-grid">${cards}</div><div class="card" style="margin-top:15px"><div class="card-head"><div><h3>Consulta assistida</h3><p>Resposta deve citar documento e manter o contexto do condomínio</p></div><span class="tag amber">SIMULAÇÃO</span></div><div class="card-body"><div class="field"><label>Pergunta</label><textarea id="docQuestion" placeholder="Ex.: Qual o horário de silêncio segundo o Regulamento?"></textarea></div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="primary-btn" id="docAskBtn">Consultar em modo demonstração</button></div><div id="docAnswer" style="display:none;margin-top:13px;padding:14px;border:1px solid var(--line);border-radius:11px;background:#f8fbfc;font-size:11px;line-height:1.55"></div></div></div>`);
+}
+function renderPeople(){
+  const rows=state.data.people.map(p=>`<tr><td class="strong">${p.name}</td><td><span class="tag neutral">${p.type}</span></td><td>${p.role}</td><td>${p.contact}</td><td><span class="tag ${p.status==="ATIVA"||p.status==="ATIVO"||p.status==="HOMOLOGADO"?"green":"neutral"}">${p.status}</span></td><td><button class="ghost-btn" data-demo-action="people">Abrir</button></td></tr>`).join("");
+  $("#page-people").innerHTML=shell("Pessoas e fornecedores","Cadastros por vínculo, papel, autorização e histórico",`<button class="primary-btn" id="newPeopleBtn">Novo cadastro</button>`,`<div class="card"><div class="card-body"><div class="toolbar"><input placeholder="Buscar pessoa ou empresa"><select><option>Todos os vínculos</option><option>Moradores</option><option>Funcionários</option><option>Fornecedores</option></select></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Nome</th><th>Tipo</th><th>Papel</th><th>Contato</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`);
+}
+function renderReports(){
+  const audits=state.audit.concat([
+    {at:"2026-08-02T20:52:00-03:00",module:"DOCUMENTOS",action:"ACCESS_MATRIX_CONFIGURED",detail:"Matriz documental criada no onboarding",user:"Administração",condo:state.context.code},
+    {at:"2026-08-02T20:14:00-03:00",module:"STORAGE",action:"FILE_CONFIRMED",detail:"Regulamento vinculado ao catálogo",user:"Administração",condo:state.context.code},
+    {at:"2026-08-02T19:51:00-03:00",module:"STORAGE",action:"FILE_CONFIRMED",detail:"Convenção vinculada ao catálogo",user:"Administração",condo:state.context.code}
+  ]);
+  const rows=audits.map(a=>`<div class="audit-row"><div>${fmtDate(a.at)} ${fmtTime(a.at)}</div><div><span class="tag neutral">${a.module}</span></div><div><strong>${a.action}</strong><br><span class="muted">${a.detail}</span></div><div>${a.user}<br><span class="muted">${a.condo}</span></div></div>`).join("");
+  $("#page-reports").innerHTML=shell("Relatórios e auditoria","Histórico imutável, filtros gerenciais e exportação",`<button class="ghost-btn" id="exportAudit">Exportar CSV</button>`,`<div class="card"><div class="card-body"><div class="toolbar"><input placeholder="Pesquisar histórico"><select><option>Todos os módulos</option><option>Ocorrências</option><option>CondoCheck</option><option>Documentos</option></select><select><option>Últimos 30 dias</option><option>Hoje</option><option>Últimos 7 dias</option></select></div>${rows}</div></div>`);
+}
+function renderHealth(){
+  const cards=state.data.health.map(h=>`<div class="card health-card"><div class="health-top"><h4>${h.name}</h4><span class="${h.status==="OK"?"health-ok":h.status==="REVISÃO"?"health-ok health-warn":"health-ok health-block"}"></span></div><p>${h.detail}</p><span class="tag ${h.status==="OK"?"green":h.status==="REVISÃO"?"amber":"red"}">${h.status}</span></div>`).join("");
+  $("#page-health").innerHTML=shell("Saúde do sistema","Disponibilidade, segurança e integrações sem exposição de segredos",`<button class="ghost-btn" id="healthCheckBtn">Executar diagnóstico local</button>`,`<div class="health-grid">${cards}</div><div class="card" style="margin-top:15px"><div class="card-head"><div><h3>Invariantes de segurança</h3><p>Condições obrigatórias antes de habilitar produção</p></div></div><div class="card-body">${[
+    ["Condomínio explícito em cada sessão","OK"],["Sem fallback para condomínio padrão","OK NA TORRE"],["Resposta do gateway deve corresponder ao contexto","CONTRATO PENDENTE"],["Perfil resolvido no servidor","CONTRATO PENDENTE"],["Follow-up curto herda o condomínio ativo ou pede esclarecimento","OK"],["RLS e gateway em todas as gravações","MIGRAÇÃO PENDENTE"],["Token/segredo fora do navegador","OK NA TORRE"],["Auditoria por alteração","MODELO PRONTO"]
+  ].map(x=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #edf2f4"><strong style="font-size:10px">${x[0]}</strong><span class="tag ${x[1].startsWith("OK")?"green":x[1].includes("P0")?"red":"amber"}">${x[1]}</span></div>`).join("")}</div></div>`);
+}
+
+function openOccurrence(id){
+  const o=state.data.occurrences.find(x=>x.id===id);if(!o)return;
+  $("#drawerTag").textContent=o.status;$("#drawerTag").className=`tag ${o.status==="RESOLVIDA"?"green":o.priority==="CRÍTICA"?"red":"amber"}`;
+  $("#drawerTitle").textContent=o.title;$("#drawerSubtitle").textContent=`${o.id} · ${state.context.code} · ${o.source}`;
+  $("#drawerBody").innerHTML=`<div class="drawer-section"><h4>Contexto bloqueado</h4><div class="meta-grid"><div class="meta"><span>Condomínio</span><strong>${escapeHtml(state.context.code)}</strong></div><div class="meta"><span>Perfil atual</span><strong>${escapeHtml(state.user.profile)}</strong></div><div class="meta"><span>Local</span><strong>${escapeHtml(o.location)}</strong></div><div class="meta"><span>Unidade</span><strong>${escapeHtml(o.unit)}</strong></div><div class="meta"><span>Responsável</span><strong>${escapeHtml(o.owner)}</strong></div><div class="meta"><span>Prioridade</span><strong>${escapeHtml(o.priority)}</strong></div></div></div>
+    <div class="drawer-section"><h4>Descrição</h4><p style="font-size:11px;line-height:1.6">${escapeHtml(o.title)}. Registro vinculado exclusivamente ao contexto ${escapeHtml(state.context.code)}.</p></div>
+    <div class="drawer-section"><h4>Conversa e histórico</h4><div class="conversation">${o.messages.length?o.messages.map(m=>`<div class="bubble ${m.dir}"><strong>${m.who}</strong><br>${escapeHtml(m.text)}</div>`).join(""):`<div class="muted" style="font-size:10px">Sem conversa vinculada.</div>`}</div></div>
+    <div class="drawer-section"><h4>Apontamento do síndico</h4><div class="field"><textarea id="occNote" placeholder="Escreva uma resposta ou observação interna..."></textarea></div></div>`;
+  $("#drawerActions").innerHTML=`<button class="ghost-btn" id="linkTaskBtn">Vincular tarefa</button><button class="ghost-btn" id="sendResidentBtn">Enviar resposta</button>${o.status!=="RESOLVIDA"?'<button class="primary-btn" id="resolveOccBtn">Resolver ocorrência</button>':""}`;
+  $("#drawerBackdrop").classList.add("open");
+  setTimeout(()=>{
+    $("#linkTaskBtn")?.addEventListener("click",()=>demoMutation("Tarefa vinculada",`A ocorrência ${o.id} foi vinculada a uma tarefa demonstrativa.`));
+    $("#sendResidentBtn")?.addEventListener("click",()=>{const note=$("#occNote").value.trim();if(!note)return toast("Resposta vazia");o.messages.push({who:state.user.name,dir:"out",text:note});logAudit("RESIDENT_MESSAGE_SIMULATED",`${o.id}: ${note}`,"OCORRÊNCIAS");openOccurrence(o.id);toast("Resposta simulada","Nada foi enviado ao WhatsApp.")});
+    $("#resolveOccBtn")?.addEventListener("click",()=>{o.status="RESOLVIDA";logAudit("OCCURRENCE_RESOLVED_SIMULATED",o.id,"OCORRÊNCIAS");renderAll();openOccurrence(o.id);toast("Ocorrência resolvida","Alteração somente nesta aba.")});
+  },0);
+}
+function demoMutation(title,msg){logAudit("DEMO_MUTATION",msg,"DEMO");renderReports();toast(title,msg)}
+function diagnosticsHtml(){
+  const fp=fingerprint(state.context);
+  return `<div class="notice"><strong>Resultado:</strong> esta Torre não possui o erro de fallback observado no fluxo do Bento. Ela não contém código de condomínio padrão.</div>
+    <div class="meta-grid" style="margin-top:14px"><div class="meta"><span>Código bloqueado</span><strong>${escapeHtml(state.context.code)}</strong></div><div class="meta"><span>Origem do contexto</span><strong>${escapeHtml(state.context.source)}</strong></div><div class="meta"><span>Perfil da sessão</span><strong>${escapeHtml(state.user.profile)}</strong></div><div class="meta"><span>Fingerprint</span><strong>${fp}</strong></div></div>
+    <div style="margin-top:16px">${[
+      ["Nenhuma consulta direta ao Supabase","OK"],["Nenhuma chave ou token embutido","OK"],["Nenhum condomínio fixo em regra de negócio","OK"],["Troca de condomínio reinicia sessão","OK"],["Ações reais pelo gateway","PENDENTE"],["Validação servidor: telefone + vínculo + perfil + condomínio","PENDENTE"],["Contexto conversacional no WhatsApp","CORREÇÃO P0"]
+    ].map(x=>`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #edf2f4"><strong style="font-size:10px">${x[0]}</strong><span class="tag ${x[1]==="OK"?"green":x[1].includes("P0")?"red":"amber"}">${x[1]}</span></div>`).join("")}</div>`;
+}
+function renderCommands(){
+  const cmds=[
+    ["Visão executiva","dashboard"],["Hoje","today"],["Caixa operacional","inbox"],["Ocorrências Bento","occurrences"],["CondoCheck","tasks"],["Agenda preventiva","agenda"],["Almoxarifado","inventory"],["Regras e documentos","documents"],["Pessoas e fornecedores","people"],["Relatórios e auditoria","reports"],["Saúde do sistema","health"]
+  ];
+  $("#commandList").innerHTML=cmds.map(c=>`<button class="palette-item" data-command-page="${c[1]}"><strong>${c[0]}</strong><span>abrir módulo</span></button>`).join("");
+}
+function openModal(id){$(id).classList.add("open")}
+function closeModal(id){$(id).classList.remove("open")}
+function filterOccurrences(){
+  const q=($("#occSearch")?.value||"").toLowerCase(), st=$("#occStatus")?.value||"";
+  $$("#occRows tr").forEach(tr=>{const id=tr.dataset.occ,o=state.data.occurrences.find(x=>x.id===id),ok=(!q||JSON.stringify(o).toLowerCase().includes(q))&&(!st||o.status===st);tr.style.display=ok?"":"none"})
+}
+function docDemoAnswer(){
+  const q=$("#docQuestion").value.trim();if(!q)return toast("Escreva uma pergunta");
+  const ans=$("#docAnswer");ans.style.display="block";
+  ans.innerHTML=`<strong>Modo demonstração:</strong> a Torre registrou a pergunta, mas não consultou documentos nem serviços externos. A consulta documental real deve ser realizada pelo Bento, que deverá responder com a fonte utilizada e manter o código do condomínio <strong>${escapeHtml(state.context.code)}</strong>.`;
+  logAudit("DOCUMENT_QUERY_SIMULATED",q,"DOCUMENTOS");renderReports();
+}
+function exportCsv(){
+  const rows=[["data","modulo","acao","detalhe","usuario","condominio"],...state.audit.map(a=>[a.at,a.module,a.action,a.detail,a.user,a.condo])];
+  const csv=rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`auditoria_${state.context.code}_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);toast("CSV gerado","Exportação local da demonstração.");
+}
+function bindDynamic(){
+  $$("[data-page-link]").forEach(b=>b.onclick=()=>showPage(b.dataset.pageLink));
+  $$("[data-occ]").forEach(r=>r.onclick=()=>openOccurrence(r.dataset.occ));
+  $$("[data-demo-action]").forEach(b=>b.onclick=()=>demoMutation("Ação simulada","Nenhuma alteração real foi enviada."));
+  $("#occSearch")?.addEventListener("input",filterOccurrences);$("#occStatus")?.addEventListener("change",filterOccurrences);
+  $("#docAskBtn")?.addEventListener("click",docDemoAnswer);$("#exportAudit")?.addEventListener("click",exportCsv);
+  $("#exportInbox")?.addEventListener("click",()=>toast("Exportação preparada","Use Relatórios e Auditoria para gerar CSV."));
+  ["newOccurrenceBtn","newTaskBtn","newAgendaBtn","purchaseBtn","docIngestBtn","newPeopleBtn"].forEach(id=>$("#"+id)?.addEventListener("click",()=>demoMutation("Ação protegida","A gravação real depende do Gateway ARCA autenticado.")));
+  $("#healthCheckBtn")?.addEventListener("click",()=>{logAudit("LOCAL_HEALTH_CHECK","Diagnóstico local concluído","SAÚDE");renderReports();toast("Diagnóstico concluído","Frontend íntegro; integrações reais permanecem bloqueadas.")});
+}
+const originalRenderAll=renderAll;renderAll=function(){originalRenderAll();bindDynamic()};
+
+$("#enterBtn").addEventListener("click",enterApp);
+$$(".nav button[data-page]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
+$("#mobileMenuBtn").addEventListener("click",()=>$("#sidebar").classList.toggle("open"));
+$("#switchContextBtn").addEventListener("click",()=>{openModal("#contextModal");$("#newCondoCode").value="";$("#newCondoName").value=""});
+$("#confirmContextBtn").addEventListener("click",()=>{const code=$("#newCondoCode").value.trim().toUpperCase(),name=$("#newCondoName").value.trim();if(!code||!name)return toast("Contexto incompleto");state.context={code,name,lockedAt:nowISO(),source:"EXPLICIT_CONTEXT_SWITCH"};state.data=buildData();state.audit=[];logAudit("CONTEXT_SWITCHED","Sessão reiniciada por troca explícita","SEGURANÇA");sessionStorage.setItem("arcaPrimeSession",JSON.stringify({context:state.context,user:state.user}));updateContextUI();renderAll();closeModal("#contextModal");showPage("dashboard");toast("Contexto trocado","Nenhum dado da sessão anterior foi mantido.")});
+$("#diagnosticsBtn").addEventListener("click",()=>{$("#diagnosticsBody").innerHTML=diagnosticsHtml();openModal("#diagnosticsModal")});
+$("#commandBtn").addEventListener("click",()=>{openModal("#commandModal");setTimeout(()=>$("#commandInput").focus(),0)});
+$("#notifyBtn").addEventListener("click",()=>{$("#notifyBody").innerHTML=state.data.notifications.map(n=>`<div class="alert-item" style="margin-bottom:9px"><div class="alert-icon">${n.type==="green"?"✓":"!"}</div><div><strong>${n.title}</strong><p>${n.desc}</p></div></div>`).join("");openModal("#notifyModal")});
+$("#printBtn").addEventListener("click",()=>window.print());
+$("#globalSearch").addEventListener("focus",()=>{openModal("#commandModal");setTimeout(()=>$("#commandInput").focus(),0)});
+$("#commandInput").addEventListener("input",e=>{const q=e.target.value.toLowerCase();$$(".palette-item").forEach(x=>x.style.display=x.textContent.toLowerCase().includes(q)?"":"none")});
+document.addEventListener("click",e=>{
+  const close=e.target.closest("[data-close]");if(close){const m={drawer:"#drawerBackdrop",context:"#contextModal",diagnostics:"#diagnosticsModal",notify:"#notifyModal"}[close.dataset.close];if(m)closeModal(m)}
+  const cmd=e.target.closest("[data-command-page]");if(cmd){showPage(cmd.dataset.commandPage);closeModal("#commandModal")}
+  if(e.target.classList.contains("modal-backdrop")||e.target.classList.contains("drawer-backdrop"))e.target.classList.remove("open");
+});
+document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();openModal("#commandModal");setTimeout(()=>$("#commandInput").focus(),0)}if(e.key==="Escape")$$(".modal-backdrop.open,.drawer-backdrop.open").forEach(x=>x.classList.remove("open"))});
+restoreSession();
+</script>
+</body>
+</html>
